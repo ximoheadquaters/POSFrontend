@@ -16,13 +16,15 @@ describe("POS response models", () => {
       enabled: true,
       hasOverride: false,
       planEnabled: true,
-      source: "Plan default",
+      source: "Enabled by plan",
+      planLabel: "Included in plan",
     });
     expect(moduleState({ planEnabled: false, overrideEnabled: true })).toEqual({
       enabled: true,
       hasOverride: true,
       planEnabled: false,
       source: "Enabled by override",
+      planLabel: "Not in plan",
     });
   });
 
@@ -33,6 +35,33 @@ describe("POS response models", () => {
       enabled: false,
       hasOverride: true,
       source: "Disabled by override",
+    });
+  });
+
+  it("understands the Platform API module contract", () => {
+    expect(
+      moduleState({
+        includedInPlan: true,
+        overrideEnabled: null,
+        effectiveEnabled: true,
+      }),
+    ).toMatchObject({
+      enabled: true,
+      hasOverride: false,
+      planEnabled: true,
+      source: "Enabled by plan",
+    });
+    expect(
+      moduleState({
+        includedInPlan: false,
+        overrideEnabled: null,
+        effectiveEnabled: false,
+      }),
+    ).toMatchObject({
+      enabled: false,
+      hasOverride: false,
+      planEnabled: false,
+      source: "Not included in plan",
     });
   });
 });

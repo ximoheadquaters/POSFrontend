@@ -52,23 +52,38 @@ export function moduleState(module) {
     module?.hasOverride === true ||
     module?.has_override === true;
   const planEnabled =
+    module?.includedInPlan ??
+    module?.included_in_plan ??
     module?.planEnabled ??
     module?.plan_enabled ??
     module?.enabledByPlan ??
     module?.enabled_by_plan ??
     false;
+  const effectiveValue =
+    module?.effectiveEnabled ??
+    module?.effective_enabled ??
+    module?.isEnabled ??
+    module?.is_enabled ??
+    module?.enabled;
   const enabled = hasOverride
     ? Boolean(overrideValue)
-    : Boolean(module?.enabled ?? planEnabled);
+    : typeof effectiveValue === "boolean"
+      ? effectiveValue
+      : Boolean(planEnabled);
+  const source = hasOverride
+    ? enabled
+      ? "Enabled by override"
+      : "Disabled by override"
+    : planEnabled
+      ? "Enabled by plan"
+      : "Not included in plan";
+
   return {
     enabled,
     hasOverride,
     planEnabled: Boolean(planEnabled),
-    source: hasOverride
-      ? enabled
-        ? "Enabled by override"
-        : "Disabled by override"
-      : "Plan default",
+    source,
+    planLabel: planEnabled ? "Included in plan" : "Not in plan",
   };
 }
 

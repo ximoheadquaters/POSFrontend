@@ -34,9 +34,28 @@ export default function ModulesPage() {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [filter, setFilter] = useState("all");
   const organization = organizationFrom(organizationResource.data);
   const modules = modulesFrom(modulesResource.data);
   const name = organizationName(organization);
+  const moduleRows = modules.map((module) => ({
+    module,
+    state: moduleState(module),
+  }));
+  const counts = moduleRows.reduce(
+    (total, row) => ({
+      enabled: total.enabled + Number(row.state.enabled),
+      disabled: total.disabled + Number(!row.state.enabled),
+      overrides: total.overrides + Number(row.state.hasOverride),
+    }),
+    { enabled: 0, disabled: 0, overrides: 0 },
+  );
+  const visibleModules = moduleRows.filter(({ state }) => {
+    if (filter === "enabled") return state.enabled;
+    if (filter === "disabled") return !state.enabled;
+    if (filter === "overrides") return state.hasOverride;
+    return true;
+  });
 
   function openChange(module, action) {
     setReason("");
@@ -113,66 +132,141 @@ export default function ModulesPage() {
           {message.text}
         </div>
       )}
-      <div className="mb-5 flex flex-wrap gap-4 rounded-card border border-neutral-200 bg-white p-4 text-xs text-neutral-600">
-        <span>
-          <strong className="text-neutral-800">Plan default:</strong> access
-          inherited from subscription
-        </span>
-        <span>
-          <strong className="text-violet-700">Manual override:</strong> access
-          explicitly enabled or disabled by an administrator
-        </span>
+      <div className="mb-5 rounded-card border border-neutral-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-button bg-emerald-50 px-4 py-3">
+            <p className="text-2xl font-semibold text-emerald-700">
+              {counts.enabled}
+            </p>
+            <p className="text-xs font-medium text-emerald-700">
+              Enabled modules
+            </p>
+          </div>
+          <div className="rounded-button bg-neutral-100 px-4 py-3">
+            <p className="text-2xl font-semibold text-neutral-700">
+              {counts.disabled}
+            </p>
+            <p className="text-xs font-medium text-neutral-600">
+              Disabled modules
+            </p>
+          </div>
+          <div className="rounded-button bg-violet-50 px-4 py-3">
+            <p className="text-2xl font-semibold text-violet-700">
+              {counts.overrides}
+            </p>
+            <p className="text-xs font-medium text-violet-700">
+              Manual overrides
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-col justify-between gap-3 border-t border-neutral-100 pt-4 lg:flex-row lg:items-center">
+          <p className="text-xs leading-5 text-neutral-500">
+            <strong className="text-neutral-700">Plan access</strong> follows
+            the subscription automatically.{" "}
+            <strong className="text-violet-700">Manual overrides</strong> take
+            priority until removed.
+          </p>
+          <div
+            className="flex flex-wrap gap-2"
+            role="group"
+            aria-label="Filter modules"
+          >
+            {[
+              ["all", `All (${modules.length})`],
+              ["enabled", `Enabled (${counts.enabled})`],
+              ["disabled", `Disabled (${counts.disabled})`],
+              ["overrides", `Overrides (${counts.overrides})`],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition-colors ${
+                  filter === value
+                    ? "bg-primary text-white ring-primary"
+                    : "bg-white text-neutral-600 ring-neutral-300 hover:bg-neutral-50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="space-y-3">
-        {modules.map((module) => {
-          const state = moduleState(module);
+        {visibleModules.map(({ module, state }) => {
           return (
             <article
               key={moduleCode(module)}
-              className="rounded-card border border-neutral-200 bg-white p-5 shadow-sm"
+              className={`rounded-card border bg-white p-5 shadow-sm transition-colors ${
+                state.hasOverride
+                  ? "border-violet-200"
+                  : state.enabled
+                    ? "border-emerald-200"
+                    : "border-neutral-200"
+              }`}
             >
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                <div>
+                <div className="min-w-0 md:w-1/3">
                   <h2 className="font-semibold">{moduleName(module)}</h2>
                   <p className="mt-1 text-xs text-neutral-400">
                     {moduleCode(module)}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge value={state.enabled ? "enabled" : "disabled"} />
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                  <StatusBadge
+                    value={state.enabled ? "Access enabled" : "Access disabled"}
+                    tone={
+                      state.enabled
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                        : "bg-red-50 text-red-700 ring-red-600/20"
+                    }
+                  />
                   <StatusBadge
                     value={state.source}
                     tone={
                       state.hasOverride
                         ? "bg-violet-50 text-violet-700 ring-violet-600/20"
-                        : "bg-neutral-100 text-neutral-600 ring-neutral-500/20"
+                        : state.planEnabled
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                          : "bg-neutral-100 text-neutral-600 ring-neutral-500/20"
                     }
                   />
+                  {state.hasOverride && (
+                    <StatusBadge
+                      value={state.planLabel}
+                      tone="bg-neutral-100 text-neutral-600 ring-neutral-500/20"
+                    />
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => openChange(module, "enable")}
-                    disabled={state.hasOverride && state.enabled}
-                  >
-                    Enable override
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => openChange(module, "disable")}
-                    disabled={state.hasOverride && !state.enabled}
-                  >
-                    Disable override
-                  </Button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  {state.enabled ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => openChange(module, "disable")}
+                      disabled={state.hasOverride && !state.enabled}
+                    >
+                      Manually disable
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => openChange(module, "enable")}
+                      disabled={state.hasOverride && state.enabled}
+                    >
+                      Manually enable
+                    </Button>
+                  )}
                   {state.hasOverride && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => openChange(module, "remove")}
                     >
-                      Remove override
+                      Return to plan
                     </Button>
                   )}
                 </div>
@@ -183,6 +277,20 @@ export default function ModulesPage() {
         {!modules.length && (
           <div className="rounded-card border border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500">
             No POS modules were returned.
+          </div>
+        )}
+        {modules.length > 0 && !visibleModules.length && (
+          <div className="rounded-card border border-dashed border-neutral-300 bg-white p-10 text-center">
+            <p className="font-medium text-neutral-700">
+              No modules match this filter
+            </p>
+            <button
+              type="button"
+              className="mt-2 text-sm font-semibold text-primary hover:underline"
+              onClick={() => setFilter("all")}
+            >
+              Show all modules
+            </button>
           </div>
         )}
       </div>
