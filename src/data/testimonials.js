@@ -1,0 +1,38 @@
+export const mockTestimonials = [
+  {
+    id: 1,
+    name: 'Sarah Chen',
+    role: 'CEO',
+    company: 'Urban Cafe Group',
+    avatar: null,
+    content: 'Ximo\'s POS system transformed our operations. We\'ve cut transaction times in half and gained invaluable insights into our business performance.',
+    rating: 5,
+  },
+  {
+    id: 2,
+    name: 'Marcus Rodriguez',
+    role: 'Operations Director',
+    company: 'FreshMart Grocery',
+    avatar: null,
+    content: 'The inventory management alone saved us thousands. Real-time tracking and automated reordering have been game-changers for our 12 locations.',
+    rating: 5,
+  },
+  {
+    id: 3,
+    name: 'Emily Thompson',
+    role: 'Owner',
+    company: 'Bella Boutique',
+    avatar: null,
+    content: 'As a small business owner, I needed something powerful but easy to use. Ximo delivered. The support team is exceptional too.',
+    rating: 5,
+  },
+  {
+    id: 4,
+    name: 'David Park',
+    role: 'CTO',
+    company: 'TechBrew Coffee',
+    avatar: null,
+    content: 'We evaluated dozens of POS systems. Ximo stood out for its modern architecture, API capabilities, and the team\'s deep understanding of our needs.',
+    rating: 5,
+  },
+];
