@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-
+import XimoIcon from '../assets/ximoIcon2.PNG'
 const links = [
   { to: "/admin", label: "Overview", end: true },
   { to: "/admin/clients", label: "Clients" },
@@ -55,7 +55,7 @@ export default function DashboardLayout() {
       >
         <NavLink to="/" className="mb-8 hidden items-center gap-3 px-3 lg:flex">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-white">
-            X
+            <img src={XimoIcon}/>
           </span>
           <span>
             <span className="block font-semibold">Ximo</span>
