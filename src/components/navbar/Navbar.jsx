@@ -39,7 +39,11 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 flex items-center justify-center">
             <span className="text-white font-bold text-sm">
-              <img  src={isScrolled ?  XimoIconGreen : XimoIcon } alt="" />
+              <img
+                src={isScrolled ? XimoIconGreen : XimoIcon}
+                alt=""
+                className={!isScrolled ? "scale-150" : undefined}
+              />
             </span>
           </div>
           <span
