@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../common/Button";
-
+import XimoIcon from '../../assets/ximoIcon2.PNG'
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "About", path: "/about" },
@@ -36,7 +36,9 @@ export default function Navbar() {
       <nav className="container-default flex items-center justify-between h-16 md:h-20">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">X</span>
+            <span className="text-white font-bold text-sm">
+              <img src={XimoIcon} alt="" />
+            </span>
           </div>
           <span
             className={`font-bold text-xl ${isScrolled ? "text-neutral-900" : "text-white"}`}
