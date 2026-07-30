@@ -71,7 +71,7 @@ function Hero() {
           <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-white/90">Ximo POS gives growing businesses one reliable place to sell, manage stock, lead their team, and make better decisions every day.</p>
           <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
             <button type="button" onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })} className="bg-white px-6 py-3.5 text-sm font-semibold text-primary transition hover:bg-[#E6F2E9]">Explore services</button>
-            <Link to="/services" className="border border-white px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white hover:text-primary">Explore Ximo POS</Link>
+            <Link to={`/services?service=${pos.slug}`} className="border border-white px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white hover:text-primary">Explore Ximo POS</Link>
           </div>
           <p className="mt-7 text-sm font-semibold text-white/85">Built for checkout, inventory, and the busy hour.</p>
         </div>
@@ -97,7 +97,7 @@ function Services() {
               <h3 className="mt-7 max-w-xl text-4xl font-semibold leading-[1.02] tracking-[-0.05em] md:text-5xl">Ximo POS is the operating system behind the counter.</h3>
               <p className="mt-6 max-w-lg text-base leading-7 text-[#59645C]">A dependable retail system for checkout, live inventory, team activity, and the decisions that happen between opening and closing.</p>
             </div>
-            <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="flex gap-5 text-sm font-semibold text-[#39443D]"><span>Fast checkout</span><span>Live inventory</span><span>Ready to grow</span></div><Link to="/services" className="inline-flex w-fit items-center border-b-2 border-primary pb-2 text-sm font-bold text-primary transition hover:border-[#17241C] hover:text-[#17241C]">See Ximo POS <Arrow /></Link></div>
+            <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="flex gap-5 text-sm font-semibold text-[#39443D]"><span>Fast checkout</span><span>Live inventory</span><span>Ready to grow</span></div><Link to={`/services?service=${pos.slug}`} className="inline-flex w-fit items-center border-b-2 border-primary pb-2 text-sm font-bold text-primary transition hover:border-[#17241C] hover:text-[#17241C]">See Ximo POS <Arrow /></Link></div>
           </div>
           <div className="min-h-[340px] bg-[#C9D8CA] p-5 md:p-8"><img src="/ximo-retail-counter.jpg" alt="Ximo POS in a retail setting" className="h-full w-full object-cover" /></div>
         </article>
