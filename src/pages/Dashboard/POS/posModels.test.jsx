@@ -8,7 +8,7 @@ describe("POS response models", () => {
     ).toEqual({ id: "org-1" });
     expect(
       modulesFrom({ data: { modules: [{ code: "inventory" }] } }),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
   });
 
   it("distinguishes plan defaults from enabled overrides", () => {

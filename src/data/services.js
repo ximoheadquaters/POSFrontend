@@ -22,9 +22,9 @@ export const mockServices = [
         icon: 'credit-card',
       },
       {
-        title: 'Multi-Store Support',
-        description: 'Manage multiple locations from a single dashboard with centralized control.',
-        icon: 'building',
+        title: 'Multi-Store & Stock Transfers',
+        description: 'Manage multiple store locations and dispatch/receive inventory transfers between branches with real-time tracking.',
+        icon: 'truck',
       },
       {
         title: 'Employee Management',
@@ -62,6 +62,7 @@ export const mockServices = [
           'Unlimited transactions',
           'Advanced inventory management',
           'Up to 3 store locations',
+          'Multi-branch stock transfers',
           'Priority support',
           'Advanced analytics & reports',
           'Employee management',
@@ -79,6 +80,7 @@ export const mockServices = [
           'Unlimited transactions',
           'Enterprise inventory management',
           'Unlimited store locations',
+          'Multi-branch stock transfers',
           'Dedicated support team',
           'Custom reporting',
           'API access',
