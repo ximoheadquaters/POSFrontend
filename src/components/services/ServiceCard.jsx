@@ -44,7 +44,7 @@ export default function ServiceCard({ service, index = 0 }) {
           {service.description}
         </p>
         <Link
-          to={`/services`}
+          to={`/services?service=${service.slug}`}
           className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-600 transition-colors"
         >
           Learn more

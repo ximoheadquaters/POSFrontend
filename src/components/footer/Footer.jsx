@@ -2,7 +2,7 @@
 import XimoIcon from "../../assets/ximoIcon2.PNG";
 
 const columns = [
-  { title: "Explore", links: [{ label: "About Ximo", path: "/about" }, { label: "Ximo POS", path: "/services" }, { label: "Pricing", path: "/#pricing" }] },
+  { title: "Explore", links: [{ label: "About Ximo", path: "/about" }, { label: "Ximo POS", path: "/services?service=pos-system" }, { label: "Pricing", path: "/#pricing" }] },
   { title: "Company", links: [{ label: "Contact", path: "/contact" }, { label: "Log in", path: "/login" }, { label: "Support", path: "/#faq" }] },
 ];
 
