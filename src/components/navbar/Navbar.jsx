@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import XimoIcon from "../../assets/ximoIcon2.PNG";
@@ -109,6 +109,12 @@ export default function Navbar() {
     ? "bg-white text-primary hover:bg-[#E6F2E9]"
     : "bg-primary text-white hover:bg-[#164F34]";
   const isServicesPage = location.pathname === "/services";
+  const handleHomeClick = (event) => {
+    if (location.pathname === "/") {
+      event.preventDefault();
+      document.getElementById("landing-hero")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <header
@@ -119,7 +125,7 @@ export default function Navbar() {
         <Link
           to="/"
           className="flex h-10 w-10 items-center justify-center overflow-hidden"
-          aria-label="Ximo home"
+          aria-label="Ximo home" onClick={handleHomeClick}
         >
           <img
             src={useLightControls ? XimoIcon : XimoIconGreen}
@@ -134,6 +140,7 @@ export default function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={link.path === "/" ? handleHomeClick : undefined}
                 className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
@@ -165,6 +172,7 @@ export default function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={link.path === "/" ? handleHomeClick : undefined}
                 className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
@@ -269,7 +277,8 @@ export default function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
+                  onClick={link.path === "/" ? handleHomeClick : undefined}
+                className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
                 >
                   {link.label}
                 </Link>
@@ -313,7 +322,8 @@ export default function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
+                  onClick={link.path === "/" ? handleHomeClick : undefined}
+                className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
                 >
                   {link.label}
                 </Link>
@@ -331,3 +341,5 @@ export default function Navbar() {
     </header>
   );
 }
+
+
