@@ -1,27 +1,24 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import useAuth from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
+import XimoIconGreen from "../../assets/greenXimo.PNG";
 
 const ADMIN_ROLES = new Set(["super_admin", "super-admin", "superadmin"]);
+
+function Mark() {
+  return <img src={XimoIconGreen} alt="Ximo" className="w-8" />;
+}
 
 export default function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    signIn,
-    signOut,
-    isAuthenticated,
-    role,
-    user,
-    isLoading,
-    error,
-    clearError,
-  } = useAuth();
+  const { signIn, signOut, isAuthenticated, role, user, isLoading, error, clearError } = useAuth();
   const [mode, setMode] = useState("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -33,15 +30,10 @@ export default function LoginPage() {
     try {
       const auth = await signIn(email, password);
       const requestedPath = location.state?.from?.pathname;
-      const destination =
-        requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
-          ? requestedPath
-          : ADMIN_ROLES.has(String(auth.role).toLowerCase())
-            ? "/admin"
-            : "/";
+      const destination = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : ADMIN_ROLES.has(String(auth.role).toLowerCase()) ? "/admin" : "/";
       navigate(destination, { replace: true });
     } catch {
-      // The Redux error is rendered below.
+      // The authentication error is rendered below.
     }
   }
 
@@ -52,9 +44,7 @@ export default function LoginPage() {
     clearError();
     try {
       await authService.sendPasswordReset(email);
-      setNotice(
-        "If an account exists for that email, a password reset link has been sent.",
-      );
+      setNotice("If an account exists for that email, a password reset link has been sent.");
     } catch (resetError) {
       setNotice(resetError.message);
     } finally {
@@ -72,175 +62,15 @@ export default function LoginPage() {
   const hasAdminAccess = ADMIN_ROLES.has(String(role || "").toLowerCase());
 
   if (isAuthenticated && !hasAdminAccess) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
-        <div className="w-full max-w-md rounded-card border border-amber-200 bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-xl text-amber-700">
-            !
-          </div>
-          <h1 className="mt-4 text-xl font-semibold text-neutral-900">
-            Super Admin access required
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600">
-            You are signed in as{" "}
-            <strong>{user?.email || "an authenticated user"}</strong>, but this
-            session does not contain the <code>super_admin</code> role.
-          </p>
-          <p className="mt-3 text-xs text-neutral-500">
-            Current role: {role || "none"}
-          </p>
-          {error && (
-            <div
-              role="alert"
-              className="mt-4 rounded-button border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-            >
-              {error}
-            </div>
-          )}
-          <Button
-            className="mt-6 w-full"
-            onClick={handleSwitchAccount}
-            loading={isLoading}
-          >
-            Sign out and use another account
-          </Button>
-          <Link
-            to="/"
-            className="mt-4 inline-block text-sm font-medium text-primary"
-          >
-            Return to website
-          </Link>
-        </div>
-      </div>
-    );
+    return <div className="grid min-h-screen place-items-center bg-[#F5F4EE] px-5"><div className="w-full max-w-md border border-[#D4DDD5] bg-white p-8 text-center"><div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#E7EEE7] font-semibold text-primary">!</div><h1 className="mt-5 text-2xl font-semibold tracking-[-0.04em] text-[#17241C]">Admin access required</h1><p className="mt-3 text-sm leading-6 text-[#59645C]">You are signed in as <strong>{user?.email || "an authenticated user"}</strong>, but this account does not have the required access.</p>{error && <div role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}<Button className="mt-6 w-full" onClick={handleSwitchAccount} loading={isLoading}>Sign out and use another account</Button><Link to="/" className="mt-5 inline-block text-sm font-semibold text-primary">Return to website</Link></div></div>;
   }
 
+  const isSubmitting = isLoading || resetLoading;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-10">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Link to="/" className="mb-6 inline-flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <span className="text-lg font-bold text-white">X</span>
-            </div>
-          </Link>
-          <h1 className="text-2xl font-semibold text-neutral-900">
-            {mode === "sign-in" ? "Welcome back" : "Reset your password"}
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {mode === "sign-in"
-              ? "Sign in to your Ximo account"
-              : "We’ll email you a secure recovery link"}
-          </p>
-        </div>
-        <div className="rounded-card border border-neutral-200 bg-white p-6 shadow-sm">
-          {(error || notice) && (
-            <div
-              role={error ? "alert" : "status"}
-              className={`mb-4 rounded-button border p-3 text-sm ${
-                error
-                  ? "border-red-200 bg-red-50 text-red-800"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
-              }`}
-            >
-              {error || notice}
-            </div>
-          )}
-          <form
-            className="space-y-4"
-            onSubmit={mode === "sign-in" ? handleSignIn : handleReset}
-          >
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (error) clearError();
-                }}
-                className="w-full rounded-button border border-neutral-300 px-3 py-2.5 text-neutral-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                placeholder="you@company.com"
-              />
-            </div>
-            {mode === "sign-in" && (
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    className="text-xs font-medium text-primary hover:text-primary-700"
-                    onClick={() => {
-                      clearError();
-                      setNotice("");
-                      setMode("reset");
-                    }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    if (error) clearError();
-                  }}
-                  className="w-full rounded-button border border-neutral-300 px-3 py-2.5 text-neutral-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="Enter your password"
-                />
-              </div>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              loading={isLoading || resetLoading}
-              disabled={
-                !email ||
-                (mode === "sign-in" && password.length < 6) ||
-                isLoading ||
-                resetLoading
-              }
-            >
-              {mode === "sign-in" ? "Sign in" : "Send reset link"}
-            </Button>
-          </form>
-          {mode === "reset" && (
-            <button
-              type="button"
-              className="mt-4 w-full text-center text-sm font-medium text-primary"
-              onClick={() => {
-                setMode("sign-in");
-                setNotice("");
-              }}
-            >
-              Back to sign in
-            </button>
-          )}
-        </div>
-        <p className="mt-6 text-center text-sm text-neutral-400">
-          <Link
-            to="/"
-            className="text-primary hover:text-primary-600 transition-colors"
-          >
-            Back to home
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#F5F4EE] lg:grid lg:grid-cols-[0.92fr_1.08fr]">
+      <aside className="hidden flex-col justify-between bg-[#17241C] p-10 text-white lg:flex xl:p-14"><Link to="/" className="flex h-10 w-10 items-center justify-center overflow-hidden"><img src={XimoIconGreen} alt="Ximo" className="w-8 brightness-0 invert" /></Link><div><p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#C9E4CF]">Ximo account</p><h1 className="mt-5 max-w-lg text-5xl font-semibold leading-[0.96] tracking-[-0.06em]">One place to run the work.</h1><p className="mt-6 max-w-md text-base leading-7 text-white/68">Access the Ximo tools that keep your operation moving, from the counter to the decisions behind it.</p></div><p className="text-sm text-white/48">Ximo business technology</p></aside>
+      <main className="flex min-h-screen items-center justify-center px-5 py-12 sm:px-8"><div className="w-full max-w-md"><Link to="/" className="mb-12 flex items-center gap-3 lg:hidden"><span className="flex h-10 w-10 items-center justify-center overflow-hidden"><Mark /></span><span className="text-xl font-semibold tracking-[-0.04em] text-[#17241C]">ximo</span></Link><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{mode === "sign-in" ? "Secure sign in" : "Account recovery"}</p><h2 className="mt-4 text-4xl font-semibold tracking-[-0.055em] text-[#17241C]">{mode === "sign-in" ? "Welcome back." : "Reset your password."}</h2><p className="mt-3 text-sm leading-6 text-[#59645C]">{mode === "sign-in" ? "Sign in to continue to your Ximo workspace." : "We will email a secure recovery link to your account."}</p><div className="mt-9 border border-[#D4DDD5] bg-white p-6 sm:p-8">{(error || notice) && <div role={error ? "alert" : "status"} className={`mb-5 border p-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{error || notice}</div>}<form className="space-y-5" onSubmit={mode === "sign-in" ? handleSignIn : handleReset}><div><label htmlFor="email" className="mb-2 block text-sm font-semibold text-[#39443D]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => { setEmail(event.target.value); if (error) clearError(); }} className="w-full border border-[#C8D2C9] px-4 py-3 text-[#17241C] outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15" placeholder="you@company.com" /></div>{mode === "sign-in" && <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-semibold text-[#39443D]">Password</label><button type="button" className="text-xs font-semibold text-primary hover:text-primary-700" onClick={() => { clearError(); setNotice(""); setMode("reset"); }}>Forgot password?</button></div><div className="relative"><input id="password" type={isPasswordVisible ? "text" : "password"} autoComplete="current-password" required minLength={6} value={password} onChange={(event) => { setPassword(event.target.value); if (error) clearError(); }} className="w-full border border-[#C8D2C9] py-3 pl-4 pr-12 text-[#17241C] outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15" placeholder="Enter your password" /><button type="button" onClick={() => setIsPasswordVisible((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#59645C] transition hover:text-primary" aria-label={isPasswordVisible ? "Hide password" : "Show password"} aria-pressed={isPasswordVisible}>{isPasswordVisible ? <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.2A10.9 10.9 0 0 1 12 4c5.3 0 8.8 4.1 9.7 6.1a1.8 1.8 0 0 1 0 1.8 12.7 12.7 0 0 1-3 3.8M6.2 6.2a12.7 12.7 0 0 0-3.9 3.9 1.8 1.8 0 0 0 0 1.8C3.2 13.9 6.7 18 12 18c.8 0 1.6-.1 2.3-.3" /></svg> : <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" /><circle cx="12" cy="12" r="2.5" /></svg>}</button></div></div>}<Button type="submit" className="mt-2 w-full rounded-none" loading={isSubmitting} disabled={!email || (mode === "sign-in" && password.length < 6) || isSubmitting}>{mode === "sign-in" ? "Sign in" : "Send reset link"}</Button></form>{mode === "reset" && <button type="button" className="mt-5 w-full text-center text-sm font-semibold text-primary" onClick={() => { setMode("sign-in"); setNotice(""); }}>Back to sign in</button>}</div><p className="mt-7 text-sm text-[#68736A]"><Link to="/" className="font-semibold text-primary hover:text-primary-700">Back to home</Link></p></div></main>
     </div>
   );
 }
+

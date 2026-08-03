@@ -8,7 +8,24 @@ export function organizationFrom(payload) {
 }
 
 export function modulesFrom(payload) {
-  return unwrapCollection(payload, ["modules"]);
+  const items = [...unwrapCollection(payload, ["modules"])];
+  const hasStockTransfers = items.some(
+    (m) => (m?.code ?? m?.moduleCode ?? m?.module_code) === "stock_transfers"
+  );
+  if (!hasStockTransfers) {
+    items.push({
+      code: "stock_transfers",
+      name: "Stock Transfers",
+      description:
+        "Transfer inventory items between multiple branches with dispatch and receiving tracking.",
+      enabled: false,
+      includedInPlan: false,
+      hasOverride: false,
+    });
+  }
+  return items.sort((a, b) =>
+    (a.name || a.code || "").localeCompare(b.name || b.code || "")
+  );
 }
 
 export function organizationName(organization) {

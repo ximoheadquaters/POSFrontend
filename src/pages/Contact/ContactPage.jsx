@@ -1,200 +1,29 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import SectionTitle from "../../components/common/SectionTitle";
-import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
 import Textarea from "../../components/common/Textarea";
-import Button from "../../components/common/Button";
+
+const steps = [
+  ["01", "Tell us where the day gets difficult", "Share your current setup, business type, and the work you want to make easier."],
+  ["02", "We map the right starting point", "Our team will help you understand whether Ximo POS is the right first move."],
+  ["03", "Move forward with a clear plan", "Get a practical next step for setup, migration, and future growth."],
+];
+
+function Arrow() {
+  return <span className="ml-3" aria-hidden="true">-&gt;</span>;
+}
 
 export default function ContactPage() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm();
-
-  const onSubmit = (data) => {
-    console.log("Contact form submitted:", data);
-    alert("Thank you for your message! We will get back to you soon.");
-    reset();
-  };
+  useEffect(() => window.scrollTo(0, 0), []);
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+  const onSubmit = (data) => { console.log("Contact form submitted:", data); alert("Thank you for your message! We will get back to you soon."); reset(); };
 
   return (
     <div className="pt-20">
-      <section className="section-padding bg-white">
-        <div className="container-default">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <SectionTitle
-              subtitle="Contact"
-              title="Get in Touch"
-              description="Have a question about our services or want to discuss how Ximo can help your business? We'd love to hear from you."
-            />
-          </motion.div>
-          <div className="grid md:grid-cols-5 gap-8 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="md:col-span-2 space-y-6"
-            >
-              <Card hover={false}>
-                <h3 className="text-base font-semibold text-neutral-900 mb-4">
-                  Contact Information
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 text-primary mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-medium text-neutral-900">
-                        Email
-                      </p>
-                      <p className="text-sm text-neutral-500">hello@ximo.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 text-primary mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-medium text-neutral-900">
-                        Phone
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        +1 (555) 123-4567
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 text-primary mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-medium text-neutral-900">
-                        Address
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        123 Tech Street
-                        <br />
-                        San Francisco, CA 94105
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+      <section className="bg-[#E7EEE7] px-5 py-20 sm:px-6 md:py-28"><motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-[1280px]"><p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">Contact Ximo</p><h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[0.94] tracking-[-0.065em] text-[#17241C] md:text-7xl">Let us make the workday easier to run.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-[#59645C]">Tell us what is happening in your business now. We will help you find a practical path forward, starting with the work that matters most.</p></motion.div></section>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="md:col-span-3"
-            >
-              <Card hover={false} className="p-6 md:p-8">
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    <Input
-                      label="First Name"
-                      name="firstName"
-                      placeholder="John"
-                      register={register}
-                      error={errors.firstName?.message}
-                      {...register("firstName", { required: "Required" })}
-                    />
-                    <Input
-                      label="Last Name"
-                      name="lastName"
-                      placeholder="Doe"
-                      register={register}
-                      error={errors.lastName?.message}
-                      {...register("lastName", { required: "Required" })}
-                    />
-                  </div>
-                  <Input
-                    label="Email"
-                    name="email"
-                    type="email"
-                    placeholder="john@company.com"
-                    register={register}
-                    error={errors.email?.message}
-                    {...register("email", {
-                      required: "Required",
-                      pattern: {
-                        value: /^\S+@\S+$/i,
-                        message: "Invalid email",
-                      },
-                    })}
-                  />
-                  <Input
-                    label="Subject"
-                    name="subject"
-                    placeholder="How can we help?"
-                    register={register}
-                    error={errors.subject?.message}
-                    {...register("subject", { required: "Required" })}
-                  />
-                  <Textarea
-                    label="Message"
-                    name="message"
-                    placeholder="Tell us more about your needs..."
-                    register={register}
-                    error={errors.message?.message}
-                    {...register("message", { required: "Required" })}
-                  />
-                  <Button type="submit" size="lg" className="w-full sm:w-auto">
-                    Send Message
-                  </Button>
-                </form>
-              </Card>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      <section className="bg-white py-20 md:py-28"><div className="container-default grid gap-12 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20"><aside><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">What happens next</p><div className="mt-7 border-t border-[#C9D6CB]">{steps.map(([number, title, body]) => <div key={number} className="border-b border-[#C9D6CB] py-6"><p className="font-mono text-xs text-primary">{number}</p><h2 className="mt-3 text-xl font-semibold tracking-[-0.03em] text-[#17241C]">{title}</h2><p className="mt-2 text-sm leading-6 text-[#59645C]">{body}</p></div>)}</div></aside><form onSubmit={handleSubmit(onSubmit)} className="border border-[#D4DDD5] bg-[#F8F7F1] p-6 md:p-10"><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Start the conversation</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em] text-[#17241C]">Tell us a little about your operation.</h2><div className="mt-8 grid gap-5 sm:grid-cols-2"><Input label="First name" name="firstName" placeholder="First name" register={register} error={errors.firstName?.message} {...register("firstName", { required: "Required" })} /><Input label="Last name" name="lastName" placeholder="Last name" register={register} error={errors.lastName?.message} {...register("lastName", { required: "Required" })} /></div><div className="mt-5"><Input label="Work email" name="email" type="email" placeholder="you@company.com" register={register} error={errors.email?.message} {...register("email", { required: "Required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} /></div><div className="mt-5"><Input label="What can we help with?" name="subject" placeholder="Tell us what you are working on" register={register} error={errors.subject?.message} {...register("subject", { required: "Required" })} /></div><div className="mt-5"><Textarea label="Message" name="message" placeholder="A short overview of your business, current setup, and goals..." register={register} error={errors.message?.message} {...register("message", { required: "Required" })} /></div><button type="submit" className="mt-7 inline-flex w-full items-center justify-center bg-primary px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#164F34]">Send inquiry <Arrow /></button><p className="mt-4 text-xs leading-5 text-[#68736A]">We use your details only to respond to this inquiry.</p></form></div></section>
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function FAQAccordion({ faq, index = 0 }) {
+export default function FAQAccordion({ faq, index: _index = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -48,3 +48,4 @@ export default function FAQAccordion({ faq, index = 0 }) {
     </div>
   );
 }
+
