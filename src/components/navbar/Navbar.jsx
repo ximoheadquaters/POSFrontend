@@ -1,11 +1,14 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import XimoIcon from "../../assets/ximoIcon2.PNG";
 import XimoIconGreen from "../../assets/greenXimo.PNG";
 
+import useAuth from "../../hooks/useAuth";
+
 const navLinks = [
   { label: "Home", path: "/" },
+  { label: "Pricing", path: "/pricing" },
   { label: "About", path: "/about" },
   { label: "Services", path: "/services" },
   { label: "Contact", path: "/contact" },
@@ -21,6 +24,7 @@ function ProfileIcon() {
 }
 
 export default function Navbar() {
+  const { isAuthenticated } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
@@ -58,6 +62,11 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-7 md:flex">
           <div className="flex items-center gap-1">
+            {isAuthenticated && (
+              <Link to="/settings/billing" className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === "/settings/billing" ? activeNavItem : navItem}`}>
+                Manage Plan
+              </Link>
+            )}
             {navLinks.map((link) => (
               <Link key={link.path} to={link.path} className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === link.path ? activeNavItem : navItem}`}>
                 {link.label}
@@ -66,7 +75,7 @@ export default function Navbar() {
           </div>
           <span className={`h-6 w-px ${useLightControls ? "bg-white/25" : "bg-[#D6DED7]"}`} aria-hidden="true" />
           <div className="flex items-center gap-3">
-            <Link to="/contact" className={`inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors ${ctaStyle}`}>Get Started</Link>
+            <Link to="/pricing" className={`inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors ${ctaStyle}`}>Get Started</Link>
             <Link to="/login" aria-label="Log in" title="Log in" className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${loginStyle}`}><ProfileIcon /></Link>
           </div>
         </div>
@@ -84,7 +93,7 @@ export default function Navbar() {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="border-t border-[#DDE5DE] bg-white md:hidden">
             <div className="container-default space-y-1 py-4">
               {navLinks.map((link) => <Link key={link.path} to={link.path} className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}>{link.label}</Link>)}
-              <Link to="/contact" className="mt-3 flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">Get Started</Link>
+              <Link to="/pricing" className="mt-3 flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">Get Started</Link>
             </div>
           </motion.div>
         )}
