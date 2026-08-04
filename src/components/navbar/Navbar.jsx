@@ -4,9 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import XimoIcon from "../../assets/ximoIcon2.PNG";
 import XimoIconGreen from "../../assets/greenXimo.PNG";
 import { mockServices } from "../../data/services";
+import useAuth from "../../hooks/useAuth";
 
 const navLinks = [
   { label: "Home", path: "/" },
+  { label: "Pricing", path: "/pricing" },
   { label: "About", path: "/about" },
   { label: "Contact", path: "/contact" },
 ];
@@ -49,6 +51,7 @@ function ServiceIcon({ slug, className = "" }) {
 }
 
 export default function Navbar() {
+  const { isAuthenticated } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
@@ -136,6 +139,14 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-7 md:flex">
           <div className="flex items-center gap-1">
+            {isAuthenticated && (
+              <Link
+                to="/settings/billing"
+                className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === "/settings/billing" ? activeNavItem : navItem}`}
+              >
+                Manage Plan
+              </Link>
+            )}
             {navLinks.slice(0, 2).map((link) => (
               <Link
                 key={link.path}
@@ -185,7 +196,7 @@ export default function Navbar() {
           />
           <div className="flex items-center gap-3">
             <Link
-              to="/contact"
+              to="/pricing"
               className={`inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors ${ctaStyle}`}
             >
               Get Started
@@ -273,6 +284,14 @@ export default function Navbar() {
             className="border-t border-[#DDE5DE] bg-white md:hidden"
           >
             <div className="container-default space-y-1 py-4">
+              {isAuthenticated && (
+                <Link
+                  to="/settings/billing"
+                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === "/settings/billing" ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
+                >
+                  Manage Plan
+                </Link>
+              )}
               {navLinks.slice(0, 2).map((link) => (
                 <Link
                   key={link.path}
@@ -329,7 +348,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link
-                to="/contact"
+                to="/pricing"
                 className="mt-3 flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
               >
                 Get Started

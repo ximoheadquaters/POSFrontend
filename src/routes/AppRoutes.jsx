@@ -10,6 +10,18 @@ const LandingPage = lazy(() => import("../pages/Landing/LandingPage"));
 const AboutPage = lazy(() => import("../pages/About/AboutPage"));
 const ServicesPage = lazy(() => import("../pages/Services/ServicesPage"));
 const ContactPage = lazy(() => import("../pages/Contact/ContactPage"));
+const PricingPage = lazy(() => import("../pages/Pricing/PricingPage"));
+const SignupPage = lazy(() => import("../pages/Signup/SignupPage"));
+const CheckoutPage = lazy(() => import("../pages/Checkout/CheckoutPage"));
+const CheckoutProcessingPage = lazy(
+  () => import("../pages/Checkout/CheckoutProcessingPage"),
+);
+const CheckoutSuccessPage = lazy(
+  () => import("../pages/Checkout/CheckoutSuccessPage"),
+);
+const CheckoutFailedPage = lazy(
+  () => import("../pages/Checkout/CheckoutFailedPage"),
+);
 const LoginPage = lazy(() => import("../pages/Login/LoginPage"));
 const ResetPasswordPage = lazy(
   () => import("../pages/Login/ResetPasswordPage"),
@@ -34,6 +46,12 @@ const OrganizationDetailsPage = lazy(
 const SubscriptionPage = lazy(
   () => import("../pages/Dashboard/POS/SubscriptionPage"),
 );
+const TenantBillingPage = lazy(
+  () => import("../pages/Dashboard/Billing/TenantBillingPage"),
+);
+const PlatformBillingPage = lazy(
+  () => import("../pages/Dashboard/PlatformBilling/PlatformBillingPage"),
+);
 const ModulesPage = lazy(() => import("../pages/Dashboard/POS/ModulesPage"));
 
 function PageLoader() {
@@ -53,6 +71,14 @@ export default function AppRoutes() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/processing" element={<CheckoutProcessingPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+          <Route path="/checkout/failed" element={<CheckoutFailedPage />} />
+          <Route path="/settings/billing" element={<TenantBillingPage />} />
+          <Route path="/billing" element={<TenantBillingPage />} />
         </Route>
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />
@@ -65,6 +91,11 @@ export default function AppRoutes() {
             <Route path="clients/:clientId" element={<ClientDetailsPage />} />
             <Route path="systems" element={<SystemsPage />} />
             <Route path="systems/pos" element={<OrganizationsPage />} />
+            <Route path="billing" element={<PlatformBillingPage />} />
+            <Route path="billing/subscriptions" element={<PlatformBillingPage />} />
+            <Route path="billing/checkouts" element={<PlatformBillingPage />} />
+            <Route path="billing/webhooks" element={<PlatformBillingPage />} />
+            <Route path="billing/provisioning" element={<PlatformBillingPage />} />
             <Route
               path="systems/pos/organizations/:organizationId"
               element={<OrganizationDetailsPage />}
