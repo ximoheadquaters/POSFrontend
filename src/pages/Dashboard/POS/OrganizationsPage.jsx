@@ -34,10 +34,17 @@ export default function OrganizationsPage() {
       ) : resource.error ? (
         <ErrorPanel error={resource.error} onRetry={resource.refresh} />
       ) : (
-        <div className="overflow-hidden rounded-card border border-neutral-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[#E2E6EB] bg-white shadow-[0_14px_38px_rgba(31,39,52,0.045)]">
+          <div className="flex flex-col justify-between gap-3 border-b border-[#E7ECE7] px-5 py-5 sm:flex-row sm:items-end sm:px-6">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9AA2AD]">POS operations</p>
+              <p className="mt-1 text-sm text-[#68736A]">Subscriptions, module access, and the operational context behind each POS organization.</p>
+            </div>
+            <p className="text-sm font-semibold text-[#39443D]">{organizations.length} organizations</p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-50">
+            <table className="min-w-full divide-y divide-[#E7ECE7]">
+              <thead className="bg-[#F8F7F1]">
                 <tr>
                   {[
                     "Business",
@@ -50,14 +57,14 @@ export default function OrganizationsPage() {
                     <th
                       key={heading}
                       scope="col"
-                      className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500"
+                      className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-[#758176]"
                     >
                       {heading}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-[#EDF0ED]">
                 {organizations.map((organization) => {
                   const organizationId = value(
                     organization,
@@ -93,16 +100,16 @@ export default function OrganizationsPage() {
                       "enabledModulesCount",
                     ) ?? 0;
                   return (
-                    <tr key={organizationId} className="hover:bg-neutral-50/70">
+                    <tr key={organizationId} className="transition hover:bg-[#F8F7F1]">
                       <td className="whitespace-nowrap px-5 py-4">
-                        <p className="font-medium text-neutral-900">
+                        <p className="font-semibold text-[#17241C]">
                           {businessName || "Unnamed organization"}
                         </p>
-                        <p className="text-xs text-neutral-400">
+                        <p className="mt-1 text-xs text-[#879187]">
                           {organizationId}
                         </p>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm capitalize">
+                      <td className="whitespace-nowrap px-5 py-4 text-sm capitalize text-[#59645C]">
                         {typeof plan === "object"
                           ? plan.name || plan.code
                           : plan}
@@ -110,10 +117,10 @@ export default function OrganizationsPage() {
                       <td className="whitespace-nowrap px-5 py-4">
                         <StatusBadge value={status} />
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm">
+                      <td className="whitespace-nowrap px-5 py-4 text-sm font-medium text-[#39443D]">
                         {enabledModules} enabled
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm text-neutral-600">
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-[#59645C]">
                         {value(
                           organization,
                           "currency",
@@ -130,7 +137,7 @@ export default function OrganizationsPage() {
                       </td>
                       <td className="whitespace-nowrap px-5 py-4">
                         <Link
-                          className="text-sm font-semibold text-primary hover:text-primary-700"
+                          className="text-sm font-semibold text-primary transition hover:text-[#17241C]"
                           to={`/admin/systems/pos/organizations/${organizationId}`}
                         >
                           View & manage
@@ -144,8 +151,9 @@ export default function OrganizationsPage() {
             </table>
           </div>
           {!organizations.length && (
-            <div className="p-10 text-center text-sm text-neutral-500">
-              No POS organizations were returned.
+            <div className="p-12 text-center">
+              <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">No POS organizations yet.</p>
+              <p className="mt-2 text-sm text-[#68736A]">Organizations will appear here when they are provisioned for a client.</p>
             </div>
           )}
         </div>

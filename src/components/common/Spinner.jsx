@@ -8,7 +8,7 @@ export default function Spinner({ size = "md", className = "" }) {
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <svg
-        className={`animate-spin text-primary ${sizes[size]}`}
+        className={`animate-spin text-[#8B94A0] ${sizes[size]}`}
         fill="none"
         viewBox="0 0 24 24"
       >

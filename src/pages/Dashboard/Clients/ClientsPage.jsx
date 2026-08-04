@@ -59,10 +59,17 @@ export default function ClientsPage() {
       ) : resource.error ? (
         <AdminError error={resource.error} retry={resource.refresh} />
       ) : (
-        <div className="overflow-hidden rounded-card border border-neutral-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[#E2E6EB] bg-white shadow-[0_14px_38px_rgba(31,39,52,0.045)]">
+          <div className="flex flex-col justify-between gap-3 border-b border-[#E7ECE7] px-5 py-5 sm:flex-row sm:items-end sm:px-6">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9AA2AD]">Platform records</p>
+              <p className="mt-1 text-sm text-[#68736A]">Each record carries the client profile and its connected Ximo systems.</p>
+            </div>
+            <p className="text-sm font-semibold text-[#39443D]">{resource.data?.length || 0} total</p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-50">
+            <table className="min-w-full divide-y divide-[#E7ECE7]">
+              <thead className="bg-[#F8F7F1]">
                 <tr>
                   {[
                     "Client",
@@ -74,39 +81,39 @@ export default function ClientsPage() {
                   ].map((heading) => (
                     <th
                       key={heading}
-                      className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500"
+                      className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-[#758176]"
                     >
                       {heading}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-[#EDF0ED]">
                 {resource.data?.map((client) => (
-                  <tr key={client.id}>
+                  <tr key={client.id} className="transition hover:bg-[#F8F7F1]">
                     <td className="px-5 py-4">
-                      <p className="font-medium">
+                      <p className="font-semibold text-[#17241C]">
                         {client.display_name || client.legal_name}
                       </p>
-                      <p className="text-xs text-neutral-400">
+                      <p className="mt-1 text-xs text-[#879187]">
                         {client.legal_name}
                       </p>
                     </td>
-                    <td className="px-5 py-4 text-sm capitalize">
+                    <td className="px-5 py-4 text-sm capitalize text-[#59645C]">
                       {client.kind}
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge value={client.status} />
                     </td>
-                    <td className="px-5 py-4 text-sm">
+                    <td className="px-5 py-4 text-sm font-medium text-[#39443D]">
                       {client.client_systems?.length || 0}
                     </td>
-                    <td className="px-5 py-4 text-sm text-neutral-600">
+                    <td className="px-5 py-4 text-sm text-[#59645C]">
                       {client.primary_email || client.primary_phone || "—"}
                     </td>
                     <td className="px-5 py-4">
                       <Link
-                        className="text-sm font-semibold text-primary"
+                        className="text-sm font-semibold text-primary transition hover:text-[#17241C]"
                         to={`/admin/clients/${client.id}`}
                       >
                         View & manage
@@ -118,8 +125,9 @@ export default function ClientsPage() {
             </table>
           </div>
           {!resource.data?.length && (
-            <div className="p-10 text-center text-sm text-neutral-500">
-              No clients yet. Add the first client to begin.
+            <div className="p-12 text-center">
+              <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">No client records yet.</p>
+              <p className="mt-2 text-sm text-[#68736A]">Add the first client to begin connecting Ximo systems.</p>
             </div>
           )}
         </div>

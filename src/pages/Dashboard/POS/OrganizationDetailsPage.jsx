@@ -165,10 +165,10 @@ export default function OrganizationDetailsPage() {
                       value={state.source}
                       tone={
                         state.hasOverride
-                          ? "bg-violet-50 text-violet-700 ring-violet-600/20"
+                        ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
                           : state.planEnabled
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                            : "bg-neutral-100 text-neutral-600 ring-neutral-500/20"
+                            ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
+                            : "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
                       }
                     />
                   </div>

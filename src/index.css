@@ -17,6 +17,30 @@
 @layer components {
   .container-default { @apply mx-auto max-w-container px-5 sm:px-6 lg:px-8; }
   .section-padding { @apply py-20 md:py-28 lg:py-32; }
+
+  .admin-workspace .rounded-card {
+    @apply rounded-2xl border-[#E2E6EB] shadow-[0_12px_32px_rgba(31,39,52,0.035)];
+  }
+
+  .admin-workspace .rounded-button {
+    @apply rounded-xl;
+  }
+
+  .admin-workspace input,
+  .admin-workspace select,
+  .admin-workspace textarea {
+    @apply border-[#E0E4E8] bg-white text-[#303746] placeholder:text-[#A3ABB5];
+  }
+
+  .admin-workspace input:focus,
+  .admin-workspace select:focus,
+  .admin-workspace textarea:focus {
+    @apply border-primary ring-primary/15;
+  }
+
+  .admin-workspace table tbody tr:last-child td {
+    @apply border-b-0;
+  }
 }
 
 @layer utilities {

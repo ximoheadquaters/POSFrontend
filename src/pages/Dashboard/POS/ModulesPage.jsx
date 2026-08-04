@@ -127,43 +127,43 @@ export default function ModulesPage() {
       {message && (
         <div
           role={message.type === "error" ? "alert" : "status"}
-          className={`mb-5 rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
+          className={`mb-5 rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-[#E2E6EB] bg-[#F3F5F6] text-[#596273]"}`}
         >
           {message.text}
         </div>
       )}
       <div className="mb-5 rounded-card border border-neutral-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-button bg-emerald-50 px-4 py-3">
-            <p className="text-2xl font-semibold text-emerald-700">
+          <div className="rounded-xl bg-[#F3F5F6] px-4 py-3">
+            <p className="text-2xl font-semibold text-[#434B58]">
               {counts.enabled}
             </p>
-            <p className="text-xs font-medium text-emerald-700">
+            <p className="text-xs font-semibold text-[#596273]">
               Enabled modules
             </p>
           </div>
-          <div className="rounded-button bg-neutral-100 px-4 py-3">
-            <p className="text-2xl font-semibold text-neutral-700">
+          <div className="rounded-xl bg-[#F3F5F6] px-4 py-3">
+            <p className="text-2xl font-semibold text-[#434B58]">
               {counts.disabled}
             </p>
-            <p className="text-xs font-medium text-neutral-600">
+            <p className="text-xs font-semibold text-[#596273]">
               Disabled modules
             </p>
           </div>
-          <div className="rounded-button bg-violet-50 px-4 py-3">
-            <p className="text-2xl font-semibold text-violet-700">
+          <div className="rounded-xl bg-[#F3F5F6] px-4 py-3">
+            <p className="text-2xl font-semibold text-[#434B58]">
               {counts.overrides}
             </p>
-            <p className="text-xs font-medium text-violet-700">
+            <p className="text-xs font-semibold text-[#596273]">
               Manual overrides
             </p>
           </div>
         </div>
         <div className="mt-4 flex flex-col justify-between gap-3 border-t border-neutral-100 pt-4 lg:flex-row lg:items-center">
           <p className="text-xs leading-5 text-neutral-500">
-            <strong className="text-neutral-700">Plan access</strong> follows
+            <strong className="text-[#39443D]">Plan access</strong> follows
             the subscription automatically.{" "}
-            <strong className="text-violet-700">Manual overrides</strong> take
+            <strong className="text-[#39443D]">Manual overrides</strong> take
             priority until removed.
           </p>
           <div
@@ -201,9 +201,9 @@ export default function ModulesPage() {
               key={moduleCode(module)}
               className={`rounded-card border bg-white p-5 shadow-sm transition-colors ${
                 state.hasOverride
-                  ? "border-violet-200"
-                  : state.enabled
-                    ? "border-emerald-200"
+                    ? "border-[#E2E6EB]"
+                    : state.enabled
+                    ? "border-[#E2E6EB]"
                     : "border-neutral-200"
               }`}
             >
@@ -219,24 +219,24 @@ export default function ModulesPage() {
                     value={state.enabled ? "Access enabled" : "Access disabled"}
                     tone={
                       state.enabled
-                        ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                        : "bg-red-50 text-red-700 ring-red-600/20"
+                        ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
+                        : "bg-[#FCECEA] text-[#A13E35] ring-[#EDC5C0]"
                     }
                   />
                   <StatusBadge
                     value={state.source}
                     tone={
                       state.hasOverride
-                        ? "bg-violet-50 text-violet-700 ring-violet-600/20"
-                        : state.planEnabled
-                          ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                          : "bg-neutral-100 text-neutral-600 ring-neutral-500/20"
+                          ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
+                          : state.planEnabled
+                            ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
+                            : "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
                     }
                   />
                   {state.hasOverride && (
                     <StatusBadge
                       value={state.planLabel}
-                      tone="bg-neutral-100 text-neutral-600 ring-neutral-500/20"
+                      tone="bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
                     />
                   )}
                 </div>

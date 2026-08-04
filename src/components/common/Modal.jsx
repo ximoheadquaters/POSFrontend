@@ -36,7 +36,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative bg-white rounded-card shadow-xl max-w-lg w-full p-6 z-10"
+            className="relative z-10 w-full max-w-lg rounded-2xl border border-[#E2E6EB] bg-white p-6 shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? "modal-title" : undefined}
@@ -45,7 +45,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
               {title && (
                 <h3
                   id="modal-title"
-                  className="text-lg font-semibold text-neutral-900"
+                  className="text-xl font-semibold tracking-[-0.035em] text-[#17241C]"
                 >
                   {title}
                 </h3>
@@ -53,7 +53,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
               <button
                 onClick={onClose}
                 aria-label="Close dialog"
-                className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                className="rounded-lg p-1 text-[#758176] transition hover:bg-[#F0F2F4] hover:text-[#252B3A]"
               >
                 <svg
                   className="w-5 h-5"

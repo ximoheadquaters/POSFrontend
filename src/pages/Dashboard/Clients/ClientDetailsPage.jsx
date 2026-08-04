@@ -518,11 +518,11 @@ function ProvisioningFields({
         </select>
       </div>
       {selectedPlan && (
-        <div className="rounded-button border border-primary-100 bg-primary-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+        <div className="rounded-button border border-[#E2E6EB] bg-[#F7F8FA] p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#8B94A0]">
             Included modules
           </p>
-          <p className="mt-1 text-sm text-primary-800">
+          <p className="mt-1 text-sm text-[#596273]">
             {selectedPlan.modules?.map((module) => module.name).join(", ") ||
               "No modules listed"}
           </p>
@@ -634,7 +634,7 @@ function Notice({ message }) {
   return (
     <div
       role={message.type === "error" ? "alert" : "status"}
-      className={`rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
+      className={`rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-[#E2E6EB] bg-[#F3F5F6] text-[#596273]"}`}
     >
       {message.text}
     </div>

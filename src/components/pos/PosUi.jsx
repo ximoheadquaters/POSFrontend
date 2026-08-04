@@ -3,29 +3,29 @@ import Spinner from "../common/Spinner";
 
 export function Breadcrumbs({ organization }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-5 text-sm text-neutral-500">
+    <nav aria-label="Breadcrumb" className="mb-5 text-xs font-medium text-[#758176]">
       <ol className="flex flex-wrap items-center gap-2">
         <li>
-          <Link className="hover:text-primary" to="/admin">
+          <Link className="transition hover:text-primary" to="/admin">
             Super Admin
           </Link>
         </li>
         <li aria-hidden="true">/</li>
         <li>
-          <Link className="hover:text-primary" to="/admin/systems">
+          <Link className="transition hover:text-primary" to="/admin/systems">
             Systems
           </Link>
         </li>
         <li aria-hidden="true">/</li>
         <li>
-          <Link className="hover:text-primary" to="/admin/systems/pos">
+          <Link className="transition hover:text-primary" to="/admin/systems/pos">
             Ximo POS
           </Link>
         </li>
         {organization && (
           <>
             <li aria-hidden="true">/</li>
-            <li className="text-neutral-800">{organization}</li>
+            <li className="text-[#39443D]">{organization}</li>
           </>
         )}
       </ol>
@@ -35,13 +35,16 @@ export function Breadcrumbs({ organization }) {
 
 export function PageHeader({ title, description, actions }) {
   return (
-    <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+    <div className="mb-8 flex flex-col justify-between gap-5 border-b border-[#E2E6EB] pb-7 sm:flex-row sm:items-end">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9AA2AD]">
+          Ximo operations
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.055em] text-[#17241C] sm:text-4xl">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-3xl text-sm text-neutral-500 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#68736A] sm:text-base">
             {description}
           </p>
         )}
@@ -58,13 +61,13 @@ export function StatusBadge({ value, tone }) {
   const color =
     tone ||
     (["active", "enabled"].includes(normalized)
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+      ? "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]"
       : ["disabled", "cancelled", "expired"].includes(normalized)
-        ? "bg-red-50 text-red-700 ring-red-600/20"
-        : "bg-amber-50 text-amber-700 ring-amber-600/20");
+        ? "bg-[#FCECEA] text-[#A13E35] ring-[#EDC5C0]"
+        : "bg-[#F0F2F4] text-[#596273] ring-[#E0E4E8]");
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ring-1 ring-inset ${color}`}
+      className={`inline-flex h-7 w-[92px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[11px] font-semibold capitalize ring-1 ring-inset ${color}`}
     >
       {String(value || "Unknown").replaceAll("_", " ")}
     </span>
@@ -75,7 +78,7 @@ export function ErrorPanel({ error, onRetry }) {
   return (
     <div
       role="alert"
-      className="rounded-card border border-red-200 bg-red-50 p-5 text-red-800"
+      className="rounded-[20px] border border-[#EDC5C0] bg-[#FCECEA] p-5 text-[#8A3028]"
     >
       <p className="font-medium">POS data could not be loaded</p>
       <p className="mt-1 text-sm">
@@ -95,7 +98,7 @@ export function ErrorPanel({ error, onRetry }) {
 
 export function LoadingPanel() {
   return (
-    <div className="flex min-h-48 items-center justify-center rounded-card border border-neutral-200 bg-white">
+    <div className="flex min-h-48 items-center justify-center rounded-2xl border border-[#E2E6EB] bg-white">
       <Spinner size="lg" />
       <span className="sr-only">Loading</span>
     </div>
@@ -104,13 +107,13 @@ export function LoadingPanel() {
 
 export function InfoGrid({ items }) {
   return (
-    <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+    <dl className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
       {items.map(({ label, value }) => (
         <div key={label}>
-          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <dt className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#879187]">
             {label}
           </dt>
-          <dd className="mt-1 text-sm font-medium text-neutral-800">
+          <dd className="mt-1.5 text-sm font-semibold text-[#26342A]">
             {value ?? "—"}
           </dd>
         </div>

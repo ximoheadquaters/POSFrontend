@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 const variants = {
   primary: "bg-primary text-white hover:bg-primary-600 active:bg-primary-700",
   secondary:
-    "bg-white text-primary border-2 border-primary hover:bg-primary-50 active:bg-primary-100",
-  ghost: "bg-transparent text-primary hover:bg-primary-50",
+    "border border-[#E0E4E8] bg-white text-[#303746] hover:bg-[#F3F5F6] active:bg-[#EAEDF0]",
+  ghost: "bg-transparent text-primary hover:bg-[#F3F5F6]",
 };
 
 const sizes = {
@@ -32,7 +32,7 @@ export default function Button({
       disabled={disabled || loading}
       onClick={onClick}
       className={`
-        inline-flex items-center justify-center font-medium rounded-button
+        inline-flex items-center justify-center rounded-xl font-semibold
         transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]}

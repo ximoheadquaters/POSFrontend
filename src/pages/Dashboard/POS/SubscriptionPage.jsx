@@ -74,7 +74,7 @@ export default function SubscriptionPage() {
       {message && (
         <div
           role={message.type === "error" ? "alert" : "status"}
-          className={`mb-5 rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
+          className={`mb-5 rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-[#E2E6EB] bg-[#F3F5F6] text-[#596273]"}`}
         >
           {message.text}
         </div>
