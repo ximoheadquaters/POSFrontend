@@ -172,7 +172,9 @@ function Contact() {
 }
 
 export default function LandingPage() {
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const sections = [...document.querySelectorAll(".scroll-transition")];

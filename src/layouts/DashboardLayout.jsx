@@ -25,13 +25,13 @@ function currentSection(pathname) {
   if (pathname.startsWith("/admin/clients")) return "Clients";
   if (pathname.startsWith("/admin/systems/pos")) return "Ximo POS";
   if (pathname.startsWith("/admin/systems")) return "Systems";
-  return "Overview";
+  return "Dashboard";
 }
 
 export default function DashboardLayout() {
-  const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, signOut } = useAuth();
@@ -63,25 +63,20 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="admin-workspace min-h-screen bg-[#F7F8FA] text-[#252B3A]">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#E9ECF0] bg-white px-4 lg:hidden">
-        <NavLink to="/admin" className="flex items-center gap-2" aria-label="Ximo admin overview">
-          <span className="grid h-8 w-8 place-items-center">
+    <div className="admin-workspace min-h-screen bg-white text-[#000000] lg:bg-[#F7F8FA]">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#1A593B]/10 bg-white px-5 lg:hidden">
+        <NavLink to="/admin" className="flex min-w-0 items-center gap-2.5" aria-label="Ximo admin dashboard">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#1A593B]/10">
             <img src={XimoAdminMark} alt="" className="h-7 w-7 object-contain" />
           </span>
-          <span className="text-sm font-semibold">Ximo Admin</span>
+          <span className="truncate text-[17px] font-semibold tracking-[-0.03em] text-[#1A593B]">{currentSection(location.pathname)}</span>
         </NavLink>
-        <div className="flex items-center gap-2">
-          <button className="grid h-9 w-9 place-items-center rounded-lg border border-[#E2E6EB] bg-white text-[#596273]" onClick={() => setSearchOpen(true)} aria-label="Search admin sections">
-            <SearchIcon className="h-4 w-4" />
-          </button>
-          <button className="grid h-9 w-9 place-items-center rounded-lg border border-[#E2E6EB] bg-white text-[#596273]" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label="Toggle dashboard navigation">
-            <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
-          </button>
-        </div>
+        <button className="grid h-10 w-10 place-items-center rounded-xl border border-[#1A593B]/15 bg-white text-[#1A593B] transition hover:bg-[#1A593B]/5" onClick={() => setSearchOpen(true)} aria-label="Search admin sections">
+          <SearchIcon className="h-[18px] w-[18px]" />
+        </button>
       </header>
 
-      <aside className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-[78px] flex-col items-center border-r border-[#E9ECF0] bg-white py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] transition-transform duration-300 lg:translate-x-0`}>
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[78px] flex-col items-center border-r border-[#E9ECF0] bg-white py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] lg:flex">
         <NavLink to="/admin" className="grid h-10 w-10 place-items-center rounded-xl transition hover:bg-[#F4F6F7]" aria-label="Ximo admin overview" title="Ximo admin overview">
           <img src={XimoAdminMark} alt="" className="h-8 w-8 object-contain" />
         </NavLink>
@@ -94,7 +89,6 @@ export default function DashboardLayout() {
                   <NavLink
                     to={link.to}
                     end={link.end}
-                    onClick={() => setOpen(false)}
                     className={({ isActive }) => `group grid h-10 w-10 place-items-center rounded-xl transition ${isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(26,89,59,0.18)]" : "text-[#9AA2AD] hover:bg-[#F4F6F7] hover:text-[#4F5867]"}`}
                     aria-label={link.label}
                     title={link.label}
@@ -117,9 +111,7 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {open && <button className="fixed inset-0 z-30 bg-[#252B3A]/25 lg:hidden" onClick={() => setOpen(false)} aria-label="Close navigation" />}
-
-      <main className="lg:pl-[78px]">
+      <main className="pb-24 lg:pb-0 lg:pl-[78px]">
         <div className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-[#E9ECF0] bg-white/95 px-8 backdrop-blur lg:flex xl:px-10">
           <div className="flex items-center gap-3">
             <p className="text-sm font-semibold text-[#252B3A]">{currentSection(location.pathname)}</p>
@@ -142,13 +134,39 @@ export default function DashboardLayout() {
             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#F0F2F4] text-xs font-bold text-[#596273]">{(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email || "A").slice(0, 1).toUpperCase()}</span>
           </div>
         </div>
-        <div className="mx-auto max-w-[1500px] px-5 py-7 sm:px-8 lg:px-10 lg:py-9 xl:px-12">
+        <div className="mx-auto max-w-[1500px] px-5 py-6 sm:px-8 lg:px-10 lg:py-9 xl:px-12">
           <Outlet />
         </div>
       </main>
+      <MobileBottomNavigation accountOpen={accountOpen} onAccountToggle={() => setAccountOpen((value) => !value)} onNavigate={() => setAccountOpen(false)} />
+      {accountOpen && <MobileAccountPanel email={user?.email} onSignOut={handleSignOut} onClose={() => setAccountOpen(false)} />}
       {searchOpen && <SectionSearch onClose={() => setSearchOpen(false)} onSelect={(section) => { navigate(section.to); setSearchOpen(false); }} />}
     </div>
   );
+}
+
+function MobileBottomNavigation({ accountOpen, onAccountToggle, onNavigate }) {
+  const mobileLinks = [
+    { to: "/admin", label: "Home", end: true, icon: OverviewIcon },
+    { to: "/admin/clients", label: "Clients", icon: ClientsIcon },
+    { to: "/admin/systems", label: "Systems", icon: SystemsIcon },
+  ];
+
+  return (
+    <nav aria-label="Mobile admin navigation" className="fixed inset-x-0 bottom-0 z-40 border-t border-[#1A593B]/15 bg-white px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(26,89,59,0.08)] lg:hidden">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
+        {mobileLinks.map((link) => {
+          const Icon = link.icon;
+          return <li key={link.to}><NavLink to={link.to} end={link.end} onClick={onNavigate} className={({ isActive }) => `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-medium transition ${isActive ? "bg-[#1A593B] text-white shadow-[0_5px_12px_rgba(26,89,59,0.18)]" : "text-[#4C4239] hover:bg-[#1A593B]/5 hover:text-[#1A593B]"}`}><Icon className="h-5 w-5" /><span>{link.label}</span></NavLink></li>;
+        })}
+        <li><button type="button" onClick={onAccountToggle} aria-expanded={accountOpen} className={`flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-medium transition ${accountOpen ? "bg-[#1A593B] text-white shadow-[0_5px_12px_rgba(26,89,59,0.18)]" : "text-[#4C4239] hover:bg-[#1A593B]/5 hover:text-[#1A593B]"}`}><AccountIcon className="h-5 w-5" /><span>Account</span></button></li>
+      </ul>
+    </nav>
+  );
+}
+
+function MobileAccountPanel({ email, onSignOut, onClose }) {
+  return <div className="fixed inset-0 z-30 bg-[#000000]/20 lg:hidden" onClick={onClose}><section className="absolute inset-x-4 bottom-20 rounded-2xl border border-[#1A593B]/15 bg-white p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)]" aria-label="Account actions" onClick={(event) => event.stopPropagation()}><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#1A593B] text-sm font-bold text-white">{String(email || "A").slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm font-semibold text-[#000000]">Super Admin</p><p className="truncate text-xs text-[#4C4239]">{email || "Ximo administrator"}</p></div></div><button type="button" onClick={onSignOut} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#4C4239] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1A593B]"><SignOutIcon className="h-[18px] w-[18px]" />Sign out</button></section></div>;
 }
 
 function SectionSearch({ onClose, onSelect }) {
@@ -188,3 +206,4 @@ function PosIcon({ className }) { return <svg className={className} fill="none" 
 function SearchIcon({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="5.8" /><path strokeLinecap="round" d="m15.2 15.2 4 4" /></svg>; }
 function BellIcon({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M18 10.3a6 6 0 0 0-12 0c0 7-2.5 7-2.5 8.5h17C20.5 17.3 18 17.3 18 10.3ZM10 21h4" /></svg>; }
 function SignOutIcon({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M10 5H6.5A2.5 2.5 0 0 0 4 7.5v9A2.5 2.5 0 0 0 6.5 19H10M14 8l4 4-4 4M8 12h10" /></svg>; }
+function AccountIcon({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="3.5" /><path strokeLinecap="round" d="M4.5 20c.8-3.4 3.4-5.2 7.5-5.2s6.7 1.8 7.5 5.2" /></svg>; }
