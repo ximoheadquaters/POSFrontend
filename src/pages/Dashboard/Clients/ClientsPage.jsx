@@ -48,26 +48,38 @@ export default function ClientsPage() {
 
   return (
     <>
-      <AdminBreadcrumbs items={[{ label: "Clients" }]} />
-      <PageHeader
-        title="Clients"
-        description="Manage core client information and the Ximo systems assigned to each client."
-        actions={<Button onClick={() => setCreating(true)}>Add client</Button>}
-      />
+      <div className="hidden md:block">
+        <AdminBreadcrumbs items={[{ label: "Clients" }]} />
+        <PageHeader
+          title="Clients"
+          description="Manage core client information and the Ximo systems assigned to each client."
+          actions={<Button onClick={() => setCreating(true)}>Add client</Button>}
+        />
+      </div>
+      <section className="mb-5 flex items-center justify-between gap-4 md:hidden">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#386F55]">Client directory</p>
+          <p className="mt-1 text-sm text-[#4C4239]">Manage client records and system access.</p>
+        </div>
+        <Button onClick={() => setCreating(true)} className="shrink-0 rounded-xl px-4 py-2.5">Add client</Button>
+      </section>
       {resource.loading ? (
         <AdminLoading />
       ) : resource.error ? (
         <AdminError error={resource.error} retry={resource.refresh} />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#E2E6EB] bg-white shadow-[0_14px_38px_rgba(31,39,52,0.045)]">
-          <div className="flex flex-col justify-between gap-3 border-b border-[#E7ECE7] px-5 py-5 sm:flex-row sm:items-end sm:px-6">
+        <div className="overflow-hidden rounded-[22px] border border-[#1A593B]/15 bg-white shadow-[0_10px_26px_rgba(26,89,59,0.06)]">
+          <div className="flex items-center justify-between gap-3 border-b border-[#1A593B]/10 px-4 py-4 sm:px-6 sm:py-5">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9AA2AD]">Platform records</p>
-              <p className="mt-1 text-sm text-[#68736A]">Each record carries the client profile and its connected Ximo systems.</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#386F55]">Platform records</p>
+              <p className="mt-1 text-sm text-[#4C4239]">Client profiles and Ximo access.</p>
             </div>
-            <p className="text-sm font-semibold text-[#39443D]">{resource.data?.length || 0} total</p>
+            <p className="shrink-0 rounded-full bg-[#1A593B]/10 px-3 py-1 text-xs font-bold text-[#1A593B]">{resource.data?.length || 0} total</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-[#1A593B]/10 md:hidden">
+            {resource.data?.map((client) => <Link key={client.id} to={`/admin/clients/${client.id}`} className="flex items-center gap-3 px-4 py-4 transition hover:bg-[#1A593B]/5"><ClientAvatar name={client.display_name || client.legal_name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#000000]">{client.display_name || client.legal_name}</p><p className="mt-1 truncate text-xs text-[#4C4239]">{client.kind} · {client.client_systems?.length || 0} system{(client.client_systems?.length || 0) === 1 ? "" : "s"}</p></div><div className="flex shrink-0 items-center gap-2"><StatusBadge value={client.status} /><span className="text-[#386F55]" aria-hidden="true">→</span></div></Link>)}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-[#E7ECE7]">
               <thead className="bg-[#F8F7F1]">
                 <tr>
@@ -125,7 +137,7 @@ export default function ClientsPage() {
             </table>
           </div>
           {!resource.data?.length && (
-            <div className="p-12 text-center">
+            <div className="p-8 text-center sm:p-12">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">No client records yet.</p>
               <p className="mt-2 text-sm text-[#68736A]">Add the first client to begin connecting Ximo systems.</p>
             </div>
@@ -216,6 +228,10 @@ export default function ClientsPage() {
       </Modal>
     </>
   );
+}
+
+function ClientAvatar({ name }) {
+  return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#1A593B]/10 text-sm font-bold text-[#1A593B]">{String(name || "C").slice(0, 1).toUpperCase()}</span>;
 }
 
 function Field({ label, onChange, ...props }) {

@@ -30,7 +30,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 [&>*:last-child]:col-span-2 sm:grid-cols-3 sm:gap-4 sm:[&>*:last-child]:col-span-1">
         <Metric icon={<ClientsIcon />} label="Client records" value={clientsResource.loading ? "—" : clients.length} detail="Across the platform" />
         <Metric icon={<LinkIcon />} label="Product assignments" value={clientsResource.loading ? "—" : assignedSystems} detail="Connected to clients" />
         <Metric icon={<SystemsIcon />} label="Available systems" value={systemsResource.loading ? "—" : availableSystems} detail="Ready to be assigned" />
@@ -66,7 +66,7 @@ export default function Dashboard() {
   );
 }
 
-function Metric({ icon, label, value, detail }) { return <article className="rounded-2xl border border-[#E2E6EB] bg-white p-5"><div className="flex items-start justify-between"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F3F5F6] text-[#7D8794]">{icon}</span><strong className="text-3xl font-semibold tracking-[-0.05em] text-[#252B3A]">{value}</strong></div><p className="mt-6 text-sm font-semibold text-[#434B58]">{label}</p><p className="mt-1 text-xs text-[#9AA2AD]">{detail}</p></article>; }
+function Metric({ icon, label, value, detail }) { return <article className="rounded-2xl border border-[#E2E6EB] bg-white p-4 sm:p-5"><div className="flex items-start justify-between"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F3F5F6] text-[#7D8794]">{icon}</span><strong className="text-2xl font-semibold tracking-[-0.05em] text-[#252B3A] sm:text-3xl">{value}</strong></div><p className="mt-4 text-sm font-semibold text-[#434B58] sm:mt-6">{label}</p><p className="mt-1 text-xs text-[#9AA2AD]">{detail}</p></article>; }
 function LoadingCopy({ text, error = false, compact = false }) { return <p className={`${compact ? "py-4" : "py-14 text-center"} text-sm ${error ? "text-[#A13E35]" : "text-[#8B94A0]"}`}>{text}</p>; }
 function ClientMark({ name }) { return <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#F0F2F4] text-xs font-bold text-[#697382]">{String(name || "C").slice(0, 1).toUpperCase()}</span>; }
 function SystemMark({ code }) { return <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#F0F2F4] text-[10px] font-bold uppercase tracking-wide text-[#697382]">{String(code || "X").slice(0, 3)}</span>; }

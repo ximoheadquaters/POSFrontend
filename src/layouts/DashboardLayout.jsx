@@ -63,7 +63,7 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="admin-workspace min-h-screen bg-white text-[#000000] lg:bg-[#F7F8FA]">
+    <div className="admin-workspace min-h-screen overflow-x-hidden bg-white text-[#000000] lg:bg-[#F7F8FA]">
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#1A593B]/10 bg-white px-5 lg:hidden">
         <NavLink to="/admin" className="flex min-w-0 items-center gap-2.5" aria-label="Ximo admin dashboard">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#1A593B]/10">
