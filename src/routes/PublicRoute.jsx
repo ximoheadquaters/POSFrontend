@@ -14,8 +14,11 @@ export default function PublicRoute() {
       </div>
     );
   }
-  if (isAuthenticated && ADMIN_ROLES.has(String(role || "").toLowerCase())) {
-    return <Navigate to="/admin" replace />;
+  if (isAuthenticated) {
+    const destination = ADMIN_ROLES.has(String(role || "").toLowerCase())
+      ? "/admin"
+      : "/client";
+    return <Navigate to={destination} replace />;
   }
   return <Outlet />;
 }

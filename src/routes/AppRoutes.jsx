@@ -3,7 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Spinner from "../components/common/Spinner";
 import AdminRoute from "./AdminRoute";
+import ClientRoute from "./ClientRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
+import ClientLayout from "../layouts/ClientLayout";
 import PublicRoute from "./PublicRoute";
 
 const LandingPage = lazy(() => import("../pages/Landing/LandingPage"));
@@ -53,6 +55,7 @@ const PlatformBillingPage = lazy(
   () => import("../pages/Dashboard/PlatformBilling/PlatformBillingPage"),
 );
 const ModulesPage = lazy(() => import("../pages/Dashboard/POS/ModulesPage"));
+const ClientHomePage = lazy(() => import("../pages/Client/ClientHomePage"));
 
 function PageLoader() {
   return (
@@ -84,6 +87,11 @@ export default function AppRoutes() {
           <Route path="/login" element={<LoginPage />} />
         </Route>
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route element={<ClientRoute />}>
+          <Route path="/client" element={<ClientLayout />}>
+            <Route index element={<ClientHomePage />} />
+          </Route>
+        </Route>
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
