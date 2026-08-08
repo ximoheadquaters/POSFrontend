@@ -1,10 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import XimoIcon from "../../assets/ximoIcon2.PNG";
-import XimoIconGreen from "../../assets/greenXimo.PNG";
 import { mockServices } from "../../data/services";
-import useAuth from "../../hooks/useAuth";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -51,7 +48,6 @@ function ServiceIcon({ slug, className = "" }) {
 }
 
 export default function Navbar() {
-  const { isAuthenticated } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
@@ -93,9 +89,9 @@ export default function Navbar() {
   }, []);
 
   const isOverHero = isLanding && !isPastHero;
-  const useLightControls = isOverHero || !isScrolled;
+  const useLightControls = !isOverHero && !isScrolled;
   const surface = isOverHero
-    ? "border-transparent bg-transparent"
+    ? "border-white/65 bg-white/70 backdrop-blur-md"
     : isScrolled
       ? "border-[#DDE5DE] bg-white"
       : "border-primary bg-primary";
@@ -124,35 +120,24 @@ export default function Navbar() {
       ref={menuRef}
       className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${surface}`}
     >
-      <nav className="container-default flex h-[72px] items-center justify-between md:h-20">
+      <nav className="mx-auto flex h-[58px] w-full max-w-[1500px] items-center justify-between px-5 sm:px-6 md:h-[65px] lg:h-[74px] lg:px-8">
         <Link
           to="/"
-          className="flex h-10 w-10 items-center justify-center overflow-hidden"
+          className="flex items-center gap-2"
           aria-label="Ximo home" onClick={handleHomeClick}
         >
-          <img
-            src={useLightControls ? XimoIcon : XimoIconGreen}
-            alt="Ximo"
-            className={useLightControls ? "w-10 scale-150" : "w-8"}
-          />
+          <img src="/ximo-logo-mark.png" alt="" className={`h-8 w-[38px] object-contain sm:h-[38px] sm:w-[43px] ${useLightControls ? "brightness-0 invert" : ""}`} />
+          <span className={`hidden text-[25px] font-bold tracking-[-0.08em] sm:block lg:text-[30px] ${useLightControls ? "text-white" : "text-primary"}`}>Ximo</span>
         </Link>
 
-        <div className="hidden items-center gap-7 md:flex">
-          <div className="flex items-center gap-1">
-            {isAuthenticated && (
-              <Link
-                to="/settings/billing"
-                className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === "/settings/billing" ? activeNavItem : navItem}`}
-              >
-                Manage Plan
-              </Link>
-            )}
+        <div className="hidden items-center gap-5 lg:flex xl:gap-7">
+          <div className="flex items-center gap-0.5 xl:gap-1">
             {navLinks.slice(0, 2).map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === link.path ? activeNavItem : navItem}`}
+                className={`rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
               </Link>
@@ -160,7 +145,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsServicesOpen((open) => !open)}
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${isServicesPage || isServicesOpen ? activeNavItem : navItem}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${isServicesPage || isServicesOpen ? activeNavItem : navItem}`}
               aria-expanded={isServicesOpen}
               aria-controls="services-menu"
             >
@@ -184,7 +169,7 @@ export default function Navbar() {
                 key={link.path}
                 to={link.path}
                 onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`rounded-full px-3 py-2 text-sm font-semibold transition-colors ${location.pathname === link.path ? activeNavItem : navItem}`}
+                className={`rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
               </Link>
@@ -197,7 +182,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               to="/pricing"
-              className={`inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-semibold transition-colors ${ctaStyle}`}
+              className={`inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold transition-colors xl:h-[44px] xl:px-5 xl:text-[13px] ${ctaStyle}`}
             >
               Get Started
             </Link>
@@ -205,14 +190,14 @@ export default function Navbar() {
               to="/login"
               aria-label="Log in"
               title="Log in"
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${loginStyle}`}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors xl:h-[44px] xl:w-[44px] ${loginStyle}`}
             >
               <ProfileIcon />
             </Link>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <Link
             to="/login"
             aria-label="Log in"
@@ -254,7 +239,7 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="absolute inset-x-0 top-full hidden max-h-[calc(100vh-80px)] overflow-y-auto border-t border-[#E1E6E1] bg-white shadow-2xl shadow-[#17241C]/10 md:block"
+            className="absolute inset-x-0 top-full hidden max-h-[calc(100vh-80px)] overflow-y-auto border-t border-[#E1E6E1] bg-white shadow-2xl shadow-[#17241C]/10 lg:block"
           >
             <div className="container-default py-5">
               <div className="grid gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
@@ -281,17 +266,9 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-[#DDE5DE] bg-white md:hidden"
+            className="border-t border-[#DDE5DE] bg-white lg:hidden"
           >
             <div className="container-default space-y-1 py-4">
-              {isAuthenticated && (
-                <Link
-                  to="/settings/billing"
-                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === "/settings/billing" ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
-                >
-                  Manage Plan
-                </Link>
-              )}
               {navLinks.slice(0, 2).map((link) => (
                 <Link
                   key={link.path}

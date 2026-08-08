@@ -61,28 +61,33 @@ function SectionIntro({ eyebrow, title, body, light = false, align = "left" }) {
 
 function Hero() {
   return (
-    <section id="landing-hero" className="relative isolate flex min-h-[720px] items-center overflow-hidden bg-primary text-white md:min-h-[790px]">
-      <img src="/ximo-retail-counter.jpg" alt="A retail counter using a point-of-sale system" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
-      <div className="absolute inset-0 -z-10 bg-primary/50" aria-hidden="true" />
-      <div className="container-default relative w-full pt-20">
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#D7EFDC]">Ximo business technology</p>
-          <h1 className="mx-auto mt-6 max-w-5xl text-5xl font-semibold leading-[0.92] tracking-[-0.07em] md:text-7xl lg:text-8xl">Systems that keep business moving.</h1>
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-white/90">Ximo POS gives growing businesses one reliable place to sell, manage stock, lead their team, and make better decisions every day.</p>
-          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-            <button type="button" onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })} className="bg-white px-6 py-3.5 text-sm font-semibold text-primary transition hover:bg-[#E6F2E9]">Explore services</button>
-            <Link to={`/services?service=${pos.slug}`} className="border border-white px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-white hover:text-primary">Explore Ximo POS</Link>
-          </div>
-          <p className="mt-7 text-sm font-semibold text-white/85">Built for checkout, inventory, and the busy hour.</p>
+    <section id="landing-hero" className="relative isolate min-h-[738px] overflow-hidden bg-[#F9FAF7] text-black sm:min-h-[810px] lg:min-h-[909px]">
+      <div
+        className="absolute inset-0 -z-20 bg-cover bg-center"
+        style={{ backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)), url('/hero-brick-wall.png')" }}
+        aria-hidden="true"
+      />
+      <div className="absolute inset-x-0 bottom-0 -z-10 h-[131px] bg-primary sm:h-[148px]" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 -z-10 h-[27px] bg-[#1A472F] sm:h-[31px]" aria-hidden="true" />
+
+      <div className="relative z-10 mx-auto flex max-w-[830px] flex-col items-center px-5 pt-[131px] text-center sm:px-6 sm:pt-[160px] lg:pt-[182px]">
+        <p className="text-[10px] font-medium uppercase tracking-[0.31em] text-primary sm:text-[12px] lg:text-[13px]">Ximo business technology</p>
+        <h1 className="mt-3.5 max-w-[810px] text-balance text-[clamp(2.3rem,2.8vw,3.2rem)] font-bold leading-[0.98] tracking-[-0.065em] text-black">Systems that keep business moving.</h1>
+        <p className="mx-auto mt-[18px] max-w-[680px] text-balance text-[14px] leading-[1.22] tracking-[-0.035em] text-[#777974] sm:text-[15px] lg:text-[18px]">Ximo POS gives growing businesses one reliable place to sell, manage stock, lead their team, and make better decisions every day.</p>
+        <div className="mt-7 flex w-full max-w-[540px] flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:gap-9 lg:gap-[50px]">
+          <button type="button" onClick={() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex min-h-[50px] flex-1 items-center justify-center rounded-[16px] bg-[#242424] px-[22px] text-[15px] font-medium tracking-[-0.045em] text-white shadow-[0_11px_14px_rgba(0,0,0,0.30)] transition-transform hover:-translate-y-0.5 hover:bg-black focus-visible:ring-black sm:min-h-[58px] sm:text-[18px] lg:text-[20px]">Explore Services</button>
+          <Link to="/pricing" className="inline-flex min-h-[50px] flex-1 items-center justify-center rounded-[16px] bg-primary px-[22px] text-[15px] font-medium tracking-[-0.045em] text-white shadow-[0_11px_14px_rgba(23,70,48,0.34)] transition-transform hover:-translate-y-0.5 hover:bg-[#164F34] focus-visible:ring-primary sm:min-h-[58px] sm:text-[18px] lg:text-[20px]">Get Started</Link>
         </div>
       </div>
+
+      <img src="/hero-pos-system.png" alt="Ximo POS terminal, receipt printer, cash drawer, and barcode scanner" className="pointer-events-none absolute bottom-[8px] left-1/2 z-20 ml-[50px] w-[min(882px,108vw)] max-w-none -translate-x-1/2 select-none drop-shadow-[0_20px_16px_rgba(0,0,0,0.35)] sm:bottom-[11px] lg:w-[min(882px,50vw)]" />
     </section>
   );
 }
 
 function Services() {
   return (
-    <section id="services" className="scroll-transition scroll-mt-20 bg-[#17241C] py-20 text-white md:py-32">
+    <section id="services" className="scroll-mt-20 bg-[#1A472F] py-20 text-white md:py-32">
       <div className="container-default">
         <div className="grid gap-12 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
           <SectionIntro eyebrow="The Ximo platform" title="One strong product now. More practical tools next." body="We are starting where the daily work is most visible: the counter. Everything else is being built from that same commitment to simpler operations." light />
