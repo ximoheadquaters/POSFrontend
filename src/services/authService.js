@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from "../config/supabase";
+import api from "../app/axios";
 
 export class AuthenticationError extends Error {
   constructor(message, code = "AUTH_ERROR") {
@@ -78,7 +79,25 @@ export function sessionToAuth(session) {
 
 export async function resolveSessionAuth(session) {
   const auth = sessionToAuth(session);
-  if (!session || auth.role) return auth;
+  if (!session) return auth;
+
+  try {
+    const { data } = await api.get("/auth/session");
+    if (data?.role) {
+      return {
+        ...auth,
+        role: data.role,
+        platformAdmin: data.platformAdmin ?? null,
+      };
+    }
+  } catch (error) {
+    console.warn(
+      "Unable to resolve the current platform role.",
+      error?.response?.data?.error?.message ?? error?.message,
+    );
+  }
+
+  if (auth.role && auth.role !== "super_admin") return auth;
 
   const { data, error } = await supabase
     .from("user_roles")
@@ -91,7 +110,6 @@ export async function resolveSessionAuth(session) {
   }
 
   const priority = [
-    "super_admin",
     "admin",
     "client_manager",
     "staff",
