@@ -3,6 +3,9 @@ import Spinner from "../components/common/Spinner";
 import useAuth from "../hooks/useAuth";
 
 const ADMIN_ROLES = new Set(["super_admin", "super-admin", "superadmin"]);
+// TODO: Remove this temporary route preview once the client workspace is
+// connected to the tenant-scoped POS data API. It never ships in production.
+const ALLOW_CLIENT_WORKSPACE_PREVIEW = import.meta.env.DEV;
 
 export default function ClientRoute() {
   const location = useLocation();
@@ -16,7 +19,9 @@ export default function ClientRoute() {
     );
   }
 
-  if (!isAuthenticated) {
+  const isPreview = !isAuthenticated && ALLOW_CLIENT_WORKSPACE_PREVIEW;
+
+  if (!isAuthenticated && !isPreview) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
@@ -24,5 +29,5 @@ export default function ClientRoute() {
     return <Navigate to="/admin" replace />;
   }
 
-  return <Outlet />;
+  return <Outlet context={{ clientPreview: isPreview }} />;
 }

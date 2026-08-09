@@ -56,6 +56,9 @@ const PlatformBillingPage = lazy(
 );
 const ModulesPage = lazy(() => import("../pages/Dashboard/POS/ModulesPage"));
 const ClientHomePage = lazy(() => import("../pages/Client/ClientHomePage"));
+const ClientPlaceholderPage = lazy(
+  () => import("../pages/Client/ClientPlaceholderPage"),
+);
 
 function PageLoader() {
   return (
@@ -77,7 +80,10 @@ export default function AppRoutes() {
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/checkout/processing" element={<CheckoutProcessingPage />} />
+          <Route
+            path="/checkout/processing"
+            element={<CheckoutProcessingPage />}
+          />
           <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
           <Route path="/checkout/failed" element={<CheckoutFailedPage />} />
           <Route path="/settings/billing" element={<TenantBillingPage />} />
@@ -90,6 +96,26 @@ export default function AppRoutes() {
         <Route element={<ClientRoute />}>
           <Route path="/client" element={<ClientLayout />}>
             <Route index element={<ClientHomePage />} />
+            <Route
+              path="reports"
+              element={<ClientPlaceholderPage section="reports" />}
+            />
+            <Route
+              path="branches"
+              element={<ClientPlaceholderPage section="branches" />}
+            />
+            <Route
+              path="inventory"
+              element={<ClientPlaceholderPage section="inventory" />}
+            />
+            <Route
+              path="customers"
+              element={<ClientPlaceholderPage section="customers" />}
+            />
+            <Route
+              path="settings"
+              element={<ClientPlaceholderPage section="settings" />}
+            />
           </Route>
         </Route>
         <Route element={<AdminRoute />}>
@@ -100,10 +126,16 @@ export default function AppRoutes() {
             <Route path="systems" element={<SystemsPage />} />
             <Route path="systems/pos" element={<OrganizationsPage />} />
             <Route path="billing" element={<PlatformBillingPage />} />
-            <Route path="billing/subscriptions" element={<PlatformBillingPage />} />
+            <Route
+              path="billing/subscriptions"
+              element={<PlatformBillingPage />}
+            />
             <Route path="billing/checkouts" element={<PlatformBillingPage />} />
             <Route path="billing/webhooks" element={<PlatformBillingPage />} />
-            <Route path="billing/provisioning" element={<PlatformBillingPage />} />
+            <Route
+              path="billing/provisioning"
+              element={<PlatformBillingPage />}
+            />
             <Route
               path="systems/pos/organizations/:organizationId"
               element={<OrganizationDetailsPage />}
