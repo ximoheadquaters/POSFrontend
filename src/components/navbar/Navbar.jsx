@@ -91,7 +91,7 @@ export default function Navbar() {
   const isOverHero = isLanding && !isPastHero;
   const useLightControls = !isOverHero && !isScrolled;
   const surface = isOverHero
-    ? "border-white/65 bg-white/70 backdrop-blur-md"
+    ? "border-white/65 bg-white/90"
     : isScrolled
       ? "border-[#DDE5DE] bg-white"
       : "border-primary bg-primary";
@@ -120,14 +120,14 @@ export default function Navbar() {
       ref={menuRef}
       className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${surface}`}
     >
-      <nav className="mx-auto flex h-[58px] w-full max-w-[1500px] items-center justify-between px-5 sm:px-6 md:h-[65px] lg:h-[74px] lg:px-8">
+      <nav className="mx-auto flex h-[58px] w-full max-w-[1350px] items-center justify-between px-5 sm:px-6 md:h-[62px] lg:h-[67px] lg:px-8">
         <Link
           to="/"
           className="flex items-center gap-2"
           aria-label="Ximo home" onClick={handleHomeClick}
         >
-          <img src="/ximo-logo-mark.png" alt="" className={`h-8 w-[38px] object-contain sm:h-[38px] sm:w-[43px] ${useLightControls ? "brightness-0 invert" : ""}`} />
-          <span className={`hidden text-[25px] font-bold tracking-[-0.08em] sm:block lg:text-[30px] ${useLightControls ? "text-white" : "text-primary"}`}>Ximo</span>
+          <img src="/ximo-logo-mark.png" alt="" className={`h-8 w-[38px] object-contain sm:h-[35px] sm:w-[40px] ${useLightControls ? "brightness-0 invert" : ""}`} />
+          <span className={`hidden text-[24px] font-bold tracking-[-0.08em] sm:block lg:text-[27px] ${useLightControls ? "text-white" : "text-primary"}`}>Ximo</span>
         </Link>
 
         <div className="hidden items-center gap-5 lg:flex xl:gap-7">
@@ -182,7 +182,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               to="/pricing"
-              className={`inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold transition-colors xl:h-[44px] xl:px-5 xl:text-[13px] ${ctaStyle}`}
+              className={`inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold transition-colors xl:h-[40px] xl:px-[18px] xl:text-[12px] ${ctaStyle}`}
             >
               Get Started
             </Link>
@@ -190,7 +190,7 @@ export default function Navbar() {
               to="/login"
               aria-label="Log in"
               title="Log in"
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors xl:h-[44px] xl:w-[44px] ${loginStyle}`}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors xl:h-[40px] xl:w-[40px] ${loginStyle}`}
             >
               <ProfileIcon />
             </Link>
