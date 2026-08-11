@@ -182,7 +182,7 @@ export default function ClientDetailsPage() {
       setResendAssignment(null);
       setMessage({
         type: "success",
-        text: `A new POS password-setup link was sent to ${email}.`,
+        text: `A new POS owner verification email and temporary password were sent to ${email}.`,
       });
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -277,7 +277,7 @@ export default function ClientDetailsPage() {
                       className="text-sm font-semibold text-primary"
                       onClick={() => setResendAssignment(assignment)}
                     >
-                      Resend setup link
+                      Resend owner email
                     </button>
                     <Link
                       className="text-sm font-semibold text-primary"
@@ -397,23 +397,23 @@ export default function ClientDetailsPage() {
       <Modal
         isOpen={Boolean(resendAssignment)}
         onClose={() => !resending && setResendAssignment(null)}
-        title="Resend POS setup link?"
+        title="Resend POS owner email?"
       >
         <p className="text-sm text-neutral-600">
-          Send a new password-setup link to{" "}
+          Send a new email-verification link and generated temporary password to{" "}
           <strong>
             {resendAssignment?.metadata?.ownerEmail ||
               client.primary_email ||
               "the client owner"}
           </strong>
-          ? Previously issued setup links should become invalid.
+          ? Previously issued verification links and temporary passwords will become invalid.
         </p>
         {!(resendAssignment?.metadata?.ownerEmail || client.primary_email) && (
           <div
             role="alert"
             className="mt-4 rounded-button bg-red-50 p-3 text-sm text-red-800"
           >
-            Add a primary client email before resending the setup link.
+            Add a primary client email before resending the owner email.
           </div>
         )}
         <div className="mt-6 flex justify-end gap-3">
