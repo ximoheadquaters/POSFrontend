@@ -45,7 +45,7 @@ export default function SubscriptionPage() {
       setConfirming(false);
       setMessage({
         type: "success",
-        text: "Subscription updated successfully.",
+        text: "Subscription updated successfully. Ask the owner to refresh POS (or sign out/in) to reload modules.",
       });
       await resource.refresh();
       setForm({ planCode: "", status: "" });

@@ -68,6 +68,12 @@ export const posPlatformApi = {
       url: `/admin/pos/organizations/${encodeURIComponent(organizationId)}/subscription`,
       data: body,
     }),
+  updateOrganizationProfile: (organizationId, body) =>
+    request({
+      method: "patch",
+      url: `/admin/pos/organizations/${encodeURIComponent(organizationId)}/profile`,
+      data: body,
+    }),
   setModuleOverride: (organizationId, moduleCode, body) =>
     request({
       method: "put",

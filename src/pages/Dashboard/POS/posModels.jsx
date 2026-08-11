@@ -58,6 +58,14 @@ export function organizationStatus(organization) {
   );
 }
 
+export function organizationBusinessProfile(organization) {
+  return (
+    organization?.businessProfile ??
+    organization?.business_profile ??
+    "retail"
+  );
+}
+
 export function moduleState(module) {
   const overrideValue =
     module?.overrideEnabled ??

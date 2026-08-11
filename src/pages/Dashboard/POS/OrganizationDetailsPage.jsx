@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import Button from "../../../components/common/Button";
 import {
   Breadcrumbs,
   ErrorPanel,
@@ -11,11 +13,30 @@ import {
   moduleName,
   modulesFrom,
   moduleState,
+  organizationBusinessProfile,
   organizationFrom,
   organizationName,
   organizationPlan,
   organizationStatus,
 } from "./posModels";
+
+const BUSINESS_PROFILES = [
+  {
+    value: "retail",
+    label: "Retail",
+    description: "Stores selling packaged and measured goods.",
+  },
+  {
+    value: "food_service",
+    label: "Food service",
+    description: "Recipes, ingredients, and prepared food workflows.",
+  },
+  {
+    value: "hybrid",
+    label: "Hybrid",
+    description: "Retail catalog plus food-service operations.",
+  },
+];
 
 export default function OrganizationDetailsPage() {
   const { organizationId } = useParams();
@@ -30,12 +51,20 @@ export default function OrganizationDetailsPage() {
   const organization = organizationFrom(organizationResource.data);
   const modules = modulesFrom(modulesResource.data);
   const name = organizationName(organization);
+  const currentBusinessProfile = organizationBusinessProfile(organization);
+  const [businessProfile, setBusinessProfile] = useState(currentBusinessProfile);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState(null);
   const enabledModuleCount = modules.filter(
     (module) => moduleState(module).enabled,
   ).length;
   const overriddenModuleCount = modules.filter(
     (module) => moduleState(module).hasOverride,
   ).length;
+
+  useEffect(() => {
+    setBusinessProfile(currentBusinessProfile);
+  }, [currentBusinessProfile]);
 
   if (organizationResource.loading) return <LoadingPanel />;
   if (organizationResource.error) {
@@ -47,9 +76,35 @@ export default function OrganizationDetailsPage() {
     );
   }
 
+  async function saveBusinessProfile() {
+    setSavingProfile(true);
+    setProfileMessage(null);
+    try {
+      await posPlatformApi.updateOrganizationProfile(organizationId, {
+        businessProfile,
+      });
+      setProfileMessage({
+        type: "success",
+        text: "Business type updated. Ask the owner to refresh POS (or sign out/in) to reload modules.",
+      });
+      await Promise.all([
+        organizationResource.refresh(),
+        modulesResource.refresh(),
+      ]);
+    } catch (error) {
+      setProfileMessage({ type: "error", text: error.message });
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
   const details = [
     { label: "Organization ID", value: organizationId, mono: true },
     { label: "Business name", value: name },
+    {
+      label: "Business type",
+      value: String(currentBusinessProfile).replaceAll("_", " "),
+    },
     {
       label: "Currency",
       value:
@@ -149,7 +204,7 @@ export default function OrganizationDetailsPage() {
                 {label}
               </dt>
               <dd
-                className={`mt-1.5 truncate text-sm font-semibold text-[#303746] ${mono ? "font-mono text-[11px]" : ""}`}
+                className={`mt-1.5 truncate text-sm font-semibold capitalize text-[#303746] ${mono ? "font-mono text-[11px] normal-case" : ""}`}
                 title={value || undefined}
               >
                 {value || "—"}
@@ -157,6 +212,56 @@ export default function OrganizationDetailsPage() {
             </div>
           ))}
         </dl>
+      </section>
+
+      <section className="mt-4 rounded-xl border border-[#E2E6EB] bg-white px-5 py-4 sm:px-6">
+        <div className="border-b border-[#EDF0F2] pb-3.5">
+          <h2 className="text-sm font-semibold text-[#252B3A]">Business type</h2>
+          <p className="mt-0.5 text-xs text-[#929AA5]">
+            Changes which POS modules are available for this organization&apos;s profile.
+          </p>
+        </div>
+        {profileMessage ? (
+          <div
+            role={profileMessage.type === "error" ? "alert" : "status"}
+            className={`mt-4 rounded-lg border p-3 text-sm ${
+              profileMessage.type === "error"
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-[#E2E6EB] bg-[#F3F5F6] text-[#596273]"
+            }`}
+          >
+            {profileMessage.text}
+          </div>
+        ) : null}
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {BUSINESS_PROFILES.map((profile) => {
+            const selected = businessProfile === profile.value;
+            return (
+              <button
+                key={profile.value}
+                type="button"
+                onClick={() => setBusinessProfile(profile.value)}
+                className={`rounded-xl border px-4 py-3 text-left transition ${
+                  selected
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-[#E2E6EB] bg-white hover:border-[#BFC8D0]"
+                }`}
+              >
+                <p className="text-sm font-semibold text-[#252B3A]">{profile.label}</p>
+                <p className="mt-1 text-xs leading-5 text-[#7F8793]">{profile.description}</p>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            type="button"
+            disabled={savingProfile || businessProfile === currentBusinessProfile}
+            onClick={saveBusinessProfile}
+          >
+            {savingProfile ? "Saving…" : "Save business type"}
+          </Button>
+        </div>
       </section>
 
       <section className="mt-4 overflow-hidden rounded-xl border border-[#E2E6EB] bg-white">
