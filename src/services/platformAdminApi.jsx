@@ -22,9 +22,47 @@ async function currentUserId() {
   return data.user.id;
 }
 
+function applicationCodeForDatabase(code) {
+  return code === "pos" ? "ximo_pos" : code;
+}
+
+function applicationCodeForUi(code) {
+  return code === "ximo_pos" ? "pos" : code;
+}
+
+function normalizeApplication(application, displayOrder = 0) {
+  if (!application) return null;
+  return {
+    ...application,
+    application_code: application.code,
+    code: applicationCodeForUi(application.code),
+    availability: application.is_active ? "available" : "coming_soon",
+    display_order: displayOrder,
+  };
+}
+
+function normalizeAssignment(assignment) {
+  const application = normalizeApplication(assignment.application);
+  const databaseCode = assignment.system_code || application?.application_code;
+  const { application: _application, ...values } = assignment;
+  return {
+    ...values,
+    system_code: applicationCodeForUi(databaseCode),
+    application_code: databaseCode,
+    systems: application,
+  };
+}
+
+function normalizeClient(client) {
+  return {
+    ...client,
+    client_systems: (client.client_systems || []).map(normalizeAssignment),
+  };
+}
+
 export const platformAdminApi = {
   async listClients() {
-    return assertResult(
+    const clients = assertResult(
       await supabase
         .from("clients")
         .select(
@@ -34,19 +72,21 @@ export const platformAdminApi = {
         .order("created_at", { ascending: false }),
       "Clients could not be loaded.",
     );
+    return (clients || []).map(normalizeClient);
   },
 
   async getClient(clientId) {
-    return assertResult(
+    const client = assertResult(
       await supabase
         .from("clients")
         .select(
-          "*, client_contacts(*), client_addresses(*), client_systems(*, systems(*))",
+          "*, client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
         )
         .eq("id", clientId)
         .single(),
       "The client could not be loaded.",
     );
+    return normalizeClient(client);
   },
 
   async createClient(values) {
@@ -74,10 +114,16 @@ export const platformAdminApi = {
   },
 
   async listSystems() {
-    return assertResult(
-      await supabase.from("systems").select("*").order("display_order"),
+    const applications = assertResult(
+      await supabase
+        .from("applications")
+        .select(
+          "id, code, name, description, launch_url, is_active, created_at, updated_at",
+        )
+        .order("name"),
       "Systems could not be loaded.",
     );
+    return (applications || []).map(normalizeApplication);
   },
 
   async assignSystem(clientId, values) {
@@ -87,7 +133,7 @@ export const platformAdminApi = {
         .from("client_systems")
         .insert({
           client_id: clientId,
-          system_code: values.systemCode,
+          system_code: applicationCodeForDatabase(values.systemCode),
           external_tenant_id: values.externalTenantId,
           status: "active",
           activated_at: new Date().toISOString(),
