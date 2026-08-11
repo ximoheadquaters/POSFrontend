@@ -153,4 +153,21 @@ export const platformAdminApi = {
       "The system assignment could not be removed.",
     );
   },
+
+  async updateSystemMetadata(assignmentId, metadata) {
+    const userId = await currentUserId();
+    return assertResult(
+      await supabase
+        .from("client_systems")
+        .update({
+          metadata,
+          updated_by: userId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", assignmentId)
+        .select()
+        .single(),
+      "The system assignment could not be updated.",
+    );
+  },
 };

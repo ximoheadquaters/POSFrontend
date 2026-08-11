@@ -173,7 +173,7 @@ export default function ClientDetailsPage() {
         type: "success",
         text:
           mode === "create"
-            ? "Ximo POS was created and assigned. The selected plan and business type now control its modules."
+            ? `Ximo POS was created and assigned. A setup link was sent to ${provisioning.ownerEmail} so they can verify email and create their own password.`
             : "Existing POS organization assigned successfully.",
       });
       await resource.refresh();
@@ -190,21 +190,80 @@ export default function ClientDetailsPage() {
     }
   }
 
+  async function openResendInvitation(assignment) {
+    setMessage(null);
+    setResending(true);
+    try {
+      const organization = unwrapEntity(
+        await posPlatformApi.getOrganization(assignment.external_tenant_id),
+        ["organization"],
+      );
+      const ownerEmail = organization?.owner?.email?.trim() || "";
+      setResendAssignment({
+        ...assignment,
+        resolvedOwnerEmail: ownerEmail,
+        resolvedOwnerName: organization?.owner?.displayName || "",
+        invitationStatus: organization?.owner?.invitationStatus || "",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: `Could not load the POS owner email. ${error.message}`,
+      });
+    } finally {
+      setResending(false);
+    }
+  }
+
   async function resendInvitation() {
     const email =
-      resendAssignment?.metadata?.ownerEmail || client.primary_email;
+      resendAssignment?.resolvedOwnerEmail ||
+      resendAssignment?.metadata?.ownerEmail ||
+      client.primary_email;
+    if (!email) {
+      setMessage({
+        type: "error",
+        text: "No POS owner email is available to receive the setup link.",
+      });
+      setResendAssignment(null);
+      return;
+    }
+
     setResending(true);
     setMessage(null);
     try {
-      await posPlatformApi.resendOwnerInvitation(
+      const payload = await posPlatformApi.resendOwnerInvitation(
         resendAssignment.external_tenant_id,
         email,
       );
+      const result = unwrapEntity(payload, []);
+      const sentTo =
+        result?.sentTo ||
+        result?.owner?.email ||
+        email;
+
+      if (resendAssignment?.id) {
+        try {
+          await platformAdminApi.updateSystemMetadata(resendAssignment.id, {
+            ...(resendAssignment.metadata || {}),
+            ownerEmail: sentTo,
+            ownerName:
+              resendAssignment.resolvedOwnerName ||
+              resendAssignment.metadata?.ownerName ||
+              null,
+            invitationStatus: "pending",
+          });
+        } catch {
+          // Invitation delivery already succeeded; metadata sync is best-effort.
+        }
+      }
+
       setResendAssignment(null);
       setMessage({
         type: "success",
-        text: `A new POS owner verification email and temporary password were sent to ${email}.`,
+        text: `A POS setup link was sent to ${sentTo}. They should open it, verify their email, then create their own password on Ximo POS.`,
       });
+      await resource.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
       setResendAssignment(null);
@@ -296,7 +355,8 @@ export default function ClientDetailsPage() {
                     <button
                       type="button"
                       className="text-sm font-semibold text-primary"
-                      onClick={() => setResendAssignment(assignment)}
+                      onClick={() => openResendInvitation(assignment)}
+                      disabled={resending}
                     >
                       Resend owner email
                     </button>
@@ -422,20 +482,35 @@ export default function ClientDetailsPage() {
         title="Resend POS owner email?"
       >
         <p className="text-sm text-neutral-600">
-          Send a new email-verification link and generated temporary password to{" "}
+          Send a new setup link to{" "}
           <strong>
-            {resendAssignment?.metadata?.ownerEmail ||
-              client.primary_email ||
-              "the client owner"}
+            {resendAssignment?.resolvedOwnerEmail ||
+              resendAssignment?.metadata?.ownerEmail ||
+              "the POS owner"}
           </strong>
-          ? Previously issued verification links and temporary passwords will become invalid.
+          ? They will verify their email on Ximo POS, then create their own
+          password. Old setup links stop working after a resend.
         </p>
-        {!(resendAssignment?.metadata?.ownerEmail || client.primary_email) && (
+        {resendAssignment?.resolvedOwnerEmail &&
+          client.primary_email &&
+          resendAssignment.resolvedOwnerEmail.toLowerCase() !==
+            client.primary_email.toLowerCase() && (
+            <div
+              role="status"
+              className="mt-4 rounded-button bg-amber-50 p-3 text-sm text-amber-900"
+            >
+              Client primary email is{" "}
+              <strong>{client.primary_email}</strong>, but POS will email the
+              organization owner above.
+            </div>
+          )}
+        {!resendAssignment?.resolvedOwnerEmail && (
           <div
             role="alert"
             className="mt-4 rounded-button bg-red-50 p-3 text-sm text-red-800"
           >
-            Add a primary client email before resending the owner email.
+            No POS owner email was found for this organization. Check the POS
+            organization owner before resending.
           </div>
         )}
         <div className="mt-6 flex justify-end gap-3">
@@ -449,9 +524,7 @@ export default function ClientDetailsPage() {
           <Button
             onClick={resendInvitation}
             loading={resending}
-            disabled={
-              !(resendAssignment?.metadata?.ownerEmail || client.primary_email)
-            }
+            disabled={!resendAssignment?.resolvedOwnerEmail}
           >
             Resend link
           </Button>
@@ -626,6 +699,10 @@ function ProvisioningFields({
         onChange={set("ownerEmail")}
         required
       />
+      <p className="-mt-3 text-xs text-neutral-500">
+        They receive a Ximo POS setup link to verify email and create their
+        password there.
+      </p>
       <Input
         label="Owner name"
         value={values.ownerName}

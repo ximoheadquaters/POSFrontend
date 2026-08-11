@@ -65,11 +65,23 @@ export default function OrganizationDetailsPage() {
         organization?.time_zone,
     },
     {
-      label: "Contact email",
+      label: "Owner email",
       value:
+        organization?.owner?.email ??
         organization?.email ??
         organization?.contactEmail ??
         organization?.contact_email,
+    },
+    {
+      label: "Owner",
+      value:
+        organization?.owner?.displayName ||
+        organization?.owner?.email ||
+        "—",
+    },
+    {
+      label: "Invitation",
+      value: organization?.owner?.invitationStatus || "—",
     },
     { label: "Created", value: organization?.createdAt ?? organization?.created_at },
   ];
