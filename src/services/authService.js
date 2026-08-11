@@ -91,8 +91,15 @@ export async function resolveSessionAuth(session) {
       };
     }
   } catch (error) {
+    if (error?.response?.status !== 404) {
+      throw new AuthenticationError(
+        error?.response?.data?.error?.message ??
+          "Your Ximo workspace access could not be verified. Please try again.",
+        error?.response?.data?.error?.code ?? "ROLE_VERIFICATION_FAILED",
+      );
+    }
     console.warn(
-      "Unable to resolve the current platform role.",
+      "The canonical session endpoint is unavailable; using the legacy website role lookup.",
       error?.response?.data?.error?.message ?? error?.message,
     );
   }
