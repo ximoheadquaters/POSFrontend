@@ -28,6 +28,24 @@ function newProvisioningKey() {
   return `ximo-web-${crypto.randomUUID()}`;
 }
 
+const BUSINESS_PROFILES = [
+  {
+    value: "retail",
+    label: "Retail",
+    description: "Barcode sales, products, purchasing, and stock control.",
+  },
+  {
+    value: "food_service",
+    label: "Food service",
+    description: "Ingredients, recipes, prepared food, and production.",
+  },
+  {
+    value: "hybrid",
+    label: "Hybrid",
+    description: "Retail products and food-service workflows in one POS.",
+  },
+];
+
 export default function ClientDetailsPage() {
   const { clientId } = useParams();
   const resource = usePosResource(
@@ -46,6 +64,7 @@ export default function ClientDetailsPage() {
     timezone: "Asia/Manila",
     planCode: "",
     subscriptionStatus: "",
+    businessProfile: "",
     ownerEmail: "",
     ownerName: "",
   });
@@ -105,6 +124,7 @@ export default function ClientDetailsPage() {
       timezone: client.timezone || "Asia/Manila",
       planCode: "",
       subscriptionStatus: "",
+      businessProfile: "",
       ownerEmail: client.primary_email || "",
       ownerName: client.display_name || client.legal_name,
     });
@@ -143,6 +163,7 @@ export default function ClientDetailsPage() {
             ? {
                 ownerEmail: provisioning.ownerEmail,
                 ownerName: provisioning.ownerName,
+                businessProfile: provisioning.businessProfile,
                 invitationStatus: "pending",
               }
             : {},
@@ -152,7 +173,7 @@ export default function ClientDetailsPage() {
         type: "success",
         text:
           mode === "create"
-            ? "Ximo POS was created and assigned. Plan-default modules are active."
+            ? "Ximo POS was created and assigned. The selected plan and business type now control its modules."
             : "Existing POS organization assigned successfully.",
       });
       await resource.refresh();
@@ -364,7 +385,7 @@ export default function ClientDetailsPage() {
           )}
           <div className="rounded-button bg-neutral-50 p-3 text-xs text-neutral-500">
             {mode === "create"
-              ? "POS creates the organization, subscription, owner invitation, default branch, and plan modules atomically. The website stores only the returned organization ID."
+              ? "POS creates the organization, subscription, owner invitation, and default branch atomically. Available modules are the features included in both the selected plan and business type."
               : "Use this only when the client already has a POS organization."}
           </div>
           <div className="flex justify-end gap-3">
@@ -382,6 +403,7 @@ export default function ClientDetailsPage() {
                 mode === "create"
                   ? !provisioning.planCode ||
                     !provisioning.subscriptionStatus ||
+                    !provisioning.businessProfile ||
                     !provisioning.ownerEmail ||
                     !provisioning.ownerName
                   : !externalTenantId
@@ -470,6 +492,48 @@ function ProvisioningFields({
         onChange={set("name")}
         required
       />
+      <fieldset>
+        <legend className="text-sm font-medium">Business type</legend>
+        <p className="mt-1 text-xs text-neutral-500">
+          Choose how this business operates. Ximo will activate the relevant
+          workflows that are also included in its subscription plan.
+        </p>
+        <div
+          className="mt-3 grid gap-3 sm:grid-cols-3"
+          role="radiogroup"
+          aria-label="Business type"
+        >
+          {BUSINESS_PROFILES.map((profile) => {
+            const selected = values.businessProfile === profile.value;
+            return (
+              <button
+                key={profile.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    businessProfile: profile.value,
+                  }))
+                }
+                className={`min-h-28 rounded-button border p-3 text-left transition-colors ${
+                  selected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-neutral-300 bg-white hover:border-primary/50"
+                }`}
+              >
+                <span className="block text-sm font-semibold text-neutral-900">
+                  {profile.label}
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-neutral-500">
+                  {profile.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           label="Currency"
@@ -520,11 +584,15 @@ function ProvisioningFields({
       {selectedPlan && (
         <div className="rounded-button border border-[#E2E6EB] bg-[#F7F8FA] p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#8B94A0]">
-            Included modules
+            Plan coverage
           </p>
           <p className="mt-1 text-sm text-[#596273]">
             {selectedPlan.modules?.map((module) => module.name).join(", ") ||
               "No modules listed"}
+          </p>
+          <p className="mt-2 text-xs text-[#8B94A0]">
+            The selected business type filters this plan to the workflows that
+            apply to the store.
           </p>
         </div>
       )}
