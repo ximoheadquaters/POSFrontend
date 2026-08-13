@@ -59,6 +59,11 @@ export default function SubscriptionPage() {
 
   const name = organizationName(organization);
   const selectedPlan = plans.find((item) => item.code === form.planCode);
+  const selectedModules = Array.isArray(selectedPlan?.modules)
+    ? [...selectedPlan.modules].sort((a, b) =>
+        String(a.name || a.code || "").localeCompare(String(b.name || b.code || "")),
+      )
+    : [];
 
   async function save() {
     setSaving(true);
@@ -101,76 +106,111 @@ export default function SubscriptionPage() {
           {message.text}
         </div>
       )}
-      <div className="max-w-2xl rounded-card border border-neutral-200 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-neutral-100 pb-6">
-          <span className="font-medium capitalize">{plan}</span>
-          <StatusBadge value={status} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)]">
+        <div className="rounded-card border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-neutral-100 pb-6">
+            <span className="font-medium capitalize">{plan}</span>
+            <StatusBadge value={status} />
+          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setConfirming(true);
+            }}
+            className="space-y-5"
+          >
+            <div>
+              <label
+                htmlFor="planCode"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                Plan
+              </label>
+              <select
+                id="planCode"
+                required
+                value={form.planCode}
+                onChange={(event) =>
+                  setForm({ ...form, planCode: event.target.value })
+                }
+                className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Select a plan</option>
+                {plans.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.name || item.code}
+                    {item.priceMonthly ? ` — ${item.priceMonthly}/month` : ""}
+                  </option>
+                ))}
+              </select>
+              {selectedPlan?.description ? (
+                <p className="mt-2 text-xs text-neutral-500">
+                  {selectedPlan.description}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <label
+                htmlFor="status"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                Subscription status
+              </label>
+              <select
+                id="status"
+                required
+                value={form.status}
+                onChange={(event) =>
+                  setForm({ ...form, status: event.target.value })
+                }
+                className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Select a status</option>
+                <option value="active">Active</option>
+                <option value="trialing">Trialing</option>
+                <option value="past_due">Past due</option>
+                <option value="suspended">Suspended</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <Button type="submit" disabled={!form.planCode || !form.status}>
+              Review change
+            </Button>
+          </form>
         </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            setConfirming(true);
-          }}
-          className="space-y-5"
-        >
-          <div>
-            <label
-              htmlFor="planCode"
-              className="mb-1.5 block text-sm font-medium"
-            >
-              Plan
-            </label>
-            <select
-              id="planCode"
-              required
-              value={form.planCode}
-              onChange={(event) =>
-                setForm({ ...form, planCode: event.target.value })
-              }
-              className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Select a plan</option>
-              {plans.map((item) => (
-                <option key={item.code} value={item.code}>
-                  {item.name || item.code}
-                  {item.priceMonthly ? ` — ${item.priceMonthly}/month` : ""}
-                </option>
-              ))}
-            </select>
-            {selectedPlan?.description ? (
-              <p className="mt-2 text-xs text-neutral-500">
-                {selectedPlan.description}
+
+        <aside className="rounded-card border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="border-b border-neutral-100 pb-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#929AA5]">
+              Included modules
+            </p>
+            <h2 className="mt-1 text-base font-semibold text-[#252B3A]">
+              {selectedPlan?.name || "Select a plan"}
+            </h2>
+            <p className="mt-1 text-xs text-[#7F8793]">
+              Modules included with the selected plan.
+            </p>
+          </div>
+          {selectedPlan ? (
+            selectedModules.length ? (
+              <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-[#303746]">
+                {selectedModules.map((module) => (
+                  <li key={module.code || module.name}>
+                    {module.name || module.code}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-[#7F8793]">
+                No modules listed for this plan.
               </p>
-            ) : null}
-          </div>
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-1.5 block text-sm font-medium"
-            >
-              Subscription status
-            </label>
-            <select
-              id="status"
-              required
-              value={form.status}
-              onChange={(event) =>
-                setForm({ ...form, status: event.target.value })
-              }
-              className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Select a status</option>
-              <option value="active">Active</option>
-              <option value="trialing">Trialing</option>
-              <option value="past_due">Past due</option>
-              <option value="suspended">Suspended</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <Button type="submit" disabled={!form.planCode || !form.status}>
-            Review change
-          </Button>
-        </form>
+            )
+          ) : (
+            <p className="mt-4 text-sm text-[#7F8793]">
+              Choose a plan to see included modules.
+            </p>
+          )}
+        </aside>
       </div>
       <Modal
         isOpen={confirming}
