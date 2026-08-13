@@ -55,6 +55,7 @@ const PlatformBillingPage = lazy(
   () => import("../pages/Dashboard/PlatformBilling/PlatformBillingPage"),
 );
 const ModulesPage = lazy(() => import("../pages/Dashboard/POS/ModulesPage"));
+const PlansPage = lazy(() => import("../pages/Dashboard/POS/PlansPage"));
 const ClientHomePage = lazy(() => import("../pages/Client/ClientHomePage"));
 const ClientPlaceholderPage = lazy(
   () => import("../pages/Client/ClientPlaceholderPage"),
@@ -125,6 +126,7 @@ export default function AppRoutes() {
             <Route path="clients/:clientId" element={<ClientDetailsPage />} />
             <Route path="systems" element={<SystemsPage />} />
             <Route path="systems/pos" element={<OrganizationsPage />} />
+            <Route path="systems/pos/plans" element={<PlansPage />} />
             <Route path="billing" element={<PlatformBillingPage />} />
             <Route
               path="billing/subscriptions"

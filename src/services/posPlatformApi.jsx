@@ -46,6 +46,13 @@ async function request(config) {
 
 export const posPlatformApi = {
   listPlans: () => request({ url: "/admin/pos/plans" }),
+  listModulesCatalog: () => request({ url: "/admin/pos/modules" }),
+  updatePlanModules: (planCode, body) =>
+    request({
+      method: "put",
+      url: `/admin/pos/plans/${encodeURIComponent(planCode)}/modules`,
+      data: body,
+    }),
   listOrganizations: () => request({ url: "/admin/pos/organizations" }),
   createOrganization: (body, idempotencyKey) =>
     request({

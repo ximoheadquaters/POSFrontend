@@ -28,6 +28,14 @@ export default function OrganizationsPage() {
       <PageHeader
         title="Ximo POS"
         description="Manage Ximo POS organizations, subscriptions, and module access through the Express Platform API."
+        actions={
+          <Link
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-[#D9DFE4] bg-white px-3.5 text-sm font-semibold text-[#303746] transition hover:border-[#BFC8D0] hover:bg-[#F8F9FA]"
+            to="/admin/systems/pos/plans"
+          >
+            Manage plan modules
+          </Link>
+        }
       />
       {resource.loading ? (
         <LoadingPanel />
