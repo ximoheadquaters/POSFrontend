@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
@@ -10,7 +10,10 @@ import {
   StatusBadge,
 } from "../../../components/pos/PosUi";
 import usePosResource from "../../../hooks/usePosResource";
-import { posPlatformApi } from "../../../services/posPlatformApi";
+import {
+  posPlatformApi,
+  unwrapCollection,
+} from "../../../services/posPlatformApi";
 import {
   organizationFrom,
   organizationName,
@@ -24,18 +27,38 @@ export default function SubscriptionPage() {
     () => posPlatformApi.getOrganization(organizationId),
     [organizationId],
   );
+  const plansResource = usePosResource(() => posPlatformApi.listPlans(), []);
   const organization = organizationFrom(resource.data);
   const [form, setForm] = useState({ planCode: "", status: "" });
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  if (resource.loading) return <LoadingPanel />;
-  if (resource.error)
-    return <ErrorPanel error={resource.error} onRetry={resource.refresh} />;
-  const name = organizationName(organization);
   const plan = organizationPlan(organization);
   const status = organizationStatus(organization);
+  const plans = unwrapCollection(plansResource.data, ["plans"]).filter(
+    (item) => item.isActive !== false,
+  );
+
+  useEffect(() => {
+    if (!organization) return;
+    setForm((current) => ({
+      planCode: current.planCode || String(plan || "").toLowerCase(),
+      status: current.status || String(status || "").toLowerCase(),
+    }));
+  }, [organization, plan, status]);
+
+  if (resource.loading || plansResource.loading) return <LoadingPanel />;
+  if (resource.error)
+    return <ErrorPanel error={resource.error} onRetry={resource.refresh} />;
+  if (plansResource.error) {
+    return (
+      <ErrorPanel error={plansResource.error} onRetry={plansResource.refresh} />
+    );
+  }
+
+  const name = organizationName(organization);
+  const selectedPlan = plans.find((item) => item.code === form.planCode);
 
   async function save() {
     setSaving(true);
@@ -48,7 +71,6 @@ export default function SubscriptionPage() {
         text: "Subscription updated successfully. Ask the owner to refresh POS (or sign out/in) to reload modules.",
       });
       await resource.refresh();
-      setForm({ planCode: "", status: "" });
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     } finally {
@@ -96,18 +118,30 @@ export default function SubscriptionPage() {
               htmlFor="planCode"
               className="mb-1.5 block text-sm font-medium"
             >
-              Plan code
+              Plan
             </label>
-            <input
+            <select
               id="planCode"
               required
               value={form.planCode}
               onChange={(event) =>
                 setForm({ ...form, planCode: event.target.value })
               }
-              placeholder="business"
-              className="w-full rounded-button border border-neutral-300 px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+              className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Select a plan</option>
+              {plans.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name || item.code}
+                  {item.priceMonthly ? ` — ${item.priceMonthly}/month` : ""}
+                </option>
+              ))}
+            </select>
+            {selectedPlan?.description ? (
+              <p className="mt-2 text-xs text-neutral-500">
+                {selectedPlan.description}
+              </p>
+            ) : null}
           </div>
           <div>
             <label
@@ -150,7 +184,7 @@ export default function SubscriptionPage() {
           </strong>{" "}
           to{" "}
           <strong className="capitalize">
-            {form.planCode} / {form.status}
+            {selectedPlan?.name || form.planCode} / {form.status}
           </strong>
           ?
         </p>
