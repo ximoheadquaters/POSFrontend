@@ -1,11 +1,17 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Spinner from "../components/common/Spinner";
 import useAuth from "../hooks/useAuth";
 
 const ADMIN_ROLES = new Set(["super_admin", "super-admin", "superadmin"]);
 
 export default function PublicRoute() {
+  const location = useLocation();
   const { isInitialized, isAuthenticated, role } = useAuth();
+  const isSignInRoute = location.pathname === "/login";
+
+  if (!isSignInRoute) {
+    return <Outlet />;
+  }
 
   if (!isInitialized) {
     return (

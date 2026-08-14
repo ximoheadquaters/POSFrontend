@@ -31,8 +31,10 @@ function ProfileIcon() {
 
 const serviceIcons = {
   "pos-system": "https://img.icons8.com/ios7/100/1A593B/pos-terminal--v1.png",
-  "business-management": "https://img.icons8.com/ios7/100/1A593B/management.png",
-  "workflow-automation": "https://img.icons8.com/ios7/100/1A593B/settings-3--v1.png",
+  "business-management":
+    "https://img.icons8.com/ios7/100/1A593B/management.png",
+  "workflow-automation":
+    "https://img.icons8.com/ios7/100/1A593B/settings-3--v1.png",
   integrations: "https://img.icons8.com/ios7/100/1A593B/combine.png",
 };
 
@@ -111,7 +113,9 @@ export default function Navbar() {
   const handleHomeClick = (event) => {
     if (location.pathname === "/") {
       event.preventDefault();
-      document.getElementById("landing-hero")?.scrollIntoView({ behavior: "smooth" });
+      document
+        .getElementById("landing-hero")
+        ?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -124,10 +128,19 @@ export default function Navbar() {
         <Link
           to="/"
           className="flex items-center gap-2"
-          aria-label="Ximo home" onClick={handleHomeClick}
+          aria-label="Ximo home"
+          onClick={handleHomeClick}
         >
-          <img src="/ximo-logo-mark.png" alt="" className={`h-8 w-[38px] object-contain sm:h-[35px] sm:w-[40px] ${useLightControls ? "brightness-0 invert" : ""}`} />
-          <span className={`hidden text-[24px] font-bold tracking-[-0.08em] sm:block lg:text-[27px] ${useLightControls ? "text-white" : "text-primary"}`}>Ximo</span>
+          <img
+            src="/ximo-logo-mark.png"
+            alt=""
+            className={`h-8 w-[38px] object-contain sm:h-[35px] sm:w-[40px] ${useLightControls ? "brightness-0 invert" : ""}`}
+          />
+          <span
+            className={`hidden text-[24px] font-bold tracking-[-0.08em] sm:block lg:text-[27px] ${useLightControls ? "text-white" : "text-primary"}`}
+          >
+            Ximo
+          </span>
         </Link>
 
         <div className="hidden items-center gap-5 lg:flex xl:gap-7">
@@ -181,10 +194,10 @@ export default function Navbar() {
           />
           <div className="flex items-center gap-3">
             <Link
-              to="/pricing"
+              to="/signup"
               className={`inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold transition-colors xl:h-[40px] xl:px-[18px] xl:text-[12px] ${ctaStyle}`}
             >
-              Get Started
+              Create account
             </Link>
             <Link
               to="/login"
@@ -244,13 +257,24 @@ export default function Navbar() {
             <div className="container-default py-5">
               <div className="grid gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 {mockServices.map((service) => (
-                  <Link key={service.id} to={`/services?service=${service.slug}`} className="group flex gap-3 rounded-xl p-4 transition-colors hover:bg-[#E6F2E9]">
+                  <Link
+                    key={service.id}
+                    to={`/services?service=${service.slug}`}
+                    className="group flex gap-3 rounded-xl p-4 transition-colors hover:bg-[#E6F2E9]"
+                  >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#E6F2E9] shadow-sm shadow-primary/5 transition-colors group-hover:bg-primary">
-                      <ServiceIcon slug={service.slug} className="transition group-hover:brightness-0 group-hover:invert" />
+                      <ServiceIcon
+                        slug={service.slug}
+                        className="transition group-hover:brightness-0 group-hover:invert"
+                      />
                     </span>
                     <span>
-                      <span className="block text-sm font-bold text-[#17241C]">{service.title}</span>
-                      <span className="mt-1 block text-xs leading-5 text-[#657069]">{service.tagline}</span>
+                      <span className="block text-sm font-bold text-[#17241C]">
+                        {service.title}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-[#657069]">
+                        {service.tagline}
+                      </span>
                     </span>
                   </Link>
                 ))}
@@ -274,7 +298,7 @@ export default function Navbar() {
                   key={link.path}
                   to={link.path}
                   onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
+                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
                 >
                   {link.label}
                 </Link>
@@ -302,13 +326,19 @@ export default function Navbar() {
               {isServicesOpen && (
                 <div className="space-y-3 px-3 pb-3">
                   {mockServices.map((service) => (
-                    <Link key={service.id} to={`/services?service=${service.slug}`} className="flex items-center gap-3 rounded-xl bg-[#F4F8F4] px-4 py-3 text-sm font-semibold text-primary">
+                    <Link
+                      key={service.id}
+                      to={`/services?service=${service.slug}`}
+                      className="flex items-center gap-3 rounded-xl bg-[#F4F8F4] px-4 py-3 text-sm font-semibold text-primary"
+                    >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm shadow-primary/5">
                         <ServiceIcon slug={service.slug} />
                       </span>
                       <span>
                         {service.title}
-                        <span className="mt-1 block text-xs font-normal text-[#657069]">{service.tagline}</span>
+                        <span className="mt-1 block text-xs font-normal text-[#657069]">
+                          {service.tagline}
+                        </span>
                       </span>
                     </Link>
                   ))}
@@ -319,16 +349,16 @@ export default function Navbar() {
                   key={link.path}
                   to={link.path}
                   onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
+                  className={`block rounded-lg px-3 py-3 text-sm font-semibold ${location.pathname === link.path ? "bg-[#E6F2E9] text-primary" : "text-[#4B574E]"}`}
                 >
                   {link.label}
                 </Link>
               ))}
               <Link
-                to="/pricing"
+                to="/signup"
                 className="mt-3 flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
               >
-                Get Started
+                Create account
               </Link>
             </div>
           </motion.div>
@@ -337,5 +367,3 @@ export default function Navbar() {
     </header>
   );
 }
-
-

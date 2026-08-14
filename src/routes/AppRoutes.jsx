@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Spinner from "../components/common/Spinner";
 import AdminRoute from "./AdminRoute";
@@ -24,7 +24,6 @@ const CheckoutSuccessPage = lazy(
 const CheckoutFailedPage = lazy(
   () => import("../pages/Checkout/CheckoutFailedPage"),
 );
-const LoginPage = lazy(() => import("../pages/Login/LoginPage"));
 const ResetPasswordPage = lazy(
   () => import("../pages/Login/ResetPasswordPage"),
 );
@@ -69,6 +68,20 @@ function PageLoader() {
   );
 }
 
+function AccountAccessPage() {
+  const location = useLocation();
+
+  return (
+    <SignupPage
+      initialMode={location.pathname === "/login" ? "signin" : "signup"}
+    />
+  );
+}
+
+function AccountAccessPath() {
+  return null;
+}
+
 export default function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -79,7 +92,6 @@ export default function AppRoutes() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/signup" element={<SignupPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route
             path="/checkout/processing"
@@ -91,7 +103,10 @@ export default function AppRoutes() {
           <Route path="/billing" element={<TenantBillingPage />} />
         </Route>
         <Route element={<PublicRoute />}>
-          <Route path="/login" element={<LoginPage />} />
+          <Route element={<AccountAccessPage />}>
+            <Route path="/signup" element={<AccountAccessPath />} />
+            <Route path="/login" element={<AccountAccessPath />} />
+          </Route>
         </Route>
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<ClientRoute />}>
