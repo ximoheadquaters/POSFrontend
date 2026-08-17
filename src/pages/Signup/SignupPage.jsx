@@ -473,14 +473,14 @@ export default function SignupPage({ initialMode = "signup" }) {
             >
               <Link
                 to="/"
-                className="mb-8 inline-flex items-center gap-2.5 lg:hidden"
+                className="mb-8 inline-flex items-center gap-2.5 text-[#1A593B]"
               >
                 <img
                   src={XimoIconGreen}
-                  alt=""
-                  className="h-7 w-7 object-contain"
+                  alt="Ximo logo"
+                  className="h-8 w-8 object-contain"
                 />
-                <span className="text-lg font-semibold tracking-[-0.05em] text-[#17241C]">
+                <span className="text-[1.7rem] font-semibold tracking-[-0.06em] text-[#1A593B]">
                   ximo
                 </span>
               </Link>
@@ -768,13 +768,13 @@ export default function SignupPage({ initialMode = "signup" }) {
               aria-hidden="true"
             />
 
-            <div className="relative flex items-center gap-2.5 p-10">
+            <div className="relative flex items-center gap-2.5 p-10 text-[#DDEEE0]">
               <img
                 src={XimoIconGreen}
-                alt=""
-                className="h-8 w-8 object-contain brightness-0 invert"
+                alt="Ximo logo"
+                className="h-8 w-8 object-contain"
               />
-              <span className="text-xl font-semibold tracking-[-0.05em]">
+              <span className="text-xl font-semibold tracking-[-0.05em] text-[#DDEEE0]">
                 ximo
               </span>
             </div>

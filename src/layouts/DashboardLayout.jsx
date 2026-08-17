@@ -76,25 +76,25 @@ export default function DashboardLayout() {
         </button>
       </header>
 
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[78px] flex-col items-center border-r border-[#E9ECF0] bg-white py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[84px] flex-col items-center border-r border-[#E9ECF0] bg-white py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] transition-all duration-200 ease-out hover:w-[220px] lg:flex">
         <NavLink to="/admin" className="grid h-10 w-10 place-items-center rounded-xl transition hover:bg-[#F4F6F7]" aria-label="Ximo admin overview" title="Ximo admin overview">
           <img src={XimoAdminMark} alt="" className="h-8 w-8 object-contain" />
         </NavLink>
-        <nav aria-label="Super Admin" className="mt-10">
+        <nav aria-label="Super Admin" className="mt-10 w-full px-2">
           <ul className="space-y-3">
             {links.map((link) => {
               const Icon = link.icon;
               return (
-                <li key={link.to}>
+                <li key={link.to} className="group w-[42px] overflow-hidden transition-all duration-200 hover:w-[168px]">
                   <NavLink
                     to={link.to}
                     end={link.end}
-                    className={({ isActive }) => `group grid h-10 w-10 place-items-center rounded-xl transition ${isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(26,89,59,0.18)]" : "text-[#9AA2AD] hover:bg-[#F4F6F7] hover:text-[#4F5867]"}`}
+                    className={({ isActive }) => `flex h-10 w-full items-center gap-3 rounded-xl px-2.5 transition ${isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(26,89,59,0.18)]" : "text-[#9AA2AD] hover:bg-[#F4F6F7] hover:text-[#4F5867]"}`}
                     aria-label={link.label}
                     title={link.label}
                   >
-                    <Icon className="h-[18px] w-[18px]" />
-                    <span className="sr-only">{link.label}</span>
+                    <Icon className="h-[18px] w-[18px] shrink-0" />
+                    <span className="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-[&:has(.active)]:opacity-100">{link.label}</span>
                   </NavLink>
                 </li>
               );

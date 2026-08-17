@@ -91,17 +91,26 @@ export async function resolveSessionAuth(session) {
       };
     }
   } catch (error) {
-    if (error?.response?.status !== 404) {
+    const status = error?.response?.status;
+    const isNetworkFailure = !error?.response;
+    const isTransientAuthFailure = [401, 403, 404, 408, 429, 500, 503].includes(status);
+
+    if (isNetworkFailure || isTransientAuthFailure) {
+      console.warn(
+        "The canonical session endpoint is unavailable; falling back to the local auth session role lookup.",
+        {
+          status,
+          message: error?.message,
+          responseData: error?.response?.data,
+        },
+      );
+    } else {
       throw new AuthenticationError(
         error?.response?.data?.error?.message ??
           "Your Ximo workspace access could not be verified. Please try again.",
         error?.response?.data?.error?.code ?? "ROLE_VERIFICATION_FAILED",
       );
     }
-    console.warn(
-      "The canonical session endpoint is unavailable; using the legacy website role lookup.",
-      error?.response?.data?.error?.message ?? error?.message,
-    );
   }
 
   if (auth.role && auth.role !== "super_admin") return auth;
