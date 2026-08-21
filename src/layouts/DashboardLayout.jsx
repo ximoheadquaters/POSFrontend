@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import useAuth from "../hooks/useAuth";
-import XimoAdminMark from "../assets/ximo-admin-mark.png";
+import XimoAdminMark from "../assets/greenXimo.PNG";
 import {
   clearAll,
   dismissNotification,
@@ -76,37 +76,41 @@ export default function DashboardLayout() {
         </button>
       </header>
 
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[84px] flex-col items-center border-r border-[#E9ECF0] bg-white py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] transition-all duration-200 ease-out hover:w-[220px] lg:flex">
-        <NavLink to="/admin" className="grid h-10 w-10 place-items-center rounded-xl transition hover:bg-[#F4F6F7]" aria-label="Ximo admin overview" title="Ximo admin overview">
-          <img src={XimoAdminMark} alt="" className="h-8 w-8 object-contain" />
+      <aside className="group/sidebar fixed inset-y-0 left-0 z-40 hidden w-[78px] flex-col border-r border-[#DDE8E0] bg-[linear-gradient(180deg,#FFFFFF_0%,#FAFCFA_100%)] py-4 shadow-[10px_0_35px_rgba(31,39,52,0.04)] transition-[width,box-shadow] duration-200 ease-out hover:w-[236px] hover:shadow-[18px_0_45px_rgba(26,89,59,0.1)] focus-within:w-[236px] lg:flex">
+        <NavLink to="/admin" className="mx-2 flex h-11 items-center gap-3 overflow-hidden rounded-xl px-2.5 text-[#1A593B] transition hover:bg-[#F0F6F2]" aria-label="Ximo admin overview" title="Ximo admin overview">
+          <img src={XimoAdminMark} alt="" className="h-8 w-8 shrink-0 object-contain" />
+          <span className="whitespace-nowrap text-base font-semibold tracking-[-0.04em] opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">Ximo Admin</span>
         </NavLink>
-        <nav aria-label="Super Admin" className="mt-10 w-full px-2">
-          <ul className="space-y-3">
+        <nav aria-label="Super Admin" className="mt-9 w-full px-2">
+          <p className="mb-3 h-4 overflow-hidden whitespace-nowrap px-2.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#9AA69E] opacity-0 transition-opacity group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">Workspace</p>
+          <ul className="space-y-2">
             {links.map((link) => {
               const Icon = link.icon;
               return (
-                <li key={link.to} className="group w-[42px] overflow-hidden transition-all duration-200 hover:w-[168px]">
+                <li key={link.to} className="w-full overflow-hidden">
                   <NavLink
                     to={link.to}
                     end={link.end}
-                    className={({ isActive }) => `flex h-10 w-full items-center gap-3 rounded-xl px-2.5 transition ${isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(26,89,59,0.18)]" : "text-[#9AA2AD] hover:bg-[#F4F6F7] hover:text-[#4F5867]"}`}
+                    className={({ isActive }) => `relative flex h-12 w-full items-center gap-3 rounded-xl px-2.5 transition ${isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(26,89,59,0.18)]" : "text-[#738078] hover:bg-[#EDF4EF] hover:text-[#1A593B]"}`}
                     aria-label={link.label}
                     title={link.label}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
-                    <span className="whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-[&:has(.active)]:opacity-100">{link.label}</span>
+                    <span className="whitespace-nowrap text-sm font-semibold opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">{link.label}</span>
                   </NavLink>
                 </li>
               );
             })}
           </ul>
         </nav>
-        <div className="mt-auto flex flex-col items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#F0F2F4] text-xs font-bold text-[#596273]" title={user?.email || "Super admin"}>
-            {(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email || "A").slice(0, 1).toUpperCase()}
-          </span>
-          <button type="button" onClick={handleSignOut} disabled={isLoading} className="grid h-9 w-9 place-items-center rounded-lg text-[#9AA2AD] transition hover:bg-[#FCECEA] hover:text-[#A13E35] disabled:opacity-50" aria-label="Sign out" title="Sign out">
-            <SignOutIcon className="h-[18px] w-[18px]" />
+        <div className="mt-auto space-y-2 px-2">
+          <div className="flex min-h-12 items-center gap-3 overflow-hidden rounded-xl border border-transparent px-2.5 group-hover/sidebar:border-[#E2EBE4] group-hover/sidebar:bg-white group-focus-within/sidebar:border-[#E2EBE4]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#E7F1EA] text-xs font-bold text-[#1A593B]" title={user?.email || "Super admin"}>{(user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email || "A").slice(0, 1).toUpperCase()}</span>
+            <span className="min-w-0 whitespace-nowrap opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100"><span className="block text-sm font-semibold text-[#425048]">Super Admin</span><span className="block max-w-[150px] truncate text-[10px] text-[#929D96]">{user?.email || "Ximo administrator"}</span></span>
+          </div>
+          <button type="button" onClick={handleSignOut} disabled={isLoading} className="flex h-11 w-full items-center gap-3 overflow-hidden rounded-xl px-2.5 text-[#8D969F] transition hover:bg-[#FCECEA] hover:text-[#A13E35] disabled:opacity-50" aria-label="Sign out" title="Sign out">
+            <SignOutIcon className="h-[18px] w-[18px] shrink-0" />
+            <span className="whitespace-nowrap text-sm font-semibold opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">Sign out</span>
           </button>
         </div>
       </aside>

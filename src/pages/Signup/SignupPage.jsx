@@ -140,17 +140,17 @@ function AccountField({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-3 lg:mb-1">
+      <div className="mb-2 flex items-center justify-between gap-3">
         <label
           htmlFor={name}
-          className="block text-sm font-semibold text-[#39443D] lg:text-[13px]"
+          className="block text-[13px] font-semibold text-[#34453A]"
         >
           {label}
         </label>
         {action}
       </div>
       <div className="relative">
-        <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-[#68736A]">
+        <span className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-[#738078] transition-colors peer-focus:text-[#1A593B]">
           <FieldIcon kind={icon} />
         </span>
         <input
@@ -163,13 +163,13 @@ function AccountField({
           autoComplete={autoComplete}
           minLength={minLength}
           required
-          className="w-full rounded-xl border border-[#C8D2C9] bg-white py-3 pl-11 pr-11 text-sm text-[#17241C] outline-none transition placeholder:text-[#9AA49C] focus:border-primary focus:ring-2 focus:ring-primary/15 lg:py-2.5 lg:text-[13px]"
+          className="peer w-full rounded-2xl border border-[#D2DDD5] bg-[#FBFCFB] py-3.5 pl-12 pr-12 text-sm text-[#17241C] outline-none transition placeholder:text-[#98A29B] hover:border-[#B9CABD] focus:border-[#1A593B] focus:bg-white focus:shadow-[0_0_0_4px_rgba(26,89,59,0.08)]"
         />
         {isPassword && (
           <button
             type="button"
             onClick={onToggleVisibility}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#68736A] transition hover:text-primary"
+            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-2xl text-[#68736A] transition hover:bg-[#EFF5F0] hover:text-primary"
             aria-label={
               isVisible
                 ? "Hide " + label.toLowerCase()
@@ -260,8 +260,6 @@ export default function SignupPage({ initialMode = "signup" }) {
   const isSignInMode = mode === "signin";
   const isResetMode = mode === "reset";
   const visibleError = formError || (isSignupMode ? null : authError);
-  const shouldExpandForSignupFeedback =
-    isSignupMode && (existingUserNotice || Boolean(visibleError));
   const headerCopy = isSignInMode
     ? {
         eyebrow: "Secure sign in",
@@ -437,373 +435,115 @@ export default function SignupPage({ initialMode = "signup" }) {
         : "Send reset link";
 
   return (
-    <div className="min-h-screen bg-[#F5F4EE] px-4 py-5 sm:px-6 sm:py-8 lg:flex lg:items-center lg:px-8 lg:py-3">
-      <div className="mx-auto w-full max-w-md lg:max-w-[1080px]">
-        <div
-          className={
-            "overflow-hidden rounded-[28px] border border-[#D4DDD5] bg-[#FCFDF9] shadow-[0_24px_60px_rgba(23,36,28,0.12)] lg:grid " +
-            (shouldExpandForSignupFeedback ? "lg:min-h-[684px]" : "lg:h-[684px]") +
-            " lg:grid-cols-[0.96fr_1.04fr]"
-          }
-        >
-          <section
-            className={
-              "relative px-6 pb-7 pt-[100px] sm:px-9 sm:pb-9 sm:pt-[104px] lg:min-h-0 lg:overflow-hidden lg:px-10 lg:pb-5 lg:pt-[88px] " +
-              (isSignInMode || isResetMode
-                ? "lg:flex lg:flex-col lg:justify-center"
-                : "")
-            }
-          >
-            <Link
-              to="/"
-              className="absolute left-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#D4DDD5] bg-white text-[#17241C] shadow-sm transition hover:border-primary hover:text-primary sm:left-7 sm:top-7 lg:left-8 lg:top-8"
-              aria-label="Back to home"
-            >
-              <BackArrowIcon />
-            </Link>
+    <main className="min-h-screen bg-[#F3F7F4] lg:grid lg:grid-cols-[minmax(400px,0.92fr)_minmax(560px,1.08fr)]">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[linear-gradient(145deg,#103F29_0%,#1A593B_55%,#23734D_100%)] px-12 py-10 text-white lg:flex lg:flex-col xl:px-16 xl:py-12">
+        <div className="absolute -bottom-24 -right-28 h-[520px] w-[520px] rounded-full border border-white/10" />
+        <div className="absolute -bottom-5 -right-6 h-[360px] w-[360px] rounded-full border border-white/10" />
+        <img src={XimoIconGreen} alt="" className="absolute -right-20 top-[14%] h-[440px] w-[440px] rotate-[-8deg] object-contain opacity-[0.08] brightness-0 invert" />
 
-            <motion.div
-              layout="position"
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : { layout: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }
-              }
-              className="mx-auto max-w-[390px] lg:w-full"
-            >
-              <Link
-                to="/"
-                className="mb-8 inline-flex items-center gap-2.5 text-[#1A593B]"
-              >
-                <img
-                  src={XimoIconGreen}
-                  alt="Ximo logo"
-                  className="h-8 w-8 object-contain"
-                />
-                <span className="text-[1.7rem] font-semibold tracking-[-0.06em] text-[#1A593B]">
-                  ximo
-                </span>
-              </Link>
+        <Link to="/" className="relative inline-flex w-fit items-center gap-3" aria-label="Ximo home">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-[0_12px_30px_rgba(4,33,20,0.18)]">
+            <img src={XimoIconGreen} alt="" className="h-9 w-9 object-contain" />
+          </span>
+          <span className="text-3xl font-semibold tracking-[-0.07em]">ximo</span>
+        </Link>
 
-              <AnimatePresence initial={false} mode="wait">
-                <motion.div
-                  key={mode + (verificationSent ? "-verified" : "-form")}
-                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
-                  }
-                  className="w-full"
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
-                    {headerCopy.eyebrow}
-                  </p>
-                  <h1 className="mt-3 text-3xl font-semibold leading-[1.02] tracking-[-0.055em] text-[#17241C] sm:text-4xl">
-                    {headerCopy.title}
-                  </h1>
-                  <p className="mt-3 max-w-sm text-sm leading-6 text-[#59645C] lg:mt-2 lg:leading-5">
-                    <span className={headerCopy.compactBody ? "lg:hidden" : ""}>
-                      {headerCopy.body}
-                    </span>
-                    {headerCopy.compactBody && (
-                      <span className="hidden lg:inline">
-                        {headerCopy.compactBody}
-                      </span>
-                    )}
-                  </p>
-
-                  {!isResetMode && (
-                    <div
-                      role="tablist"
-                      aria-label="Account access"
-                      className="mt-7 grid grid-cols-2 rounded-xl bg-[#E9EEEA] p-1 text-sm font-semibold lg:mt-4"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => switchAuthMode("signup")}
-                        role="tab"
-                        aria-selected={isSignupMode}
-                        className={
-                          "flex min-h-[42px] items-center justify-center rounded-[9px] transition lg:min-h-[38px] " +
-                          (isSignupMode
-                            ? "bg-white text-[#17241C] shadow-sm"
-                            : "text-[#68736A] hover:bg-white/65 hover:text-primary")
-                        }
-                      >
-                        Create account
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => switchAuthMode("signin")}
-                        role="tab"
-                        aria-selected={isSignInMode}
-                        className={
-                          "flex min-h-[42px] items-center justify-center rounded-[9px] transition lg:min-h-[38px] " +
-                          (isSignInMode
-                            ? "bg-white text-[#17241C] shadow-sm"
-                            : "text-[#68736A] hover:bg-white/65 hover:text-primary")
-                        }
-                      >
-                        Sign in
-                      </button>
-                    </div>
-                  )}
-
-                  {existingUserNotice && isSignupMode && (
-                    <div
-                      role="alert"
-                      className="mt-5 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
-                    >
-                      <p className="font-semibold">
-                        This email already has a Ximo account.
-                      </p>
-                      <p className="mt-1 text-amber-800">
-                        Sign in to continue with this email.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => switchAuthMode("signin")}
-                        className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-lg bg-amber-700 px-4 text-xs font-bold text-white transition hover:bg-amber-800"
-                      >
-                        Sign In to Continue
-                      </button>
-                    </div>
-                  )}
-
-                  {verificationSent ? (
-                    <div
-                      role="status"
-                      className="mt-6 border border-[#B7CEBD] bg-[#E8F5EE] p-6 text-center"
-                    >
-                      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m3 8 7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
-                          />
-                        </svg>
-                      </span>
-                      <h2 className="mt-4 text-lg font-semibold tracking-[-0.03em] text-[#17241C]">
-                        Check your email to verify your account.
-                      </h2>
-                      <p className="mt-2 text-sm leading-6 text-[#59645C]">
-                        We sent a confirmation link to{" "}
-                        <span className="font-semibold text-[#17241C]">
-                          {formData.email}
-                        </span>
-                        . Confirm it, then sign in to continue.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => switchAuthMode("signin")}
-                        className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#164F34]"
-                      >
-                        I've verified my email - sign in
-                      </button>
-                      {!planFromUrl && (
-                        <Link
-                          to="/pricing"
-                          className="mt-4 inline-flex text-sm font-semibold text-primary hover:underline"
-                        >
-                          View plans
-                        </Link>
-                      )}
-                    </div>
-                  ) : (
-                    <form
-                      onSubmit={handleSubmit}
-                      className="mt-6 space-y-4 lg:mt-3 lg:space-y-2"
-                    >
-                      {visibleError && (
-                        <div
-                          role="alert"
-                          className="border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800"
-                        >
-                          {visibleError}
-                        </div>
-                      )}
-                      {notice && (
-                        <div
-                          role="status"
-                          className="border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800"
-                        >
-                          {notice}
-                        </div>
-                      )}
-
-                      {isSignupMode && (
-                        <AccountField
-                          label="Full name"
-                          name="ownerName"
-                          value={formData.ownerName}
-                          onChange={handleChange}
-                          placeholder="Your name"
-                          autoComplete="name"
-                          icon="person"
-                        />
-                      )}
-
-                      <AccountField
-                        label="Email address"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="you@company.com"
-                        autoComplete="email"
-                        icon="email"
-                      />
-
-                      {!isResetMode && (
-                        <AccountField
-                          label="Password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          placeholder={
-                            isSignupMode
-                              ? "At least 6 characters"
-                              : "Enter your password"
-                          }
-                          autoComplete={
-                            isSignupMode ? "new-password" : "current-password"
-                          }
-                          icon="password"
-                          isPassword
-                          isVisible={isPasswordVisible}
-                          onToggleVisibility={() =>
-                            setIsPasswordVisible((visible) => !visible)
-                          }
-                          minLength={6}
-                          action={
-                            isSignInMode ? (
-                              <button
-                                type="button"
-                                onClick={showPasswordReset}
-                                className="text-xs font-semibold text-primary hover:text-primary-700"
-                              >
-                                Forgot password?
-                              </button>
-                            ) : null
-                          }
-                        />
-                      )}
-
-                      {isSignupMode && (
-                        <AccountField
-                          label="Confirm password"
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          placeholder="Repeat your password"
-                          autoComplete="new-password"
-                          icon="password"
-                          isPassword
-                          isVisible={isConfirmPasswordVisible}
-                          onToggleVisibility={() =>
-                            setIsConfirmPasswordVisible((visible) => !visible)
-                          }
-                          minLength={6}
-                        />
-                      )}
-
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="mt-2 inline-flex min-h-[50px] w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-[0_10px_18px_rgba(26,89,59,0.18)] transition hover:-translate-y-0.5 hover:bg-[#164F34] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 lg:min-h-[46px]"
-                      >
-                        {submitLabel}
-                      </button>
-
-                      {isSignupMode && (
-                        <p className="px-2 text-center text-xs leading-5 text-[#68736A] lg:leading-4">
-                          <span className="lg:hidden">
-                            By creating an account, you agree to use Ximo
-                            responsibly and keep your sign-in details secure.
-                          </span>
-                          <span className="hidden lg:inline">
-                            By creating an account, you agree to use Ximo
-                            responsibly.
-                          </span>
-                        </p>
-                      )}
-                    </form>
-                  )}
-
-                  {!verificationSent && isResetMode && (
-                    <div className="mt-6 text-center text-sm text-[#68736A] lg:mt-4">
-                      <button
-                        type="button"
-                        onClick={() => switchAuthMode("signin")}
-                        className="font-semibold text-primary hover:text-primary-700 hover:underline"
-                      >
-                        Back to sign in
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </motion.div>
-          </section>
-
-          <aside className="relative hidden min-h-full overflow-hidden bg-[#17241C] text-white lg:flex lg:flex-col lg:justify-between">
-            <img
-              src="/ximo-signup-pos.jpeg"
-              alt="POS touchscreen in use at a counter"
-              className="absolute inset-0 h-full w-full object-cover object-[65%_center] opacity-60"
-            />
-            <div
-              className="absolute inset-0 bg-gradient-to-b from-[#102017]/35 via-[#17241C]/58 to-[#102017]/95"
-              aria-hidden="true"
-            />
-
-            <div className="relative flex items-center gap-2.5 p-10 text-[#DDEEE0]">
-              <img
-                src={XimoIconGreen}
-                alt="Ximo logo"
-                className="h-8 w-8 object-contain"
-              />
-              <span className="text-xl font-semibold tracking-[-0.05em] text-[#DDEEE0]">
-                ximo
-              </span>
+        <div className="relative my-auto max-w-lg py-10">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#BDE5CA]">Your business, in rhythm</p>
+          <h2 className="mt-5 text-[2.9rem] font-semibold leading-[1.02] tracking-[-0.055em] xl:text-[3.6rem]">
+            Start the day ready for what comes next.
+          </h2>
+          <p className="mt-6 max-w-md text-base leading-7 text-white/72">
+            One connected workspace for sales, inventory, customers, and the decisions that keep your business moving.
+          </p>
+          <div className="mt-8 overflow-hidden rounded-[26px] border border-white/15 bg-white/[0.09] p-4 shadow-[0_24px_60px_rgba(3,31,18,0.2)] backdrop-blur-md xl:p-5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div><p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#C9E7D2]">Today at a glance</p><p className="mt-1 text-sm text-white/60">Store performance</p></div>
+              <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-[#D6F0DE]"><span className="h-2 w-2 rounded-full bg-[#7EE2A1] shadow-[0_0_0_4px_rgba(126,226,161,0.12)]" />Live</span>
             </div>
-
-            <div className="relative px-10 pb-10">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#C9E4CF]">
-                Built for the busy day
-              </p>
-              <h2 className="mt-4 max-w-md text-4xl font-semibold leading-[1.02] tracking-[-0.055em]">
-                One clear place to keep business moving.
-              </h2>
-              <p className="mt-5 max-w-md text-sm leading-6 text-white/76">
-                Bring checkout, stock, and the next decision into a workspace
-                designed around the work that matters.
-              </p>
-
-              <div className="mt-9 border border-white/20 bg-[#17241C]/75 p-5 backdrop-blur-sm">
-                <p className="text-sm leading-6 text-white/90">
-                  &ldquo;Ximo keeps the essential work close, so the next step
-                  is always clear.&rdquo;
-                </p>
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#C9E4CF]">
-                  Ximo business technology
-                </p>
-              </div>
+            <div className="grid grid-cols-3 gap-3 py-4">
+              {[{ label: "Sales", value: "₱48.2k" }, { label: "Orders", value: "126" }, { label: "Stock", value: "98%" }].map((item) => <div key={item.label} className="rounded-2xl bg-white/[0.08] p-3"><p className="text-[10px] uppercase tracking-wider text-white/45">{item.label}</p><p className="mt-2 text-lg font-semibold tracking-[-0.03em]">{item.value}</p></div>)}
             </div>
-          </aside>
+            <div className="flex items-center justify-between rounded-2xl bg-white p-3.5 text-[#173B28]">
+              <div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#E7F3EA] text-[#1A593B]">✓</span><div><p className="text-xs font-semibold">Everything is in sync</p><p className="mt-0.5 text-[10px] text-[#738078]">Updated just now</p></div></div>
+              <span className="text-[#1A593B]">→</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <p className="relative text-xs text-white/50">© {new Date().getFullYear()} Ximo Business Technology</p>
+      </section>
+
+      <section className="relative flex min-h-screen items-center overflow-hidden px-5 py-8 sm:px-8 lg:px-12 xl:px-20">
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[440px] w-[440px] rounded-full bg-[#DDEDE2]/55 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-44 left-1/4 h-[360px] w-[360px] rounded-full bg-white blur-3xl" />
+        <Link to="/" className="absolute left-5 top-5 inline-flex h-10 items-center gap-2 rounded-full border border-[#D9E3DB] bg-white px-4 text-sm font-semibold text-[#355342] shadow-sm transition hover:border-[#1A593B] hover:text-[#1A593B] sm:left-8 sm:top-8 lg:left-12" aria-label="Back to home">
+          <BackArrowIcon />
+          <span>Home</span>
+        </Link>
+
+        <div className="relative mx-auto w-full max-w-[500px] pt-16 lg:pt-0">
+          <Link to="/" className="mb-10 inline-flex items-center gap-3 lg:hidden" aria-label="Ximo home">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#E5F1E8]">
+              <img src={XimoIconGreen} alt="" className="h-8 w-8 object-contain" />
+            </span>
+            <span className="text-2xl font-semibold tracking-[-0.06em] text-[#1A593B]">ximo</span>
+          </Link>
+
+          <motion.div layout="position" transition={reduceMotion ? { duration: 0 } : { layout: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }} className="rounded-[30px] border border-white/80 bg-white/90 p-5 shadow-[0_28px_80px_rgba(29,66,43,0.12)] backdrop-blur-sm sm:p-8 lg:p-9">
+            <AnimatePresence initial={false} mode="wait">
+              <motion.div key={mode + (verificationSent ? "-verified" : "-form")} initial={reduceMotion ? false : { opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? undefined : { opacity: 0, x: -8 }} transition={reduceMotion ? { duration: 0 } : { duration: 0.2 }}>
+                <div className="flex items-start gap-4">
+                  <span className="mt-1 hidden h-12 w-1.5 rounded-full bg-[#1A593B] sm:block" />
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#1A593B]">{headerCopy.eyebrow}</p>
+                    <h1 className="mt-3 text-[2.35rem] font-semibold leading-none tracking-[-0.055em] text-[#15251B] sm:text-[2.8rem]">{headerCopy.title}</h1>
+                    <p className="mt-4 max-w-md text-sm leading-6 text-[#647168]">{headerCopy.body}</p>
+                  </div>
+                </div>
+
+                {!isResetMode && (
+                  <div role="tablist" aria-label="Account access" className="mt-7 grid grid-cols-2 gap-2 rounded-2xl bg-[#EDF3EE] p-1.5">
+                    <button type="button" onClick={() => switchAuthMode("signup")} role="tab" aria-selected={isSignupMode} className={"min-h-11 rounded-xl text-sm font-semibold transition " + (isSignupMode ? "bg-[#1A593B] text-white shadow-md" : "text-[#657269] hover:bg-[#EEF4EF] hover:text-[#1A593B]")}>Create account</button>
+                    <button type="button" onClick={() => switchAuthMode("signin")} role="tab" aria-selected={isSignInMode} className={"min-h-11 rounded-xl text-sm font-semibold transition " + (isSignInMode ? "bg-[#1A593B] text-white shadow-md" : "text-[#657269] hover:bg-[#EEF4EF] hover:text-[#1A593B]")}>Sign in</button>
+                  </div>
+                )}
+
+                {existingUserNotice && isSignupMode && (
+                  <div role="alert" className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p className="font-semibold">This email already has a Ximo account.</p>
+                    <button type="button" onClick={() => switchAuthMode("signin")} className="mt-2 font-bold text-[#1A593B] hover:underline">Sign In to Continue</button>
+                  </div>
+                )}
+
+                {verificationSent ? (
+                  <div role="status" className="mt-8 rounded-3xl border border-[#C7DBCC] bg-white p-7 text-center shadow-[0_18px_50px_rgba(26,89,59,0.08)]">
+                    <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#E5F1E8] text-2xl text-[#1A593B]">✓</span>
+                    <h2 className="mt-5 text-xl font-semibold text-[#15251B]">Check your email</h2>
+                    <p className="mt-2 text-sm leading-6 text-[#647168]">We sent a confirmation link to <span className="font-semibold text-[#15251B]">{formData.email}</span>.</p>
+                    <button type="button" onClick={() => switchAuthMode("signin")} className="mt-6 min-h-12 w-full rounded-xl bg-[#1A593B] px-5 text-sm font-semibold text-white transition hover:bg-[#12472E]">I've verified my email — sign in</button>
+                    {!planFromUrl && <Link to="/pricing" className="mt-4 inline-flex text-sm font-semibold text-[#1A593B] hover:underline">View plans</Link>}
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                    {visibleError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">{visibleError}</div>}
+                    {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">{notice}</div>}
+                    {isSignupMode && <AccountField label="Full name" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Your name" autoComplete="name" icon="person" />}
+                    <AccountField label="Email address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@company.com" autoComplete="email" icon="email" />
+                    {!isResetMode && <AccountField label="Password" name="password" value={formData.password} onChange={handleChange} placeholder={isSignupMode ? "At least 6 characters" : "Enter your password"} autoComplete={isSignupMode ? "new-password" : "current-password"} icon="password" isPassword isVisible={isPasswordVisible} onToggleVisibility={() => setIsPasswordVisible((visible) => !visible)} minLength={6} action={isSignInMode ? <button type="button" onClick={showPasswordReset} className="text-xs font-semibold text-[#1A593B] hover:underline">Forgot password?</button> : null} />}
+                    {isSignupMode && <AccountField label="Confirm password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Repeat your password" autoComplete="new-password" icon="password" isPassword isVisible={isConfirmPasswordVisible} onToggleVisibility={() => setIsConfirmPasswordVisible((visible) => !visible)} minLength={6} />}
+                    <button type="submit" disabled={isSubmitting} className="group mt-2 inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#1A593B,#23734D)] px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(26,89,59,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(26,89,59,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">{submitLabel}<span className="ml-2 transition-transform group-hover:translate-x-1" aria-hidden="true">→</span></button>
+                    {isSignupMode && <p className="px-3 text-center text-xs leading-5 text-[#748078]">By creating an account, you agree to use Ximo responsibly and keep your sign-in details secure.</p>}
+                  </form>
+                )}
+
+                {!verificationSent && isResetMode && <div className="mt-6 text-center"><button type="button" onClick={() => switchAuthMode("signin")} className="text-sm font-semibold text-[#1A593B] hover:underline">Back to sign in</button></div>}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+          <div className="mt-5 flex items-center justify-center gap-5 text-[11px] font-medium text-[#7A877E]"><span className="flex items-center gap-1.5"><span className="text-[#1A593B]">✓</span> Secure access</span><span className="h-3 w-px bg-[#C9D4CC]" /><span>Built for Ximo businesses</span></div>
+        </div>
+      </section>
+    </main>
   );
 }
