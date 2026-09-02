@@ -108,7 +108,7 @@ export default function PlansPage() {
         description="Choose which POS modules are included in each subscription plan."
         actions={
           <Link className="text-sm font-semibold text-primary" to="/admin/systems/pos">
-            ← Back to organizations
+            Back to organizations
           </Link>
         }
       />

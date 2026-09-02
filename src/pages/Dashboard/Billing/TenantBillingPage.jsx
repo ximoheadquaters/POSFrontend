@@ -138,7 +138,7 @@ export default function TenantBillingPage() {
             to="/admin"
             className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
           >
-            ← Back to Store Dashboard
+            Back to Store Dashboard
           </Link>
         </div>
       </div>

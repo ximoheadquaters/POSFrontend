@@ -459,14 +459,12 @@ export default function SignupPage({ initialMode = "signup" }) {
           <div className="mt-8 overflow-hidden rounded-[26px] border border-white/15 bg-white/[0.09] p-4 shadow-[0_24px_60px_rgba(3,31,18,0.2)] backdrop-blur-md xl:p-5">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div><p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#C9E7D2]">Today at a glance</p><p className="mt-1 text-sm text-white/60">Store performance</p></div>
-              <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-[#D6F0DE]"><span className="h-2 w-2 rounded-full bg-[#7EE2A1] shadow-[0_0_0_4px_rgba(126,226,161,0.12)]" />Live</span>
             </div>
             <div className="grid grid-cols-3 gap-3 py-4">
               {[{ label: "Sales", value: "₱48.2k" }, { label: "Orders", value: "126" }, { label: "Stock", value: "98%" }].map((item) => <div key={item.label} className="rounded-2xl bg-white/[0.08] p-3"><p className="text-[10px] uppercase tracking-wider text-white/45">{item.label}</p><p className="mt-2 text-lg font-semibold tracking-[-0.03em]">{item.value}</p></div>)}
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-white p-3.5 text-[#173B28]">
               <div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#E7F3EA] text-[#1A593B]">✓</span><div><p className="text-xs font-semibold">Everything is in sync</p><p className="mt-0.5 text-[10px] text-[#738078]">Updated just now</p></div></div>
-              <span className="text-[#1A593B]">→</span>
             </div>
           </div>
         </div>
@@ -532,7 +530,7 @@ export default function SignupPage({ initialMode = "signup" }) {
                     <AccountField label="Email address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@company.com" autoComplete="email" icon="email" />
                     {!isResetMode && <AccountField label="Password" name="password" value={formData.password} onChange={handleChange} placeholder={isSignupMode ? "At least 6 characters" : "Enter your password"} autoComplete={isSignupMode ? "new-password" : "current-password"} icon="password" isPassword isVisible={isPasswordVisible} onToggleVisibility={() => setIsPasswordVisible((visible) => !visible)} minLength={6} action={isSignInMode ? <button type="button" onClick={showPasswordReset} className="text-xs font-semibold text-[#1A593B] hover:underline">Forgot password?</button> : null} />}
                     {isSignupMode && <AccountField label="Confirm password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Repeat your password" autoComplete="new-password" icon="password" isPassword isVisible={isConfirmPasswordVisible} onToggleVisibility={() => setIsConfirmPasswordVisible((visible) => !visible)} minLength={6} />}
-                    <button type="submit" disabled={isSubmitting} className="group mt-2 inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#1A593B,#23734D)] px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(26,89,59,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(26,89,59,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">{submitLabel}<span className="ml-2 transition-transform group-hover:translate-x-1" aria-hidden="true">→</span></button>
+                    <button type="submit" disabled={isSubmitting} className="group mt-2 inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#1A593B,#23734D)] px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(26,89,59,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(26,89,59,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">{submitLabel}</button>
                     {isSignupMode && <p className="px-3 text-center text-xs leading-5 text-[#748078]">By creating an account, you agree to use Ximo responsibly and keep your sign-in details secure.</p>}
                   </form>
                 )}

@@ -51,7 +51,7 @@ export default function SystemsPage() {
                     className="mt-auto inline-flex w-fit items-center gap-2 rounded-xl bg-[#1A593B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#386F55]"
                     to={`/admin/systems/${system.code}`}
                   >
-                    Manage system <span aria-hidden="true">→</span>
+                    Manage system
                   </Link>
                 ) : (
                   <button

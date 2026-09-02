@@ -87,7 +87,7 @@ export default function DashboardLayout() {
             {links.map((link) => {
               const Icon = link.icon;
               return (
-                <li key={link.to} className="w-full overflow-hidden">
+                <li key={link.to} className="w-12 overflow-hidden transition-[width] duration-200 group-hover/sidebar:w-full group-focus-within/sidebar:w-full">
                   <NavLink
                     to={link.to}
                     end={link.end}
@@ -191,7 +191,7 @@ function SectionSearch({ onClose, onSelect }) {
         </div>
         <div className="p-2">
           <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#A3ABB5]">Jump to</p>
-          {results.map((section) => { const Icon = section.icon; return <button key={section.to} type="button" onClick={() => onSelect(section)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-[#F3F5F6]"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F0F2F4] text-[#697382]"><Icon className="h-[17px] w-[17px]" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-[#303746]">{section.label}</span><span className="mt-0.5 block truncate text-xs text-[#8B94A0]">{section.description}</span></span><span className="text-[#A3ABB5]" aria-hidden="true">→</span></button>; })}
+          {results.map((section) => { const Icon = section.icon; return <button key={section.to} type="button" onClick={() => onSelect(section)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-[#F3F5F6]"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F0F2F4] text-[#697382]"><Icon className="h-[17px] w-[17px]" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-[#303746]">{section.label}</span><span className="mt-0.5 block truncate text-xs text-[#8B94A0]">{section.description}</span></span></button>; })}
           {!results.length && <p className="px-3 py-10 text-center text-sm text-[#8B94A0]">No admin sections match “{query}”.</p>}
         </div>
       </div>

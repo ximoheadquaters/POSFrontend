@@ -28,7 +28,7 @@ const operatingPrinciples = [
 ];
 
 const roadmap = [
-  ["POS", "Live", true],
+  ["POS", "Available", true],
   ["Business software", "In development", false],
   ["Automation", "Planned", false],
   ["Integrations", "Planned", false],

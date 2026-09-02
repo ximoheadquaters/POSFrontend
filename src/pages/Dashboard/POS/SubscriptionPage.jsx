@@ -94,7 +94,7 @@ export default function SubscriptionPage() {
             className="text-sm font-semibold text-primary"
             to={`/admin/systems/pos/organizations/${organizationId}`}
           >
-            ← Back to organization
+            Back to organization
           </Link>
         }
       />

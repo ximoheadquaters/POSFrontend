@@ -285,7 +285,7 @@ export default function ClientDetailsPage() {
             className="text-sm font-semibold text-primary"
             to="/admin/clients"
           >
-            ← Back to clients
+            Back to clients
           </Link>
         }
       />

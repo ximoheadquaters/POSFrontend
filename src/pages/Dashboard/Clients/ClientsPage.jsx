@@ -77,7 +77,7 @@ export default function ClientsPage() {
             <p className="shrink-0 rounded-full bg-[#1A593B]/10 px-3 py-1 text-xs font-bold text-[#1A593B]">{resource.data?.length || 0} total</p>
           </div>
           <div className="divide-y divide-[#1A593B]/10 md:hidden">
-            {resource.data?.map((client) => <Link key={client.id} to={`/admin/clients/${client.id}`} className="flex items-center gap-3 px-4 py-4 transition hover:bg-[#1A593B]/5"><ClientAvatar name={client.display_name || client.legal_name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#000000]">{client.display_name || client.legal_name}</p><p className="mt-1 truncate text-xs text-[#4C4239]">{client.kind} · {client.client_systems?.length || 0} system{(client.client_systems?.length || 0) === 1 ? "" : "s"}</p></div><div className="flex shrink-0 items-center gap-2"><StatusBadge value={client.status} /><span className="text-[#386F55]" aria-hidden="true">→</span></div></Link>)}
+            {resource.data?.map((client) => <Link key={client.id} to={`/admin/clients/${client.id}`} className="flex items-center gap-3 px-4 py-4 transition hover:bg-[#1A593B]/5"><ClientAvatar name={client.display_name || client.legal_name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#000000]">{client.display_name || client.legal_name}</p><p className="mt-1 truncate text-xs text-[#4C4239]">{client.kind} · {client.client_systems?.length || 0} system{(client.client_systems?.length || 0) === 1 ? "" : "s"}</p></div><StatusBadge value={client.status} /></Link>)}
           </div>
           <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-[#E7ECE7]">
@@ -212,7 +212,7 @@ export default function ClientsPage() {
             value={form.timezone}
             onChange={(value) => setForm({ ...form, timezone: value })}
           />
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row sm:gap-3">
             <Button
               variant="ghost"
               onClick={() => setCreating(false)}
