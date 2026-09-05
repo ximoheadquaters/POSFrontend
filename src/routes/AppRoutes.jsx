@@ -7,57 +7,80 @@ import ClientRoute from "./ClientRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
 import ClientLayout from "../layouts/ClientLayout";
 import PublicRoute from "./PublicRoute";
+import { logStage } from "../utils/logger";
 
-const LandingPage = lazy(() => import("../pages/Landing/LandingPage"));
-const AboutPage = lazy(() => import("../pages/About/AboutPage"));
-const ServicesPage = lazy(() => import("../pages/Services/ServicesPage"));
-const ContactPage = lazy(() => import("../pages/Contact/ContactPage"));
-const PricingPage = lazy(() => import("../pages/Pricing/PricingPage"));
-const SignupPage = lazy(() => import("../pages/Signup/SignupPage"));
-const CheckoutPage = lazy(() => import("../pages/Checkout/CheckoutPage"));
-const CheckoutProcessingPage = lazy(
+function lazyRoute(importer, route) {
+  return lazy(() =>
+    importer().catch((error) => {
+      logStage("lazy route import", error, { route });
+      throw error;
+    }),
+  );
+}
+
+const LandingPage = lazyRoute(() => import("../pages/Landing/LandingPage"), "landing");
+const AboutPage = lazyRoute(() => import("../pages/About/AboutPage"), "about");
+const ServicesPage = lazyRoute(() => import("../pages/Services/ServicesPage"), "services");
+const ContactPage = lazyRoute(() => import("../pages/Contact/ContactPage"), "contact");
+const PricingPage = lazyRoute(() => import("../pages/Pricing/PricingPage"), "pricing");
+const SignupPage = lazyRoute(() => import("../pages/Signup/SignupPage"), "account");
+const CheckoutPage = lazyRoute(() => import("../pages/Checkout/CheckoutPage"), "checkout");
+const CheckoutProcessingPage = lazyRoute(
   () => import("../pages/Checkout/CheckoutProcessingPage"),
+  "checkout-processing",
 );
-const CheckoutSuccessPage = lazy(
+const CheckoutSuccessPage = lazyRoute(
   () => import("../pages/Checkout/CheckoutSuccessPage"),
+  "checkout-success",
 );
-const CheckoutFailedPage = lazy(
+const CheckoutFailedPage = lazyRoute(
   () => import("../pages/Checkout/CheckoutFailedPage"),
+  "checkout-failed",
 );
-const ResetPasswordPage = lazy(
+const ResetPasswordPage = lazyRoute(
   () => import("../pages/Login/ResetPasswordPage"),
+  "reset-password",
 );
-const NotFoundPage = lazy(() => import("../pages/NotFound/NotFoundPage"));
-const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard"));
-const ClientsPage = lazy(
+const NotFoundPage = lazyRoute(() => import("../pages/NotFound/NotFoundPage"), "not-found");
+const Dashboard = lazyRoute(() => import("../pages/Dashboard/Dashboard"), "dashboard");
+const ClientsPage = lazyRoute(
   () => import("../pages/Dashboard/Clients/ClientsPage"),
+  "clients",
 );
-const ClientDetailsPage = lazy(
+const ClientDetailsPage = lazyRoute(
   () => import("../pages/Dashboard/Clients/ClientDetailsPage"),
+  "client-details",
 );
-const SystemsPage = lazy(
+const SystemsPage = lazyRoute(
   () => import("../pages/Dashboard/Systems/SystemsPage"),
+  "systems",
 );
-const OrganizationsPage = lazy(
+const OrganizationsPage = lazyRoute(
   () => import("../pages/Dashboard/POS/OrganizationsPage"),
+  "pos-organizations",
 );
-const OrganizationDetailsPage = lazy(
+const OrganizationDetailsPage = lazyRoute(
   () => import("../pages/Dashboard/POS/OrganizationDetailsPage"),
+  "pos-organization-details",
 );
-const SubscriptionPage = lazy(
+const SubscriptionPage = lazyRoute(
   () => import("../pages/Dashboard/POS/SubscriptionPage"),
+  "pos-subscription",
 );
-const TenantBillingPage = lazy(
+const TenantBillingPage = lazyRoute(
   () => import("../pages/Dashboard/Billing/TenantBillingPage"),
+  "tenant-billing",
 );
-const PlatformBillingPage = lazy(
+const PlatformBillingPage = lazyRoute(
   () => import("../pages/Dashboard/PlatformBilling/PlatformBillingPage"),
+  "platform-billing",
 );
-const ModulesPage = lazy(() => import("../pages/Dashboard/POS/ModulesPage"));
-const PlansPage = lazy(() => import("../pages/Dashboard/POS/PlansPage"));
-const ClientHomePage = lazy(() => import("../pages/Client/ClientHomePage"));
-const ClientPlaceholderPage = lazy(
+const ModulesPage = lazyRoute(() => import("../pages/Dashboard/POS/ModulesPage"), "pos-modules");
+const PlansPage = lazyRoute(() => import("../pages/Dashboard/POS/PlansPage"), "pos-plans");
+const ClientHomePage = lazyRoute(() => import("../pages/Client/ClientHomePage"), "client-home");
+const ClientPlaceholderPage = lazyRoute(
   () => import("../pages/Client/ClientPlaceholderPage"),
+  "client-placeholder",
 );
 
 function PageLoader() {

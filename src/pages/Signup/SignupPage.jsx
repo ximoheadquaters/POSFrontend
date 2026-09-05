@@ -380,6 +380,16 @@ export default function SignupPage({ initialMode = "signup" }) {
     setNotice("");
     clearError();
 
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      setFormError("Enter a valid email address to continue.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setFormError("Enter your password to continue.");
+      return;
+    }
+
     try {
       const auth = await signIn(formData.email, formData.password);
       navigate(
@@ -523,8 +533,8 @@ export default function SignupPage({ initialMode = "signup" }) {
                     {!planFromUrl && <Link to="/pricing" className="mt-4 inline-flex text-sm font-semibold text-[#1A593B] hover:underline">View plans</Link>}
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                    {visibleError && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">{visibleError}</div>}
+                  <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
+                    {visibleError && <div role="alert" aria-live="polite" className="rounded-2xl border border-[#EDC5C0] bg-[#FCECEA] p-4 text-sm text-[#8A3028]"><p className="font-semibold">Sign in could not continue</p><p className="mt-1 leading-5">{visibleError}</p></div>}
                     {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">{notice}</div>}
                     {isSignupMode && <AccountField label="Full name" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Your name" autoComplete="name" icon="person" />}
                     <AccountField label="Email address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@company.com" autoComplete="email" icon="email" />

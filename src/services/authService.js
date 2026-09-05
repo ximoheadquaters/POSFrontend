@@ -1,5 +1,24 @@
 import { isSupabaseConfigured, supabase } from "../config/supabase";
 import api from "../app/axios";
+import { logStage } from "../utils/logger";
+
+const SESSION_TIMEOUT_MS = 10_000;
+
+function withTimeout(promise, stage, timeoutMs = SESSION_TIMEOUT_MS) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      const error = new AuthenticationError(
+        "Session verification timed out. Please try again.",
+        "AUTH_TIMEOUT",
+      );
+      logStage(stage, error, { timeoutMs });
+      reject(error);
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
 
 export class AuthenticationError extends Error {
   constructor(message, code = "AUTH_ERROR") {
@@ -82,7 +101,7 @@ export async function resolveSessionAuth(session) {
   if (!session) return auth;
 
   try {
-    const { data } = await api.get("/auth/session");
+    const { data } = await withTimeout(api.get("/auth/session"), "session verification");
     if (data?.role) {
       return {
         ...auth,
@@ -91,19 +110,26 @@ export async function resolveSessionAuth(session) {
       };
     }
   } catch (error) {
+    if (error?.code === "AUTH_TIMEOUT") {
+      logStage("session verification timeout", error);
+      throw error;
+    }
     const status = error?.response?.status;
+    const code = error?.response?.data?.error?.code;
+    if (status === 503 && code === "PLATFORM_AUTH_UNAVAILABLE") {
+      const authError = new AuthenticationError(
+        error?.response?.data?.error?.message ??
+          "Platform administrator verification is temporarily unavailable.",
+        code,
+      );
+      logStage("session verification", authError, { status });
+      throw authError;
+    }
     const isNetworkFailure = !error?.response;
     const isTransientAuthFailure = [401, 403, 404, 408, 429, 500, 503].includes(status);
 
     if (isNetworkFailure || isTransientAuthFailure) {
-      console.warn(
-        "The canonical session endpoint is unavailable; falling back to the local auth session role lookup.",
-        {
-          status,
-          message: error?.message,
-          responseData: error?.response?.data,
-        },
-      );
+      logStage("session verification fallback", error, { status });
     } else {
       throw new AuthenticationError(
         error?.response?.data?.error?.message ??
@@ -121,7 +147,7 @@ export async function resolveSessionAuth(session) {
     .eq("user_id", session.user.id);
 
   if (error) {
-    console.warn("Unable to resolve the current website role.", error.message);
+    logStage("fallback role lookup", error);
     return auth;
   }
 
@@ -144,7 +170,10 @@ export async function resolveSessionAuth(session) {
 export const authService = {
   async getSession() {
     ensureConfigured();
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await withTimeout(
+      supabase.auth.getSession(),
+      "session verification",
+    );
     if (error) throw friendlyError(error);
     return data.session;
   },

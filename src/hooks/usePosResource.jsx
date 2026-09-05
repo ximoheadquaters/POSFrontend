@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logStage } from "../utils/logger";
 
 const MAX_RETRIES = 2;
 const BACKOFF_BASE_MS = 2_000;
@@ -48,6 +49,10 @@ export default function usePosResource(loader, dependencies = []) {
         return;
       } catch (requestError) {
         lastError = requestError;
+        logStage("dashboard API", requestError, {
+          resource: loader.name || "anonymous resource",
+          attempt: attempt + 1,
+        });
         if (!isRetriable(requestError)) break;
       }
     }
