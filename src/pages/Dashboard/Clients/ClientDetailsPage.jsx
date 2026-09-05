@@ -24,6 +24,25 @@ function orgValue(org, ...keys) {
   return keys.map((key) => org?.[key]).find((value) => value != null);
 }
 
+function organizationOwnerEmail(organization) {
+  return String(
+    organization?.owner?.email ||
+      organization?.ownerEmail ||
+      organization?.owner_email ||
+      "",
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function isExistingOwnerAccountError(error) {
+  const text = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
+  return (
+    text.includes("authentication account") &&
+    (text.includes("already exists") || text.includes("already exist"))
+  );
+}
+
 function newProvisioningKey() {
   return `ximo-web-${crypto.randomUUID()}`;
 }
@@ -178,6 +197,40 @@ export default function ClientDetailsPage() {
       });
       await resource.refresh();
     } catch (error) {
+      if (mode === "create" && isExistingOwnerAccountError(error)) {
+        try {
+          const payload = await posPlatformApi.listOrganizations();
+          const organizations = unwrapCollection(payload, ["organizations"]);
+          const ownerEmail = provisioning.ownerEmail.trim().toLowerCase();
+          const existingOrganization = organizations.find(
+            (organization) => organizationOwnerEmail(organization) === ownerEmail,
+          );
+          const existingOrganizationId = existingOrganization && orgValue(
+            existingOrganization,
+            "id",
+            "organizationId",
+            "organization_id",
+          );
+
+          if (existingOrganizationId) {
+            setMode("link");
+            setExternalTenantId(existingOrganizationId);
+            setMessage({
+              type: "success",
+              text: "An existing POS organization was found for this owner. Review it below, then choose Assign existing POS.",
+            });
+            return;
+          }
+        } catch {
+          // Keep the original provisioning error when the recovery lookup fails.
+        }
+
+        setMessage({
+          type: "error",
+          text: "This owner already has a Ximo authentication account, but no POS organization was found. The POS Platform must attach the existing account before an organization can be created.",
+        });
+        return;
+      }
       setMessage({
         type: "error",
         text:
