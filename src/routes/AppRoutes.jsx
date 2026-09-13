@@ -155,6 +155,10 @@ export default function AppRoutes() {
               path="settings"
               element={<ClientPlaceholderPage section="settings" />}
             />
+            <Route
+              path="billing"
+              element={<TenantBillingPage />}
+            />
           </Route>
         </Route>
         <Route element={<AdminRoute />}>

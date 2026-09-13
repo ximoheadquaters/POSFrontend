@@ -17,6 +17,7 @@ const workspaceLinks = [
 ];
 
 const utilityLinks = [
+  { to: "/client/billing", label: "Billing", icon: BillingIcon },
   { to: "/client/settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -25,6 +26,7 @@ function sectionTitle(pathname) {
   if (pathname.startsWith("/client/branches")) return "Branches";
   if (pathname.startsWith("/client/inventory")) return "Inventory";
   if (pathname.startsWith("/client/customers")) return "Customers";
+  if (pathname.startsWith("/client/billing")) return "Billing";
   if (pathname.startsWith("/client/settings")) return "Settings";
   return "Dashboard";
 }
@@ -330,6 +332,21 @@ function SettingsIcon({ className }) {
         strokeLinejoin="round"
         d="m19.4 15 .1 1.6-2.1 2.1-1.7-.6a7.7 7.7 0 0 1-1.5.6L13.5 20h-3l-.7-1.3a7.7 7.7 0 0 1-1.5-.6l-1.7.6-2.1-2.1.1-1.6a7.7 7.7 0 0 1-.6-1.5L2.7 13v-3l1.3-.7a7.7 7.7 0 0 1 .6-1.5l-.1-1.6 2.1-2.1 1.7.6a7.7 7.7 0 0 1 1.5-.6l.7-1.3h3l.7 1.3a7.7 7.7 0 0 1 1.5.6l1.7-.6 2.1 2.1-.1 1.6a7.7 7.7 0 0 1 .6 1.5l1.3.7v3l-1.3.7a7.7 7.7 0 0 1-.6 1.5Z"
       />
+    </svg>
+  );
+}
+function BillingIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
+      <path strokeLinecap="round" d="M2.5 10.5h19" />
+      <path strokeLinecap="round" d="M6.5 14.5h3" />
     </svg>
   );
 }
