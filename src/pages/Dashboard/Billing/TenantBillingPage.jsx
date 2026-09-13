@@ -101,12 +101,23 @@ export default function TenantBillingPage() {
     }
   };
 
-  const handleChangePlan = async () => {
+  const handleChangePlan = async (withPayment = true) => {
     if (changingPlan) return;
     setChangingPlan(true);
     setActionMessage(null);
     try {
-      const res = await api.post("/billing/change-plan", { planCode: selectedTargetPlan });
+      const res = await api.post("/billing/change-plan", {
+        planCode: selectedTargetPlan,
+        pay: withPayment,
+      });
+      if (res.data?.requiresPayment && res.data?.redirectUrl) {
+        setActionMessage({
+          type: "success",
+          text: "Connecting to PayMongo QR Ph checkout...",
+        });
+        window.location.href = res.data.redirectUrl;
+        return;
+      }
       setShowChangePlanModal(false);
       setActionMessage({
         type: "success",
@@ -483,34 +494,43 @@ export default function TenantBillingPage() {
             </div>
           </div>
 
-          {/* Downgrade Warning Requirement */}
-          {isDowngrade && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
-              <p className="font-bold text-amber-900">Downgrade Notice:</p>
-              <p className="text-amber-800">
-                Your data will not be deleted. Features outside the new plan will become unavailable at the end of your current billing period.
+          {/* Upgrade / Downgrade Guidance Banner */}
+          {selectedTargetPlan === "business" && (subscription?.plan?.code || "starter") === "starter" ? (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 space-y-1">
+              <p className="font-bold text-emerald-900">Upgrade to Business Plan (₱999.00 / month)</p>
+              <p className="text-emerald-800">
+                You will be redirected to PayMongo QR Ph to pay ₱999.00. Your account upgrades to Business immediately upon payment.
               </p>
             </div>
+          ) : isDowngrade ? (
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-950 space-y-1">
+              <p className="font-bold text-amber-900">Downgrade Notice</p>
+              <p className="text-amber-800">
+                Your store data will not be deleted. Switching to Starter takes effect immediately without any additional payment.
+              </p>
+            </div>
+          ) : (
+            <div className="p-3 bg-[#EBF3ED] border border-[#D5E3D8] rounded-xl text-xs text-[#2A4B36]">
+              Your plan features will be updated for your store.
+            </div>
           )}
-
-          <div className="p-3 bg-[#EBF3ED] border border-[#D5E3D8] rounded-xl text-xs text-[#2A4B36]">
-            Your new plan features will be active immediately for your store.
-          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-[#E1E8E2]">
             <Button variant="ghost" onClick={() => setShowChangePlanModal(false)}>
               Close
             </Button>
             <Button
-              onClick={handleChangePlan}
+              onClick={() => handleChangePlan(true)}
               disabled={changingPlan || selectedTargetPlan === (subscription?.plan?.code || "starter")}
               className="min-h-[44px]"
             >
               {changingPlan
-                ? "Updating Plan…"
+                ? "Connecting to Payment…"
                 : selectedTargetPlan === (subscription?.plan?.code || "starter")
                 ? "Current Plan"
-                : `Switch to ${selectedTargetPlan === "business" ? "Business" : "Starter"} Plan`}
+                : selectedTargetPlan === "business" && (subscription?.plan?.code || "starter") === "starter"
+                ? "Pay ₱999.00 with QR Ph & Upgrade"
+                : `Confirm Switch to ${selectedTargetPlan === "business" ? "Business" : "Starter"}`}
             </Button>
           </div>
         </div>
