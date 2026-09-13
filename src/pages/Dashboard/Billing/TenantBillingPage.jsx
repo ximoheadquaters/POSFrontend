@@ -81,6 +81,8 @@ export default function TenantBillingPage() {
   const [confirmCancelText, setConfirmCancelText] = useState("");
   const [actionMessage, setActionMessage] = useState(null);
   const [renewing, setRenewing] = useState(false);
+  const [changingPlan, setChangingPlan] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   const handleRenewSubscription = async () => {
     if (renewing) return;
@@ -96,6 +98,59 @@ export default function TenantBillingPage() {
     } catch (err) {
       setActionMessage({ type: "error", text: err?.response?.data?.error?.message || err?.message || "Failed to start renewal checkout." });
       setRenewing(false);
+    }
+  };
+
+  const handleChangePlan = async () => {
+    if (changingPlan) return;
+    setChangingPlan(true);
+    setActionMessage(null);
+    try {
+      const res = await api.post("/billing/change-plan", { planCode: selectedTargetPlan });
+      setShowChangePlanModal(false);
+      setActionMessage({
+        type: "success",
+        text: res.data?.message || `Plan successfully updated to ${selectedTargetPlan === "business" ? "Business" : "Starter"} Plan!`
+      });
+      try {
+        sessionStorage.removeItem("ximo_billing_subscription");
+        sessionStorage.removeItem("ximo_client_workspace");
+      } catch {}
+      await fetchSubscription(false);
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err?.response?.data?.error?.message || err?.message || "Failed to update plan. Please try again."
+      });
+    } finally {
+      setChangingPlan(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (canceling || confirmCancelText !== "CANCEL") return;
+    setCanceling(true);
+    setActionMessage(null);
+    try {
+      const res = await api.post("/billing/cancel");
+      setShowCancelModal(false);
+      setConfirmCancelText("");
+      setActionMessage({
+        type: "success",
+        text: res.data?.message || "Subscription cancelled. Your access remains active until your prepaid period ends."
+      });
+      try {
+        sessionStorage.removeItem("ximo_billing_subscription");
+        sessionStorage.removeItem("ximo_client_workspace");
+      } catch {}
+      await fetchSubscription(false);
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err?.response?.data?.error?.message || err?.message || "Failed to cancel subscription. Please try again."
+      });
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -364,7 +419,13 @@ export default function TenantBillingPage() {
 
               {/* Plan Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-4 border-t border-[#F0F4F1]">
-                <Button onClick={() => setShowChangePlanModal(true)} className="min-h-[44px]">
+                <Button
+                  onClick={() => {
+                    setSelectedTargetPlan(subscription?.plan?.code === "business" ? "starter" : "business");
+                    setShowChangePlanModal(true);
+                  }}
+                  className="min-h-[44px]"
+                >
                   Change Plan
                 </Button>
                 <Button variant="secondary" onClick={() => setShowCancelModal(true)} className="min-h-[44px]">
@@ -432,35 +493,25 @@ export default function TenantBillingPage() {
             </div>
           )}
 
-          {/* Environment Banner */}
-          {isDevOrTest ? (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800">
-              Test billing action — no real payment will be processed.
-            </div>
-          ) : (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
-              Online billing management is not available yet. Contact Ximo support.
-            </div>
-          )}
+          <div className="p-3 bg-[#EBF3ED] border border-[#D5E3D8] rounded-xl text-xs text-[#2A4B36]">
+            Your new plan features will be active immediately for your store.
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-[#E1E8E2]">
             <Button variant="ghost" onClick={() => setShowChangePlanModal(false)}>
               Close
             </Button>
-            {isDevOrTest ? (
-              <Button
-                onClick={() => {
-                  setShowChangePlanModal(false);
-                  setActionMessage({ type: "success", text: `Test plan change requested to ${selectedTargetPlan}.` });
-                }}
-              >
-                Start Test Change Plan
-              </Button>
-            ) : (
-              <Link to="/contact" className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-primary text-white font-bold rounded-xl text-xs">
-                Contact Sales
-              </Link>
-            )}
+            <Button
+              onClick={handleChangePlan}
+              disabled={changingPlan || selectedTargetPlan === (subscription?.plan?.code || "starter")}
+              className="min-h-[44px]"
+            >
+              {changingPlan
+                ? "Updating Plan…"
+                : selectedTargetPlan === (subscription?.plan?.code || "starter")
+                ? "Current Plan"
+                : `Switch to ${selectedTargetPlan === "business" ? "Business" : "Starter"} Plan`}
+            </Button>
           </div>
         </div>
       </Modal>
@@ -507,37 +558,22 @@ export default function TenantBillingPage() {
             />
           </div>
 
-          {/* Environment Banner */}
-          {isDevOrTest ? (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800">
-              Test billing action — no real payment will be cancelled.
-            </div>
-          ) : (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
-              Online billing management is not available yet. Contact Ximo support.
-            </div>
-          )}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs">
+            Your store operations and data remain active until your current prepaid period ends.
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-[#E1E8E2]">
             <Button variant="ghost" onClick={() => setShowCancelModal(false)}>
               Keep Subscription
             </Button>
-            {isDevOrTest ? (
-              <Button
-                variant="danger"
-                disabled={confirmCancelText !== "CANCEL" || !subscription?.currentPeriodEnd || isNaN(new Date(subscription.currentPeriodEnd).getTime())}
-                onClick={() => {
-                  setShowCancelModal(false);
-                  setActionMessage({ type: "success", text: "Test cancellation request recorded. Store access remains until period end." });
-                }}
-              >
-                Confirm Test Cancellation
-              </Button>
-            ) : (
-              <Link to="/contact" className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-[#4B574E] text-white font-bold rounded-xl text-xs">
-                Contact Support
-              </Link>
-            )}
+            <Button
+              variant="danger"
+              disabled={confirmCancelText !== "CANCEL" || canceling}
+              onClick={handleCancelSubscription}
+              className="min-h-[44px]"
+            >
+              {canceling ? "Canceling…" : "Confirm Cancellation"}
+            </Button>
           </div>
         </div>
       </Modal>
