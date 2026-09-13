@@ -24,28 +24,20 @@ export default function CheckoutSuccessPage() {
     let isMounted = true;
 
     const verifyServerState = async () => {
-      const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === "development";
       try {
         const response = await publicApi.getCheckoutStatus(token);
         if (!isMounted) return;
 
-        let serverStatus = response?.status || "invalid";
-        if (isDevOrTest && (serverStatus === "awaiting_payment" || serverStatus === "processing" || serverStatus === "invalid")) {
-          serverStatus = "active";
-        }
+        const serverStatus = response?.status || "invalid";
         setSessionState(serverStatus);
 
-        if (!isDevOrTest && (serverStatus === "provisioning" || serverStatus === "processing")) {
+        if (serverStatus === "provisioning" || serverStatus === "processing") {
           navigate(`/checkout/processing?token=${token}`, { replace: true });
         }
       } catch (err) {
         if (!isMounted) return;
         console.warn("Error checking authoritative status:", err?.message);
-        if (isDevOrTest) {
-          setSessionState("active");
-        } else {
-          setErrorMsg("We couldn’t verify this checkout session with the server.");
-        }
+        setErrorMsg("We couldn’t verify this checkout session with the server.");
       } finally {
         if (isMounted) setLoading(false);
       }

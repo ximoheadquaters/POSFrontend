@@ -25,6 +25,10 @@ export default function CheckoutPage() {
   const [planError, setPlanError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  useEffect(() => {
+    publicApi.getPaymentConfiguration().then(setPaymentConfig).catch(() => setPaymentConfig({ enabled: false }));
+  }, []);
 
   // Business form state
   const [businessData, setBusinessData] = useState({
@@ -97,7 +101,7 @@ export default function CheckoutPage() {
     });
   };
 
-  const isEmailVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at || user?.id);
+  const isEmailVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
 
   const handleNextStep = () => {
     setErrorMsg(null);
@@ -143,12 +147,12 @@ export default function CheckoutPage() {
 
       const result = await publicApi.createCheckoutSession(payload);
 
-      if (result?.checkoutSessionToken) {
+      if (result?.redirectUrl) {
+        window.location.assign(result.redirectUrl);
+      } else if (result?.checkoutSessionToken) {
         // Clear transient form state
         sessionStorage.removeItem("ximo_business_data");
         navigate(`/checkout/processing?token=${result.checkoutSessionToken}`);
-      } else if (result?.redirectUrl) {
-        window.location.href = result.redirectUrl;
       } else {
         throw new Error("No session token returned from server.");
       }
@@ -159,7 +163,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === "development" || import.meta.env.MODE === "test" || !import.meta.env.PROD;
+  const isDevOrTest = paymentConfig?.testMode === true;
 
   return (
     <div className="bg-[#F8FAF8] min-h-screen pt-24 pb-16 px-4 sm:px-6">
@@ -384,22 +388,22 @@ export default function CheckoutPage() {
         {currentStep === 4 && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-[#1F2923]">Payment Activation</h2>
-              <p className="text-xs text-[#5A685D]">Verification of payment environment status</p>
+              <h2 className="text-lg font-bold text-[#1F2923]">Pay with QR Ph</h2>
+              <p className="text-xs text-[#5A685D]">Scan the QR code on PayMongo using a QR Ph-compatible bank or e-wallet app. Renew with a new payment each month.</p>
             </div>
 
-            {isDevOrTest ? (
+            {paymentConfig?.enabled ? (
               /* Test Environment Banner */
               <div className="p-6 bg-blue-50 border border-blue-200 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2 text-blue-800 font-bold text-xs uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                  Development / Test Environment Active
+                  {isDevOrTest ? 'PayMongo Test Mode' : 'Secure PayMongo Checkout'}
                 </div>
                 <p className="text-xs text-blue-900 font-medium">
-                  Test checkout — no real payment will be charged.
+                  {isDevOrTest ? 'Test checkout — no real payment will be charged.' : 'Pay for one month of your selected Ximo plan using QR Ph.'}
                 </p>
                 <p className="text-[11px] text-blue-700">
-                  This test checkout simulates complete subscription payment confirmation and triggers idempotent organization provisioning.
+                  Your subscription starts after PayMongo confirms your payment. Renewals require a new payment; you will not be charged automatically.
                 </p>
               </div>
             ) : (
@@ -424,7 +428,7 @@ export default function CheckoutPage() {
 
             <div className="flex gap-3">
               <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
-              <Button onClick={handleNextStep} disabled={!isDevOrTest} className="flex-1 min-h-[44px]">
+              <Button onClick={handleNextStep} disabled={!paymentConfig?.enabled} className="flex-1 min-h-[44px]">
                 Continue to Review
               </Button>
             </div>
@@ -466,23 +470,23 @@ export default function CheckoutPage() {
               </div>
               <div className="p-4 flex justify-between">
                 <span className="text-[#5A685D]">Payment Mode:</span>
-                <span className="font-bold text-blue-700">PayMongo Sandbox (Test Mode)</span>
+                <span className="font-bold text-blue-700">QR Ph via PayMongo {isDevOrTest ? '(Test Mode)' : ''}</span>
               </div>
             </div>
 
             {/* Sandbox Notice Banner */}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs font-semibold text-blue-900">
-              PayMongo test checkout — no real payment will be charged.
+              {isDevOrTest ? 'PayMongo test checkout — no real payment will be charged.' : 'One monthly payment. No automatic renewal or recurring debit.'}
             </div>
 
             <div className="flex gap-3 pt-2">
               <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
               <button
                 onClick={handleStartCheckout}
-                disabled={submitting || !isDevOrTest}
+                disabled={submitting || !paymentConfig?.enabled || !isEmailVerified}
                 className="flex-1 min-h-[44px] py-3 px-6 bg-primary hover:bg-[#164F34] text-white font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-50"
               >
-                {submitting ? "Starting Test Checkout..." : "Continue to PayMongo Test Checkout"}
+                {submitting ? "Opening PayMongo..." : "Pay with QR Ph"}
               </button>
             </div>
           </div>

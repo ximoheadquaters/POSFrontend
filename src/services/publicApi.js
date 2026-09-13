@@ -1,6 +1,7 @@
 import api from "../app/axios";
 
 export const publicApi = {
+  getPaymentConfiguration: async () => (await api.get('/public/checkout/config')).data,
   /**
    * Fetch canonical public plans catalog
    */

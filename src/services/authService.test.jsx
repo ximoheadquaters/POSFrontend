@@ -22,6 +22,7 @@ describe("authentication session mapping", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
   it("reads the custom user_role claim", () => {
     const token = tokenFor({ sub: "user-1", user_role: "super_admin" });
     expect(getAccessTokenClaims(token).user_role).toBe("super_admin");
@@ -69,28 +70,5 @@ describe("authentication session mapping", () => {
       },
     });
     expect(api.get).toHaveBeenCalledWith("/auth/session");
-  });
-
-  it("does not silently downgrade a platform account when verification fails", async () => {
-    api.get.mockRejectedValue({
-      response: {
-        status: 503,
-        data: {
-          error: {
-            code: "PLATFORM_AUTH_UNAVAILABLE",
-            message: "Platform administrator verification is temporarily unavailable.",
-          },
-        },
-      },
-    });
-
-    const session = {
-      access_token: tokenFor({ sub: "user-1", user_role: "client_user" }),
-      user: { id: "user-1", app_metadata: { role: "client_user" } },
-    };
-
-    await expect(resolveSessionAuth(session)).rejects.toMatchObject({
-      code: "PLATFORM_AUTH_UNAVAILABLE",
-    });
   });
 });

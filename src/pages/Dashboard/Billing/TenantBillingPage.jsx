@@ -182,7 +182,7 @@ export default function TenantBillingPage() {
       {/* Main Content */}
       {!loading && !error && subscription && (() => {
         const accessState = getSubscriptionAccessState(subscription);
-        const canRenew = subscription.availableActions?.some(a => a.code === "renew");
+        const canRenew = subscription.availableActions?.some(a => a.code === "renew" && a.isEnabled);
 
         return (
           <div className="space-y-8">

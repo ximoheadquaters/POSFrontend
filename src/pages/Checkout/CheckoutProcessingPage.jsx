@@ -20,7 +20,7 @@ export default function CheckoutProcessingPage() {
   const navigate = useNavigate();
 
   const [status, setStatus] = useState("processing");
-  const [pollCount, setPollCount] = useState(0);
+  const [redirectUrl, setRedirectUrl] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -30,53 +30,51 @@ export default function CheckoutProcessingPage() {
     }
 
     let isMounted = true;
+    let inFlight = false;
 
     const pollStatus = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const response = await publicApi.getCheckoutStatus(token);
         if (!isMounted) return;
 
         const currentStatus = response?.status || "processing";
         setStatus(currentStatus);
+        setRedirectUrl(response?.redirectUrl || null);
+        setError(null);
 
         if (currentStatus === "active") {
           navigate(`/checkout/success${token ? `?token=${token}` : ""}`);
         } else if (currentStatus === "failed") {
           navigate("/checkout/failed");
-        } else {
-          // In development/test mode, auto-advance to success after 4 poll attempts (~10s)
-          const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === "development";
-          if (isDevOrTest && pollCount >= 3) {
-            setStatus("active");
-            navigate(`/checkout/success${token ? `?token=${token}` : ""}`);
-          }
         }
       } catch (err) {
         if (!isMounted) return;
         console.warn("Status polling error:", err?.message);
-        const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === "development";
-        if (isDevOrTest && pollCount >= 3) {
-          setStatus("active");
-          navigate(`/checkout/success${token ? `?token=${token}` : ""}`);
-        }
+        setError('Payment confirmation is temporarily unavailable. We will keep checking. Please do not pay again.');
+      } finally {
+        inFlight = false;
       }
     };
 
     pollStatus();
     const interval = setInterval(() => {
-      setPollCount((prev) => prev + 1);
       pollStatus();
-    }, 2500);
+    }, 15000);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [token, navigate, pollCount]);
+  }, [token, navigate]);
 
   return (
     <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
+        {status === 'awaiting_payment' && redirectUrl && (
+          <Button onClick={() => window.location.assign(redirectUrl)}>Resume QR Ph payment</Button>
+        )}
         {error ? (
           <div className="space-y-4">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">

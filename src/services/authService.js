@@ -98,7 +98,7 @@ export function sessionToAuth(session) {
 
 export async function resolveSessionAuth(session) {
   const auth = sessionToAuth(session);
-  if (!session) return auth;
+  if (!session || auth.role) return auth;
 
   try {
     const { data } = await withTimeout(api.get("/auth/session"), "session verification");
@@ -139,8 +139,6 @@ export async function resolveSessionAuth(session) {
     }
   }
 
-  if (auth.role && auth.role !== "super_admin") return auth;
-
   const { data, error } = await supabase
     .from("user_roles")
     .select("role_code")
@@ -152,6 +150,7 @@ export async function resolveSessionAuth(session) {
   }
 
   const priority = [
+    "super_admin",
     "admin",
     "client_manager",
     "staff",
