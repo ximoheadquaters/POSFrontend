@@ -62,8 +62,15 @@ const PLAN_CAPABILITIES = [
 ];
 
 export default function TenantBillingPage() {
-  const [subscription, setSubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("ximo_billing_subscription");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!subscription);
   const [error, setError] = useState(null);
   const [isPermissionDenied, setIsPermissionDenied] = useState(false);
 
@@ -92,19 +99,22 @@ export default function TenantBillingPage() {
     }
   };
 
-  const fetchSubscription = async () => {
-    setLoading(true);
+  const fetchSubscription = async (background = false) => {
+    if (!background && !subscription) setLoading(true);
     setError(null);
     setIsPermissionDenied(false);
 
     try {
       const response = await api.get("/billing/subscription");
       setSubscription(response.data);
+      try {
+        sessionStorage.setItem("ximo_billing_subscription", JSON.stringify(response.data));
+      } catch {}
     } catch (err) {
       if (err?.response?.status === 403) {
         setIsPermissionDenied(true);
         setError("Only your organization’s billing administrator can manage the subscription.");
-      } else {
+      } else if (!subscription) {
         setError(err?.response?.data?.error?.message || "We couldn’t load billing details. Try again.");
       }
     } finally {
@@ -113,7 +123,7 @@ export default function TenantBillingPage() {
   };
 
   useEffect(() => {
-    fetchSubscription();
+    fetchSubscription(Boolean(subscription));
   }, []);
 
   const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === "development" || import.meta.env.MODE === "test" || !import.meta.env.PROD;

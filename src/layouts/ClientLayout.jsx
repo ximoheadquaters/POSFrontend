@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import {
   NavLink,
   Outlet,
@@ -6,6 +7,7 @@ import {
   useOutletContext,
 } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import api from "../app/axios";
 import XimoAdminMark from "../assets/ximo-admin-mark.png";
 
 const workspaceLinks = [
@@ -36,6 +38,37 @@ export default function ClientLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user, isLoading } = useAuth();
+  
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("ximo_client_workspace");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loadingWorkspace, setLoadingWorkspace] = useState(!workspace);
+
+  const fetchWorkspace = useCallback(async (background = false) => {
+    if (!background && !workspace) setLoadingWorkspace(true);
+    try {
+      const res = await api.get("/client/workspace");
+      if (res.data?.data) {
+        setWorkspace(res.data.data);
+        try {
+          sessionStorage.setItem("ximo_client_workspace", JSON.stringify(res.data.data));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn("Failed to load workspace data:", err?.message);
+    } finally {
+      setLoadingWorkspace(false);
+    }
+  }, [workspace]);
+
+  useEffect(() => {
+    fetchWorkspace(Boolean(workspace));
+  }, []);
   const accountName =
     user?.user_metadata?.display_name ||
     user?.user_metadata?.full_name ||
@@ -182,7 +215,14 @@ export default function ClientLayout() {
           )}
         </div>
         <div className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 lg:px-10 lg:py-9 xl:px-12">
-          <Outlet context={{ clientPreview }} />
+          <Outlet
+            context={{
+              clientPreview,
+              workspace,
+              loadingWorkspace,
+              refreshWorkspace: () => fetchWorkspace(false),
+            }}
+          />
         </div>
       </main>
 

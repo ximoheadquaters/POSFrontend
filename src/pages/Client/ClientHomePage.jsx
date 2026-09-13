@@ -1,31 +1,10 @@
-import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import api from "../../app/axios";
 
 export default function ClientHomePage() {
-  const { clientPreview = false } = useOutletContext() || {};
+  const context = useOutletContext() || {};
+  const { clientPreview = false, workspace = null } = context;
   const { user } = useAuth();
-  const [workspace, setWorkspace] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    api
-      .get("/client/workspace")
-      .then((res) => {
-        if (mounted && res.data?.data) {
-          setWorkspace(res.data.data);
-        }
-      })
-      .catch((err) => console.warn("Failed to load workspace data:", err?.message))
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const firstName = String(
     user?.user_metadata?.display_name ||
