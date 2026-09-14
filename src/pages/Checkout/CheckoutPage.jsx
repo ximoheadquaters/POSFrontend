@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { publicApi } from "../../services/publicApi";
-import Spinner from "../../components/common/Spinner";
+import CheckoutLoading from "../../components/common/CheckoutLoading";
 import Button from "../../components/common/Button";
 
 const STEPS = [
@@ -165,6 +165,8 @@ export default function CheckoutPage() {
 
   const isDevOrTest = paymentConfig?.testMode === true;
 
+  if (loadingPlan) return <CheckoutLoading />;
+
   return (
     <div className="bg-[#F8FAF8] min-h-screen pt-24 pb-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -222,11 +224,6 @@ export default function CheckoutPage() {
               </Link>
             </div>
 
-            {loadingPlan ? (
-              <div className="py-12 flex justify-center">
-                <Spinner size="md" />
-              </div>
-            ) : (
               <div className="p-6 bg-[#F9FBF9] rounded-2xl border border-[#E1E8E2] space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -255,7 +252,6 @@ export default function CheckoutPage() {
                   </ul>
                 </div>
               </div>
-            )}
 
             <Button onClick={handleNextStep} className="w-full min-h-[44px]">
               Continue to Account Setup

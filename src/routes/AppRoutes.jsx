@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Spinner from "../components/common/Spinner";
+import CheckoutLoading from "../components/common/CheckoutLoading";
 import AdminRoute from "./AdminRoute";
 import ClientRoute from "./ClientRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -115,7 +116,11 @@ export default function AppRoutes() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout" element={
+            <Suspense fallback={<CheckoutLoading />}>
+              <CheckoutPage />
+            </Suspense>
+          } />
           <Route
             path="/checkout/processing"
             element={<CheckoutProcessingPage />}
