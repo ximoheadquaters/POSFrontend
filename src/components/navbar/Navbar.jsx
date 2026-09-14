@@ -50,24 +50,10 @@ function ServiceIcon({ slug, className = "" }) {
 }
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [isPastHero, setIsPastHero] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
-  const isLanding = location.pathname === "/";
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 24);
-      const hero = document.getElementById("landing-hero");
-      setIsPastHero(hero ? hero.getBoundingClientRect().bottom <= 0 : true);
-    };
-    requestAnimationFrame(handleScroll);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [location.pathname]);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -90,25 +76,11 @@ export default function Navbar() {
     };
   }, []);
 
-  const isOverHero = isLanding && !isPastHero;
-  const useLightControls = !isOverHero && !isScrolled;
-  const surface = isOverHero
-    ? "border-white/65 bg-white/90"
-    : isScrolled
-      ? "border-[#DDE5DE] bg-white"
-      : "border-primary bg-primary";
-  const navItem = useLightControls
-    ? "text-white/78 hover:bg-white/10 hover:text-white"
-    : "text-[#4B574E] hover:bg-[#E6F2E9] hover:text-primary";
-  const activeNavItem = useLightControls
-    ? "bg-white/12 text-white"
-    : "bg-[#E6F2E9] text-primary";
-  const loginStyle = useLightControls
-    ? "border-white/40 text-white hover:border-white hover:bg-white/10"
-    : "border-[#B7CEBD] text-primary hover:border-primary hover:bg-[#E6F2E9]";
-  const ctaStyle = useLightControls
-    ? "bg-white text-primary hover:bg-[#E6F2E9]"
-    : "bg-primary text-white hover:bg-[#164F34]";
+  const navItem = "text-[#4B574E] hover:bg-[#E6F2E9] hover:text-primary";
+  const activeNavItem = "bg-[#E6F2E9] text-primary";
+  const loginStyle =
+    "border-[#B7CEBD] text-primary hover:border-primary hover:bg-[#E6F2E9]";
+  const ctaStyle = "bg-primary text-white hover:bg-[#164F34]";
   const isServicesPage = location.pathname === "/services";
   const handleHomeClick = (event) => {
     if (location.pathname === "/") {
@@ -122,7 +94,7 @@ export default function Navbar() {
   return (
     <header
       ref={menuRef}
-      className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${surface}`}
+      className="fixed inset-x-0 top-0 z-50 border-b border-[#DDE5DE] bg-white"
     >
       <nav className="mx-auto flex h-[58px] w-full max-w-[1350px] items-center justify-between px-5 sm:px-6 md:h-[62px] lg:h-[67px] lg:px-8">
         <Link
@@ -134,10 +106,10 @@ export default function Navbar() {
           <img
             src="/ximo-logo-mark.png"
             alt=""
-            className={`h-8 w-[38px] object-contain sm:h-[35px] sm:w-[40px] ${useLightControls ? "brightness-0 invert" : ""}`}
+            className="h-8 w-[38px] object-contain sm:h-[35px] sm:w-[40px]"
           />
           <span
-            className={`hidden text-[24px] font-bold tracking-[-0.08em] sm:block lg:text-[27px] ${useLightControls ? "text-white" : "text-primary"}`}
+            className="hidden text-[24px] font-bold tracking-[-0.08em] text-primary sm:block lg:text-[27px]"
           >
             Ximo
           </span>
@@ -189,7 +161,7 @@ export default function Navbar() {
             ))}
           </div>
           <span
-            className={`h-6 w-px ${useLightControls ? "bg-white/25" : "bg-[#D6DED7]"}`}
+            className="h-6 w-px bg-[#D6DED7]"
             aria-hidden="true"
           />
           <div className="flex items-center gap-3">
@@ -219,7 +191,7 @@ export default function Navbar() {
             <ProfileIcon />
           </Link>
           <button
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${useLightControls ? "border-white/40 text-white" : "border-[#B7CEBD] text-primary"}`}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#B7CEBD] text-primary transition-colors"
             onClick={() => setIsMobileOpen((open) => !open)}
             aria-label="Toggle menu"
           >
