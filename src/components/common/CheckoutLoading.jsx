@@ -1,6 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import lottie from "lottie-web/build/player/lottie_light";
+import checkoutDots from "./checkoutDots";
 
 export default function CheckoutLoading() {
+  const animationRef = useRef(null);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animation = lottie.loadAnimation({
+      container: animationRef.current,
+      renderer: "svg",
+      loop: true,
+      autoplay: !reducedMotion.matches,
+      animationData: structuredClone(checkoutDots),
+    });
+    const updateMotion = () => {
+      if (reducedMotion.matches) animation.goToAndStop(0, true);
+      else animation.play();
+    };
+    reducedMotion.addEventListener("change", updateMotion);
+    return () => {
+      reducedMotion.removeEventListener("change", updateMotion);
+      animation.destroy();
+    };
+  }, []);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -17,10 +41,7 @@ export default function CheckoutLoading() {
       aria-busy="true"
     >
       <div className="max-w-sm text-center">
-        <div className="relative mx-auto mb-7 flex h-20 w-20 items-center justify-center" aria-hidden="true">
-          <div className="absolute inset-0 rounded-full border-2 border-[#E1E8E2] border-t-primary motion-safe:animate-spin" />
-          <img src="/ximo-logo-mark.png" alt="" className="h-9 w-11 object-contain" />
-        </div>
+        <div ref={animationRef} className="mx-auto mb-7 h-20 w-[120px]" aria-hidden="true" />
         <h1 className="text-2xl font-bold tracking-tight text-[#1F2923]">
           Preparing your plan
         </h1>
