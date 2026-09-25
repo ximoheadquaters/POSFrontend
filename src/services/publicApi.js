@@ -1,12 +1,13 @@
-import api from "../app/axios";
+import api from '../app/axios';
 
 export const publicApi = {
+  quoteCheckout: async (payload) => (await api.post('/public/checkout/quote', payload)).data,
   getPaymentConfiguration: async () => (await api.get('/public/checkout/config')).data,
   /**
    * Fetch canonical public plans catalog
    */
   getPublicPlans: async () => {
-    const response = await api.get("/public/plans");
+    const response = await api.get('/public/plans');
     return response.data;
   },
 
@@ -14,7 +15,7 @@ export const publicApi = {
    * Create a checkout session
    */
   createCheckoutSession: async (payload) => {
-    const response = await api.post("/public/checkout/session", payload);
+    const response = await api.post('/public/checkout/session', payload);
     return response.data;
   },
 
@@ -30,7 +31,7 @@ export const publicApi = {
    * Renew current subscription
    */
   renewSubscription: async () => {
-    const response = await api.post("/billing/renew", {});
+    const response = await api.post('/billing/renew', {});
     return response.data;
   },
 };

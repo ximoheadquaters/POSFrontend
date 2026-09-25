@@ -84,7 +84,7 @@ export default function PricingPage() {
   }, []);
 
   const handleSelectPlan = (planCode) => {
-    navigate(`/checkout?plan=${planCode}`);
+    navigate(`/checkout?plan=${planCode}${businessFilter !== "all" ? `&business=${businessFilter}` : ""}`);
   };
 
   return (

@@ -1,494 +1,577 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import useAuth from "../../hooks/useAuth";
-import { publicApi } from "../../services/publicApi";
-import CheckoutLoading from "../../components/common/CheckoutLoading";
-import Button from "../../components/common/Button";
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
+import { publicApi } from '../../services/publicApi';
+import CheckoutLoading from '../../components/common/CheckoutLoading';
+import Button from '../../components/common/Button';
 
 const STEPS = [
-  { id: 1, title: "Your Plan" },
-  { id: 2, title: "Your Account" },
-  { id: 3, title: "Your Business" },
-  { id: 4, title: "Payment" },
-  { id: 5, title: "Review" },
+  'Business & software',
+  'Package',
+  'Add-ons',
+  'Branches',
+  'Review & terms',
+  'Payment',
+  'Confirmation',
 ];
+const PROFILES = [
+  ['retail', 'Retail'],
+  ['food_service', 'Food service'],
+  ['hybrid', 'Retail & food service'],
+];
+const DRAFT_KEY = 'ximo_subscription_order';
+const money = (amount) =>
+  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount / 100);
+const inputClass =
+  'mt-2 w-full min-h-12 rounded-xl border border-[#D4DDD5] bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+const defaults = {
+  softwareCode: 'ximo_pos',
+  intendedBusinessProfile: 'retail',
+  organizationName: '',
+  planCode: '',
+  addOnCodes: [],
+  modificationRequest: '',
+  branchCount: 1,
+};
+function readDraft() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+    if (saved && Array.isArray(saved.addOnCodes)) return { ...defaults, ...saved };
+  } catch {
+    /* Continue with a new order if storage is unavailable. */
+  }
+  return defaults;
+}
 
 export default function CheckoutPage() {
-  const [searchParams] = useSearchParams();
-  const planCodeFromUrl = searchParams.get("plan");
-  const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
-
-  const [currentStep, setCurrentStep] = useState(1);
-  const [loadingPlan, setLoadingPlan] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [planError, setPlanError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [paymentConfig, setPaymentConfig] = useState(null);
-  useEffect(() => {
-    publicApi.getPaymentConfiguration().then(setPaymentConfig).catch(() => setPaymentConfig({ enabled: false }));
-  }, []);
-
-  // Business form state
-  const [businessData, setBusinessData] = useState({
-    organizationName: "",
-    intendedBusinessProfile: "retail", // 'retail', 'food_service', 'retail_and_food_service'
-    timezone: "Asia/Manila",
-    currency: "PHP",
-  });
-
-  // Load selected plan from API (Never trust URL price!)
-  useEffect(() => {
-    const fetchPlanDetails = async () => {
-      setLoadingPlan(true);
-      setPlanError(null);
-
-      // Determine plan code from URL or sessionStorage
-      const code = planCodeFromUrl || sessionStorage.getItem("ximo_selected_plan") || "starter";
-      sessionStorage.setItem("ximo_selected_plan", code);
-
-      try {
-        const plans = await publicApi.getPublicPlans();
-        const found = plans?.find((p) => p.code === code);
-
-        if (found) {
-          setSelectedPlan(found);
-        } else {
-          // Fallback if specific plan code not found
-          setSelectedPlan(plans?.[0] || {
-            code: "starter",
-            displayName: "Starter Plan",
-            monthlyPrice: "499.00",
-            currency: "PHP",
-            features: ["Fast POS Checkout", "Inventory Management", "Customer Directory"]
-          });
-        }
-      } catch (err) {
-        console.warn("Error fetching plan details, using fallback:", err?.message);
-        setSelectedPlan({
-          code: code,
-          displayName: code === "business" ? "Business Plan" : "Starter Plan",
-          monthlyPrice: code === "business" ? "999.00" : "499.00",
-          currency: "PHP",
-          features: ["POS Checkout", "Inventory Management", "Sales Reports"]
-        });
-      } finally {
-        setLoadingPlan(false);
-      }
-    };
-
-    fetchPlanDetails();
-  }, [planCodeFromUrl]);
-
-  // Load saved business data from sessionStorage if exists
-  useEffect(() => {
-    const saved = sessionStorage.getItem("ximo_business_data");
-    if (saved) {
-      try {
-        setBusinessData((prev) => ({ ...prev, ...JSON.parse(saved) }));
-      } catch {
-        // ignore parse error
-      }
-    }
-  }, []);
-
-  const updateBusinessField = (field, val) => {
-    setBusinessData((prev) => {
-      const next = { ...prev, [field]: val };
-      sessionStorage.setItem("ximo_business_data", JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const isEmailVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
-
-  const handleNextStep = () => {
-    setErrorMsg(null);
-    if (currentStep === 3 && !businessData.organizationName.trim()) {
-      setErrorMsg("Please enter an organization name.");
-      return;
-    }
-    setCurrentStep((prev) => Math.min(prev + 1, 5));
-  };
-
-  const handlePrevStep = () => {
-    setErrorMsg(null);
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleStartCheckout = async () => {
-    if (submitting) return;
-
-    if (!isAuthenticated || !user?.email) {
-      setErrorMsg("Please sign in or create an account first.");
-      setCurrentStep(2);
-      return;
-    }
-
-    if (!businessData.organizationName.trim()) {
-      setErrorMsg("Please enter your business organization name.");
-      setCurrentStep(3);
-      return;
-    }
-
-    setSubmitting(true);
-    setErrorMsg(null);
-
+  const [order, setOrder] = useState(readDraft);
+  const [step, setStep] = useState(() => {
     try {
-      const payload = {
-        planCode: selectedPlan.code,
-        billingInterval: "monthly",
-        ownerEmail: user.email,
-        organizationName: businessData.organizationName.trim(),
-        intendedBusinessProfile: businessData.intendedBusinessProfile,
-        currency: "PHP",
-      };
-
-      const result = await publicApi.createCheckoutSession(payload);
-
-      if (result?.redirectUrl) {
-        window.location.assign(result.redirectUrl);
-      } else if (result?.checkoutSessionToken) {
-        // Clear transient form state
-        sessionStorage.removeItem("ximo_business_data");
-        navigate(`/checkout/processing?token=${result.checkoutSessionToken}`);
-      } else {
-        throw new Error("No session token returned from server.");
-      }
-    } catch (err) {
-      console.error("Checkout creation error:", err);
-      setErrorMsg(err?.response?.data?.error?.message || "Checkout session creation failed. Try again.");
-      setSubmitting(false);
+      return Math.max(1, Math.min(Number(sessionStorage.getItem('ximo_checkout_step')) || 1, 4));
+    } catch {
+      return 1;
     }
-  };
+  });
+  const [plans, setPlans] = useState([]);
+  const [config, setConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [quote, setQuote] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const selectedPlan = plans.find((plan) => plan.code === order.planCode);
+  const catalog = config?.orderConfiguration;
+  const includedModules = new Set(selectedPlan?.modules?.map((module) => module.code) || []);
+  const isVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
 
-  const isDevOrTest = paymentConfig?.testMode === true;
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([publicApi.getPublicPlans(), publicApi.getPaymentConfiguration()])
+      .then(([availablePlans, paymentConfig]) => {
+        if (!mounted) return;
+        const available = availablePlans.filter((plan) => plan.availability === 'available');
+        if (!available.length) throw new Error('No packages are currently available.');
+        setPlans(available);
+        setConfig(paymentConfig);
+        setOrder((previous) => {
+          const requested = params.get('plan') || previous.planCode;
+          const planCode = available.some((plan) => plan.code === requested)
+            ? requested
+            : available[0].code;
+          const profile = params.get('business');
+          return {
+            ...previous,
+            planCode,
+            ...(PROFILES.some(([code]) => code === profile)
+              ? { intendedBusinessProfile: profile }
+              : {}),
+          };
+        });
+      })
+      .catch((err) => {
+        if (mounted) setError(err.message || 'Unable to load subscription options.');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [params]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(order));
+    } catch {
+      /* Draft persistence is optional. */
+    }
+  }, [order]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('ximo_checkout_step', String(step));
+    } catch {
+      /* Continue without storage. */
+    }
+  }, [step]);
 
-  if (loadingPlan) return <CheckoutLoading />;
+  function update(patch) {
+    setOrder((previous) => ({ ...previous, ...patch }));
+    setQuote(null);
+    setAccepted(false);
+    setError('');
+  }
+  async function next() {
+    setError('');
+    if (step === 1 && !order.organizationName.trim())
+      return setError('Enter your business name to continue.');
+    if (step === 4) {
+      setBusy(true);
+      try {
+        setQuote(await publicApi.quoteCheckout({ ...order, termsVersion: catalog?.termsVersion }));
+        setStep(5);
+      } catch (err) {
+        setError(
+          err?.response?.data?.error?.message ||
+            'We could not calculate this order. Please try again.',
+        );
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (step === 5 && !accepted)
+      return setError('Accept the Terms and Agreement before continuing.');
+    setStep((value) => Math.min(value + 1, 6));
+  }
+  async function pay() {
+    if (busy) return;
+    if (!accepted || !quote) {
+      setStep(4);
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const result = await publicApi.createCheckoutSession({
+        ...order,
+        organizationName: order.organizationName.trim(),
+        ownerEmail: user.email,
+        billingInterval: 'monthly',
+        currency: 'PHP',
+        termsAccepted: accepted,
+        termsVersion: catalog.termsVersion,
+        reviewedAmount: quote.amount,
+      });
+      if (!result.redirectUrl)
+        throw new Error('The payment link is unavailable. Please try again.');
+      window.location.assign(result.redirectUrl);
+    } catch (err) {
+      setError(
+        err?.response?.data?.error?.message || err.message || 'Payment could not be started.',
+      );
+      if (err?.response?.data?.error?.code === 'ORDER_PRICE_CHANGED') {
+        setStep(4);
+        setAccepted(false);
+        setQuote(null);
+      }
+      setBusy(false);
+    }
+  }
+  if (loading) return <CheckoutLoading />;
+  if (!catalog || !selectedPlan)
+    return (
+      <main className="pt-32 px-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold">Subscription setup</h1>
+        <p role="alert" className="my-6">
+          {error || 'Subscription options are unavailable.'}
+        </p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </main>
+    );
+  const estimatedTotal =
+    Math.round(Number(selectedPlan.monthlyPrice) * 100) +
+    catalog.addOns
+      .filter((item) => order.addOnCodes.includes(item.code))
+      .reduce((sum, item) => sum + item.monthlyPrice * 100, 0) +
+    Math.max(0, (order.branchCount || 1) - catalog.includedBranches) *
+      catalog.extraBranchMonthlyPrice *
+      100;
 
   return (
-    <div className="bg-[#F8FAF8] min-h-screen pt-24 pb-16 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto space-y-8">
-
-        {/* Stepper Header */}
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-[#1F2923]">Store Setup & Subscription</h1>
-            <span className="text-xs font-semibold text-primary bg-[#E6F2E9] px-3 py-1 rounded-full">
-              Step {currentStep} of 5
-            </span>
-          </div>
-
-          {/* Step Badges */}
-          <div className="grid grid-cols-5 gap-1.5 pt-2">
-            {STEPS.map((step) => (
-              <div
-                key={step.id}
-                className={`h-2 rounded-full transition-colors ${
-                  step.id <= currentStep ? "bg-primary" : "bg-[#E1E8E2]"
-                }`}
-                title={step.title}
-              />
-            ))}
-          </div>
-          <div className="flex justify-between text-[11px] font-semibold text-[#5A685D] px-1">
-            {STEPS.map((step) => (
-              <span
-                key={step.id}
-                className={step.id === currentStep ? "text-primary font-bold" : ""}
+    <main className="min-h-screen bg-[#F8FAF8] px-4 pb-16 pt-28 sm:px-6">
+      <div className="mx-auto max-w-5xl space-y-6">
+        <header>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary">
+            Build your Ximo subscription
+          </p>
+          <h1 className="mt-2 text-3xl font-bold text-[#1F2923]">Your business. Your package.</h1>
+          <p className="mt-2 text-sm text-[#5A685D]">
+            Choose your setup, review the complete price, then pay securely.
+          </p>
+        </header>
+        <nav
+          aria-label="Subscription progress"
+          className="overflow-x-auto rounded-2xl border bg-white p-4"
+        >
+          <ol className="flex min-w-[680px] gap-3">
+            {STEPS.map((title, index) => (
+              <li
+                key={title}
+                aria-current={step === index + 1 ? 'step' : undefined}
+                className={`flex-1 text-xs ${step === index + 1 ? 'font-bold text-primary' : 'text-[#68736A]'}`}
               >
-                {step.title}
-              </span>
+                <span
+                  className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full ${step >= index + 1 ? 'bg-primary text-white' : 'bg-[#EDF1ED]'}`}
+                >
+                  {index + 1}
+                </span>
+                {title}
+              </li>
             ))}
-          </div>
-        </div>
-
-        {/* Error Banner */}
-        {errorMsg && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 font-medium">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* STEP 1: Your Plan */}
-        {currentStep === 1 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#F0F4F1] pb-4">
-              <div>
-                <h2 className="text-lg font-bold text-[#1F2923]">Selected Subscription Plan</h2>
-                <p className="text-xs text-[#5A685D]">Official price resolved directly from Ximo server</p>
-              </div>
-              <Link to="/pricing" className="text-xs font-bold text-primary hover:underline">
-                Change Plan
-              </Link>
-            </div>
-
-              <div className="p-6 bg-[#F9FBF9] rounded-2xl border border-[#E1E8E2] space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-black text-[#1F2923]">{selectedPlan?.displayName}</h3>
-                    <p className="text-xs text-[#5A685D] mt-1">{selectedPlan?.shortDescription}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-black text-[#1F2923]">
-                      ₱{Number(selectedPlan?.monthlyPrice || 499).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-xs text-[#5A685D] block">/month (PHP)</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-[#E1E8E2]/60 space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#5A685D]">Included Features:</p>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#39423B]">
-                    {selectedPlan?.features?.map((feat, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-            <Button onClick={handleNextStep} className="w-full min-h-[44px]">
-              Continue to Account Setup
-            </Button>
-          </div>
-        )}
-
-        {/* STEP 2: Your Account */}
-        {currentStep === 2 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
+          </ol>
+        </nav>
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
+          <section className="space-y-6 rounded-3xl border border-[#D4DDD5] bg-white p-5 sm:p-8">
             <div>
-              <h2 className="text-lg font-bold text-[#1F2923]">Account Ownership</h2>
-              <p className="text-xs text-[#5A685D]">Who will own and manage this Ximo store subscription?</p>
+              <p className="text-xs font-semibold text-primary">Step {step} of 7</p>
+              <h2 className="mt-1 text-2xl font-bold">{STEPS[step - 1]}</h2>
             </div>
-
-            {!isAuthenticated ? (
-              <div className="p-6 bg-[#F9FBF9] rounded-2xl border border-[#E1E8E2] text-center space-y-4">
-                <p className="text-xs text-[#5A685D]">You must be signed in to set up a subscription.</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to={`/signup?plan=${selectedPlan?.code}`} className="flex-1 min-h-[44px] flex items-center justify-center py-2.5 px-4 bg-primary text-white font-bold text-xs rounded-xl hover:bg-[#164F34] transition-colors">
-                    Create New Account
-                  </Link>
-                  <Link to={`/login?redirect=/checkout`} className="flex-1 min-h-[44px] flex items-center justify-center py-2.5 px-4 bg-white border border-[#E1E8E2] text-primary font-bold text-xs rounded-xl hover:bg-[#F0F4F1] transition-colors">
-                    Sign In to Existing Account
-                  </Link>
-                </div>
+            {error && (
+              <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </p>
+            )}
+            {step === 1 && (
+              <div className="space-y-5">
+                <label className="block text-sm font-semibold">
+                  Business name
+                  <input
+                    maxLength={200}
+                    value={order.organizationName}
+                    onChange={(e) => update({ organizationName: e.target.value })}
+                    placeholder="Your business name"
+                    className={inputClass}
+                  />
+                </label>
+                <fieldset className="space-y-3">
+                  <legend className="mb-2 text-sm font-semibold">
+                    Which software do you need?
+                  </legend>
+                  {catalog.software.map((software) => (
+                    <label
+                      key={software.code}
+                      className="flex items-center gap-3 rounded-xl border border-primary bg-[#F0F6F1] p-4"
+                    >
+                      <input
+                        type="radio"
+                        name="software"
+                        checked={order.softwareCode === software.code}
+                        onChange={() => update({ softwareCode: software.code })}
+                      />
+                      <span className="font-semibold">{software.name}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <fieldset className="space-y-3">
+                  <legend className="mb-2 text-sm font-semibold">Business type</legend>
+                  {PROFILES.map(([code, title]) => (
+                    <label
+                      key={code}
+                      className={`flex cursor-pointer gap-3 rounded-xl border p-4 ${order.intendedBusinessProfile === code ? 'border-primary bg-[#F0F6F1]' : 'border-[#D4DDD5]'}`}
+                    >
+                      <input
+                        type="radio"
+                        name="businessProfile"
+                        checked={order.intendedBusinessProfile === code}
+                        onChange={() => update({ intendedBusinessProfile: code })}
+                      />
+                      <span className="text-sm font-semibold">{title}</span>
+                    </label>
+                  ))}
+                </fieldset>
               </div>
-            ) : (
-              <div className="p-6 bg-[#E6F2E9] border border-[#B7CEBD] rounded-2xl space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm">
-                    ✓
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#5A685D]">Signed in as owner:</p>
-                    <p className="text-sm font-bold text-[#1F2923]">{user?.email}</p>
-                  </div>
-                </div>
-
-                {!isEmailVerified && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
-                    Email verification is required before provisioning. Please verify your email via the link sent to your inbox.
-                  </div>
+            )}
+            {step === 2 && (
+              <fieldset className="space-y-4">
+                <legend className="mb-3 text-sm text-[#5A685D]">
+                  Choose a fixed-price package. Only the listed modules are included.
+                </legend>
+                {plans.map((plan) => (
+                  <label
+                    key={plan.code}
+                    className={`block cursor-pointer rounded-2xl border p-5 ${order.planCode === plan.code ? 'border-primary bg-[#F0F6F1]' : 'border-[#D4DDD5]'}`}
+                  >
+                    <span className="flex flex-wrap items-center gap-3">
+                      <input
+                        type="radio"
+                        name="plan"
+                        checked={order.planCode === plan.code}
+                        onChange={() => update({ planCode: plan.code, addOnCodes: [] })}
+                      />
+                      <span className="flex-1 font-bold">{plan.displayName}</span>
+                      <span className="font-bold">{money(plan.monthlyPrice * 100)}/mo</span>
+                    </span>
+                    <p className="mt-3 text-sm text-[#5A685D]">{plan.shortDescription}</p>
+                    <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                      {plan.features.map((feature) => (
+                        <li key={feature}>✓ {feature}</li>
+                      ))}
+                    </ul>
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            {step === 3 && (
+              <div className="space-y-4">
+                <p className="text-sm text-[#5A685D]">
+                  Included modules are already covered by your package.
+                </p>
+                {catalog.addOns.map((addOn) => {
+                  const included = addOn.moduleCodes.every((code) => includedModules.has(code));
+                  return (
+                    <label
+                      key={addOn.code}
+                      className="flex items-center gap-3 rounded-xl border p-4"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={included}
+                        checked={included || order.addOnCodes.includes(addOn.code)}
+                        onChange={(e) =>
+                          update({
+                            addOnCodes: e.target.checked
+                              ? [...order.addOnCodes, addOn.code]
+                              : order.addOnCodes.filter((code) => code !== addOn.code),
+                          })
+                        }
+                      />
+                      <span className="flex-1 text-sm font-semibold">{addOn.name}</span>
+                      <span className="text-sm">
+                        {included ? 'Included' : `${money(addOn.monthlyPrice * 100)}/mo`}
+                      </span>
+                    </label>
+                  );
+                })}
+                <label className="block pt-3 text-sm font-semibold">
+                  Specific modifications (optional)
+                  <textarea
+                    value={order.modificationRequest}
+                    maxLength={2000}
+                    onChange={(e) => update({ modificationRequest: e.target.value })}
+                    rows={4}
+                    className={inputClass}
+                    placeholder="Describe any special workflow, integration, or customization."
+                  />
+                </label>
+                <p className="text-xs text-[#5A685D]">
+                  Custom work is saved as a request for a separate quote. It is not included in this
+                  payment or automatic activation.
+                </p>
+              </div>
+            )}
+            {step === 4 && (
+              <div className="space-y-5">
+                <p className="text-sm text-[#5A685D]">
+                  One branch is included. Each additional branch adds{' '}
+                  {money(catalog.extraBranchMonthlyPrice * 100)} per month.
+                </p>
+                <label className="block text-sm font-semibold">
+                  Number of branches
+                  <input
+                    type="number"
+                    min={order.addOnCodes.includes('stock_transfers') ? 2 : 1}
+                    max={catalog.maxBranches}
+                    step={1}
+                    value={order.branchCount}
+                    onChange={(e) =>
+                      update({ branchCount: e.target.value === '' ? '' : Number(e.target.value) })
+                    }
+                    className={inputClass}
+                  />
+                </label>
+                <p className="text-xs text-[#5A685D]">
+                  Branches are created after payment. Rename them and enter addresses in Ximo POS.
+                </p>
+                {order.addOnCodes.includes('stock_transfers') && (
+                  <p className="text-xs text-primary">
+                    Stock transfers require at least two branches.
+                  </p>
                 )}
               </div>
             )}
-
-            <div className="flex gap-3">
-              <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
-              <Button onClick={handleNextStep} disabled={!isAuthenticated} className="flex-1 min-h-[44px]">
-                Continue to Business Setup
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: Your Business */}
-        {currentStep === 3 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-[#1F2923]">Business Information</h2>
-              <p className="text-xs text-[#5A685D]">Your business details for Ximo store organization</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-[#39423B]">
-                  Organization / Business Name *
-                </label>
-                <input
-                  type="text"
-                  value={businessData.organizationName}
-                  onChange={(e) => updateBusinessField("organizationName", e.target.value)}
-                  placeholder="e.g. Metro Retail Supermarket"
-                  className="w-full min-h-[44px] px-3.5 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#1F2923] focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-[#39423B]">
-                  Intended Business Type *
-                </label>
-                <select
-                  value={businessData.intendedBusinessProfile}
-                  onChange={(e) => updateBusinessField("intendedBusinessProfile", e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#1F2923] focus:outline-none focus:ring-2 focus:ring-primary/40"
+            {step === 5 && quote && (
+              <div className="space-y-5">
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <dt>Business</dt>
+                  <dd>{order.organizationName}</dd>
+                  <dt>Software / type</dt>
+                  <dd>
+                    Ximo POS ·{' '}
+                    {PROFILES.find(([code]) => code === order.intendedBusinessProfile)?.[1]}
+                  </dd>
+                  <dt>Branches</dt>
+                  <dd>{order.branchCount}</dd>
+                </dl>
+                <div className="divide-y rounded-xl border px-4">
+                  {quote.lineItems.map((line) => (
+                    <div key={line.code} className="flex justify-between gap-3 py-3 text-sm">
+                      <span>
+                        {line.name}
+                        {line.quantity > 1 ? ` × ${line.quantity}` : ''}
+                      </span>
+                      <span>{money(line.unitAmount * line.quantity)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between py-4 font-bold">
+                    <span>Total due / month</span>
+                    <span>{money(quote.amount)}</span>
+                  </div>
+                </div>
+                {order.modificationRequest && (
+                  <div className="rounded-xl bg-amber-50 p-4 text-sm">
+                    <p className="font-semibold">Custom request — separate quote required</p>
+                    <p className="mt-2 whitespace-pre-wrap">{order.modificationRequest}</p>
+                    <p className="mt-2 text-xs">
+                      The total covers your package, add-ons, and branches only.
+                    </p>
+                  </div>
+                )}
+                <p className="text-sm text-[#5A685D]">
+                  Pay for one month. QR Ph renewals require a new payment; automatic charges are not
+                  enabled.
+                </p>
+                <a
+                  href={catalog.termsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block font-semibold text-primary underline"
                 >
-                  <option value="retail">Pure Retail (Supermarket, Boutique, Convenience)</option>
-                  <option value="food_service">Food Service (Restaurant, Cafe, Fast Food)</option>
-                  <option value="hybrid">Hybrid (Retail + Food Service)</option>
-                </select>
-                <p className="text-[11px] text-[#5A685D] mt-1">
-                  Your business type helps Ximo organize the tools and language you see. Business type changes are managed by Ximo support.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-[#39423B]">Currency</label>
+                  Read the Terms and Agreement ↗
+                </a>
+                <label className="flex items-start gap-3 rounded-xl border p-4 text-sm">
                   <input
-                    type="text"
-                    value="PHP (Philippine Peso)"
-                    disabled
-                    className="w-full min-h-[44px] px-3.5 py-2 bg-gray-100 border border-[#E1E8E2] rounded-xl text-xs text-gray-500"
+                    type="checkbox"
+                    checked={accepted}
+                    onChange={(e) => setAccepted(e.target.checked)}
+                    className="mt-1"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-[#39423B]">Timezone</label>
-                  <input
-                    type="text"
-                    value="Asia/Manila (PHT)"
-                    disabled
-                    className="w-full min-h-[44px] px-3.5 py-2 bg-gray-100 border border-[#E1E8E2] rounded-xl text-xs text-gray-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
-              <Button onClick={handleNextStep} className="flex-1 min-h-[44px]">
-                Continue to Payment
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4: Payment Environment */}
-        {currentStep === 4 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-[#1F2923]">Pay with QR Ph</h2>
-              <p className="text-xs text-[#5A685D]">Scan the QR code on PayMongo using a QR Ph-compatible bank or e-wallet app. Renew with a new payment each month.</p>
-            </div>
-
-            {paymentConfig?.enabled ? (
-              /* Test Environment Banner */
-              <div className="p-6 bg-blue-50 border border-blue-200 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2 text-blue-800 font-bold text-xs uppercase tracking-wider">
-                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                  {isDevOrTest ? 'PayMongo Test Mode' : 'Secure PayMongo Checkout'}
-                </div>
-                <p className="text-xs text-blue-900 font-medium">
-                  {isDevOrTest ? 'Test checkout — no real payment will be charged.' : 'Pay for one month of your selected Ximo plan using QR Ph.'}
-                </p>
-                <p className="text-[11px] text-blue-700">
-                  Your subscription starts after PayMongo confirms your payment. Renewals require a new payment; you will not be charged automatically.
-                </p>
-              </div>
-            ) : (
-              /* Production Environment Notice (Disabled) */
-              <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
-                <div className="font-bold text-xs text-amber-800 uppercase tracking-wider">
-                  Online Payment System
-                </div>
-                <p className="text-sm font-bold text-amber-900">
-                  Online subscription checkout is not available yet.
-                </p>
-                <p className="text-xs text-amber-700">
-                  Please contact Ximo sales to complete registration for live production stores.
-                </p>
-                <div className="pt-2">
-                  <Link to="/contact" className="inline-flex min-h-[44px] items-center justify-center px-4 py-2 bg-amber-700 text-white font-bold text-xs rounded-xl hover:bg-amber-800 transition-colors">
-                    Contact Sales
-                  </Link>
-                </div>
+                  <span>
+                    I have reviewed my order and accept the Terms and Agreement. Custom
+                    modifications require a separate quote.
+                  </span>
+                </label>
               </div>
             )}
-
-            <div className="flex gap-3">
-              <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
-              <Button onClick={handleNextStep} disabled={!paymentConfig?.enabled} className="flex-1 min-h-[44px]">
-                Continue to Review
-              </Button>
+            {step === 6 && (
+              <div className="space-y-5">
+                <p className="text-sm text-[#5A685D]">
+                  Your order is confirmed for {money(quote?.amount || 0)}. Identify the subscription
+                  owner, then continue to secure payment.
+                </p>
+                {!isAuthenticated ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Link
+                      to={`/signup?plan=${encodeURIComponent(order.planCode)}`}
+                      className="rounded-xl bg-primary p-4 text-center text-sm font-bold text-white"
+                    >
+                      Create an account
+                    </Link>
+                    <Link
+                      to="/login?redirect=/checkout"
+                      className="rounded-xl border p-4 text-center text-sm font-bold text-primary"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-[#F0F6F1] p-4">
+                    <p className="text-sm">
+                      Subscription owner: <strong>{user?.email}</strong>
+                    </p>
+                    {!isVerified && (
+                      <p className="mt-3 text-sm text-amber-800">
+                        Verify your email using the link in your inbox, then return to pay.
+                      </p>
+                    )}
+                  </div>
+                )}
+                <div className="rounded-xl border p-4 text-sm">
+                  <h3 className="font-bold">QR Ph via PayMongo</h3>
+                  <p className="mt-2 text-[#5A685D]">
+                    On your first purchase, enter or confirm your billing details on PayMongo, then
+                    scan the QR code with your bank or e-wallet. QR Ph requires a new authorization
+                    for every purchase.
+                  </p>
+                  <p className="mt-2 text-[#5A685D]">
+                    After payment, you’ll receive a receipt and see your activation status.
+                  </p>
+                  {config.testMode && (
+                    <p className="mt-3 font-semibold text-amber-800">
+                      Test checkout — no real payment is collected.
+                    </p>
+                  )}
+                </div>
+                {!config.enabled && (
+                  <p role="status" className="text-sm text-amber-800">
+                    Online payment is currently unavailable.
+                  </p>
+                )}
+                <Button
+                  className="w-full"
+                  disabled={busy || !isAuthenticated || !isVerified || !config.enabled}
+                  onClick={pay}
+                >
+                  {busy ? 'Opening secure payment…' : `Pay ${money(quote?.amount || 0)} with QR Ph`}
+                </Button>
+              </div>
+            )}
+            <div className="flex gap-3 border-t pt-5">
+              {step > 1 && (
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setError('');
+                    setStep((value) => value - 1);
+                  }}
+                >
+                  Back
+                </Button>
+              )}
+              {step < 6 && (
+                <Button
+                  className="flex-1"
+                  disabled={busy || (step === 5 && !accepted)}
+                  onClick={next}
+                >
+                  {busy
+                    ? 'Calculating order…'
+                    : step === 5
+                      ? 'Confirm order & continue'
+                      : 'Continue'}
+                </Button>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* STEP 5: Final Review */}
-        {currentStep === 5 && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E1E8E2] shadow-sm space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-[#1F2923]">Review & Confirm Subscription</h2>
-              <p className="text-xs text-[#5A685D]">Please confirm your details before starting checkout session</p>
-            </div>
-
-            <div className="divide-y divide-[#F0F4F1] border border-[#E1E8E2] rounded-2xl overflow-hidden text-xs">
-              <div className="p-4 flex justify-between bg-[#F9FBF9]">
-                <span className="text-[#5A685D]">Selected Plan:</span>
-                <span className="font-bold text-[#1F2923]">{selectedPlan?.displayName}</span>
-              </div>
-              <div className="p-4 flex justify-between">
-                <span className="text-[#5A685D]">Monthly Price:</span>
-                <span className="font-bold text-[#1F2923]">
-                  ₱{Number(selectedPlan?.monthlyPrice || 499).toLocaleString("en-PH", { minimumFractionDigits: 2 })} / month
-                </span>
-              </div>
-              <div className="p-4 flex justify-between bg-[#F9FBF9]">
-                <span className="text-[#5A685D]">Owner Account:</span>
-                <span className="font-bold text-[#1F2923]">{user?.email}</span>
-              </div>
-              <div className="p-4 flex justify-between">
-                <span className="text-[#5A685D]">Organization Name:</span>
-                <span className="font-bold text-[#1F2923]">{businessData.organizationName}</span>
-              </div>
-              <div className="p-4 flex justify-between bg-[#F9FBF9]">
-                <span className="text-[#5A685D]">Business Profile:</span>
-                <span className="font-bold text-[#1F2923] capitalize">
-                  {businessData.intendedBusinessProfile.replace(/_/g, " ")}
-                </span>
-              </div>
-              <div className="p-4 flex justify-between">
-                <span className="text-[#5A685D]">Payment Mode:</span>
-                <span className="font-bold text-blue-700">QR Ph via PayMongo {isDevOrTest ? '(Test Mode)' : ''}</span>
-              </div>
-            </div>
-
-            {/* Sandbox Notice Banner */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs font-semibold text-blue-900">
-              {isDevOrTest ? 'PayMongo test checkout — no real payment will be charged.' : 'One monthly payment. No automatic renewal or recurring debit.'}
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button variant="secondary" onClick={handlePrevStep} className="min-h-[44px]">Back</Button>
-              <button
-                onClick={handleStartCheckout}
-                disabled={submitting || !paymentConfig?.enabled || !isEmailVerified}
-                className="flex-1 min-h-[44px] py-3 px-6 bg-primary hover:bg-[#164F34] text-white font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-50"
-              >
-                {submitting ? "Opening PayMongo..." : "Pay with QR Ph"}
-              </button>
-            </div>
-          </div>
-        )}
-
+          </section>
+          <aside className="rounded-2xl border bg-white p-5 lg:sticky lg:top-28">
+            <h2 className="text-sm font-bold">Your subscription</h2>
+            <p className="mt-4 text-sm">Ximo POS · {selectedPlan.displayName}</p>
+            <p className="mt-2 text-xs text-[#5A685D]">
+              {order.branchCount || 1} branch(es) · {order.addOnCodes.length} add-on(s)
+            </p>
+            <p className="mt-5 text-2xl font-bold text-primary">
+              {money(quote?.amount ?? estimatedTotal)}
+              <span className="text-xs font-normal"> / month</span>
+            </p>
+            <p className="mt-2 text-xs text-[#5A685D]">
+              {quote
+                ? 'Order total confirmed. Custom work quoted separately.'
+                : 'Review the complete order before payment.'}
+            </p>
+          </aside>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

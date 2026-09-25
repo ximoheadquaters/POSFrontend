@@ -1,23 +1,24 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { publicApi } from "../../services/publicApi";
-import Spinner from "../../components/common/Spinner";
-import Button from "../../components/common/Button";
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { publicApi } from '../../services/publicApi';
+import Spinner from '../../components/common/Spinner';
+import Button from '../../components/common/Button';
 
 export default function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [sessionState, setSessionState] = useState(null);
+  const [orderSummary, setOrderSummary] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     // Validate token exists (NEVER accept query parameter flags like success=true)
     if (!token) {
       setLoading(false);
-      setErrorMsg("We couldn’t find this checkout session.");
+      setErrorMsg('We couldn’t find this checkout session.');
       return;
     }
 
@@ -28,16 +29,21 @@ export default function CheckoutSuccessPage() {
         const response = await publicApi.getCheckoutStatus(token);
         if (!isMounted) return;
 
-        const serverStatus = response?.status || "invalid";
+        const serverStatus = response?.status || 'invalid';
         setSessionState(serverStatus);
+        setOrderSummary(response?.orderSummary || null);
+        if (serverStatus === 'active') {
+          sessionStorage.removeItem('ximo_subscription_order');
+          sessionStorage.removeItem('ximo_checkout_step');
+        }
 
-        if (serverStatus === "provisioning" || serverStatus === "processing") {
+        if (serverStatus === 'provisioning' || serverStatus === 'processing') {
           navigate(`/checkout/processing?token=${token}`, { replace: true });
         }
       } catch (err) {
         if (!isMounted) return;
-        console.warn("Error checking authoritative status:", err?.message);
-        setErrorMsg("We couldn’t verify this checkout session with the server.");
+        console.warn('Error checking authoritative status:', err?.message);
+        setErrorMsg('We couldn’t verify this checkout session with the server.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -55,13 +61,28 @@ export default function CheckoutSuccessPage() {
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-4">
           <Spinner size="lg" />
-          <p className="text-xs text-[#5A685D] font-medium">Verifying store readiness with server...</p>
+          <p className="text-xs text-[#5A685D] font-medium">
+            Verifying store readiness with server...
+          </p>
         </div>
       </div>
     );
   }
 
-  if (errorMsg || !sessionState || sessionState === "invalid") {
+  if (
+    errorMsg ||
+    !sessionState ||
+    ![
+      'active',
+      'awaiting_verification',
+      'awaiting_payment',
+      'failed',
+      'expired',
+      'canceled',
+      'provisioning',
+      'processing',
+    ].includes(sessionState)
+  ) {
     return (
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
@@ -71,10 +92,10 @@ export default function CheckoutSuccessPage() {
           <div className="space-y-2">
             <h1 className="text-xl font-bold text-[#1F2923]">Session Not Found</h1>
             <p className="text-xs text-[#5A685D]">
-              {errorMsg || "We couldn’t find this checkout session."}
+              {errorMsg || 'We couldn’t find this checkout session.'}
             </p>
           </div>
-          <Button onClick={() => navigate("/pricing")} className="w-full min-h-[44px]">
+          <Button onClick={() => navigate('/pricing')} className="w-full min-h-[44px]">
             Restart Checkout
           </Button>
         </div>
@@ -83,7 +104,7 @@ export default function CheckoutSuccessPage() {
   }
 
   // Awaiting Verification
-  if (sessionState === "awaiting_verification") {
+  if (sessionState === 'awaiting_verification') {
     return (
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
@@ -96,7 +117,10 @@ export default function CheckoutSuccessPage() {
               Please check your inbox and click the verification link to complete store setup.
             </p>
           </div>
-          <Button onClick={() => navigate(`/checkout/processing?token=${token}`)} className="w-full min-h-[44px]">
+          <Button
+            onClick={() => navigate(`/checkout/processing?token=${token}`)}
+            className="w-full min-h-[44px]"
+          >
             Check Processing Status
           </Button>
         </div>
@@ -105,7 +129,7 @@ export default function CheckoutSuccessPage() {
   }
 
   // Awaiting Payment
-  if (sessionState === "awaiting_payment") {
+  if (sessionState === 'awaiting_payment') {
     return (
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
@@ -118,7 +142,10 @@ export default function CheckoutSuccessPage() {
               Your payment has not been confirmed by the server yet.
             </p>
           </div>
-          <Button onClick={() => navigate(`/checkout/processing?token=${token}`)} className="w-full min-h-[44px]">
+          <Button
+            onClick={() => navigate(`/checkout/processing?token=${token}`)}
+            className="w-full min-h-[44px]"
+          >
             View Processing Page
           </Button>
         </div>
@@ -127,7 +154,7 @@ export default function CheckoutSuccessPage() {
   }
 
   // Failed
-  if (sessionState === "failed") {
+  if (sessionState === 'failed') {
     return (
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
@@ -141,10 +168,14 @@ export default function CheckoutSuccessPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => navigate("/contact")} className="flex-1 min-h-[44px]">
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/contact')}
+              className="flex-1 min-h-[44px]"
+            >
               Contact Support
             </Button>
-            <Button onClick={() => navigate("/pricing")} className="flex-1 min-h-[44px]">
+            <Button onClick={() => navigate('/pricing')} className="flex-1 min-h-[44px]">
               Try Again
             </Button>
           </div>
@@ -154,7 +185,7 @@ export default function CheckoutSuccessPage() {
   }
 
   // Expired or Canceled
-  if (sessionState === "expired" || sessionState === "canceled") {
+  if (sessionState === 'expired' || sessionState === 'canceled') {
     return (
       <div className="bg-[#F8FAF8] min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl border border-[#E1E8E2] shadow-sm text-center space-y-6">
@@ -167,13 +198,16 @@ export default function CheckoutSuccessPage() {
               This checkout session has expired or was canceled. Please start a new checkout.
             </p>
           </div>
-          <Button onClick={() => navigate("/pricing")} className="w-full min-h-[44px]">
+          <Button onClick={() => navigate('/pricing')} className="w-full min-h-[44px]">
             Restart Checkout
           </Button>
         </div>
       </div>
     );
   }
+
+  if (sessionState !== 'active')
+    return <div className="pt-32 text-center">Confirming your activation…</div>;
 
   // Authoritative Active State
   return (
@@ -184,11 +218,34 @@ export default function CheckoutSuccessPage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-extrabold text-[#1F2923]">
-            Your Ximo store is ready.
-          </h1>
+          <p className="text-xs font-bold text-primary">Step 7 of 7 · Confirmation</p>
+          <h1 className="text-2xl font-extrabold text-[#1F2923]">Your Ximo store is ready.</h1>
           <p className="text-xs text-[#5A685D]">
-            Your subscription is active and your organization has been provisioned. You can now sign in to start managing your POS.
+            Your subscription is active and your organization has been provisioned. You can now sign
+            in to start managing your POS.
+          </p>
+        </div>
+
+        <div className="space-y-3 rounded-xl border p-4 text-left text-sm">
+          <p className="font-semibold text-primary">✓ Payment confirmed</p>
+          <p className="font-semibold text-primary">✓ System activated</p>
+          {orderSummary && (
+            <>
+              <p>
+                Package: {orderSummary.planCode} · {orderSummary.branchCount} branch(es)
+              </p>
+              <p>
+                Paid:{' '}
+                {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(
+                  orderSummary.amount / 100,
+                )}
+              </p>
+              <p className="break-all text-xs">Order: {orderSummary.reference}</p>
+            </>
+          )}
+          <p className="text-xs text-[#5A685D]">
+            PayMongo sends your payment receipt to your billing email. Custom modification requests
+            are quoted separately.
           </p>
         </div>
 
