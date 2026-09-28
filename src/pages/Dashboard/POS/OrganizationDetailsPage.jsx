@@ -69,10 +69,21 @@ export default function OrganizationDetailsPage() {
   if (organizationResource.loading) return <LoadingPanel />;
   if (organizationResource.error) {
     return (
-      <ErrorPanel
-        error={organizationResource.error}
-        onRetry={organizationResource.refresh}
-      />
+      <div className="space-y-6">
+        <Breadcrumbs organization="Organization not found" />
+        <ErrorPanel
+          error={organizationResource.error}
+          onRetry={organizationResource.refresh}
+        />
+        <div>
+          <Link
+            to="/admin/systems/pos"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+          >
+            ← Back to POS Organizations
+          </Link>
+        </div>
+      </div>
     );
   }
 

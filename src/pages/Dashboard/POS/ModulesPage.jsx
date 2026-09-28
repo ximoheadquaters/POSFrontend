@@ -94,20 +94,28 @@ export default function ModulesPage() {
 
   if (organizationResource.loading || modulesResource.loading)
     return <LoadingPanel />;
-  if (organizationResource.error)
+  if (organizationResource.error || modulesResource.error) {
     return (
-      <ErrorPanel
-        error={organizationResource.error}
-        onRetry={organizationResource.refresh}
-      />
+      <div className="space-y-6">
+        <Breadcrumbs organization="Organization not found" />
+        <ErrorPanel
+          error={organizationResource.error || modulesResource.error}
+          onRetry={() => {
+            if (organizationResource.error) organizationResource.refresh();
+            if (modulesResource.error) modulesResource.refresh();
+          }}
+        />
+        <div>
+          <Link
+            to="/admin/systems/pos"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+          >
+            ← Back to POS Organizations
+          </Link>
+        </div>
+      </div>
     );
-  if (modulesResource.error)
-    return (
-      <ErrorPanel
-        error={modulesResource.error}
-        onRetry={modulesResource.refresh}
-      />
-    );
+  }
 
   return (
     <>

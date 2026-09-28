@@ -76,14 +76,34 @@ export const platformAdminApi = {
   },
 
   async getClient(clientId) {
-    const client = assertResult(
-      await supabase
+    const primaryResult = await supabase
+      .from("clients")
+      .select(
+        "*, client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
+      )
+      .eq("id", clientId)
+      .single();
+
+    if (
+      primaryResult.error &&
+      (primaryResult.error.code === "PGRST200" ||
+        primaryResult.error.code === "PGRST205" ||
+        primaryResult.error.message?.includes("applications"))
+    ) {
+      const fallbackResult = await supabase
         .from("clients")
-        .select(
-          "*, client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
-        )
+        .select("*, client_contacts(*), client_addresses(*), client_systems(*)")
         .eq("id", clientId)
-        .single(),
+        .single();
+      const client = assertResult(
+        fallbackResult,
+        "The client could not be loaded.",
+      );
+      return normalizeClient(client);
+    }
+
+    const client = assertResult(
+      primaryResult,
       "The client could not be loaded.",
     );
     return normalizeClient(client);
@@ -114,15 +134,32 @@ export const platformAdminApi = {
   },
 
   async listSystems() {
-    const applications = assertResult(
-      await supabase
-        .from("applications")
-        .select(
-          "id, code, name, description, launch_url, is_active, created_at, updated_at",
-        )
-        .order("name"),
-      "Systems could not be loaded.",
-    );
+    const result = await supabase
+      .from("applications")
+      .select(
+        "id, code, name, description, launch_url, is_active, created_at, updated_at",
+      )
+      .order("name");
+
+    if (
+      result.error &&
+      (result.error.code === "PGRST205" ||
+        result.error.code === "42P01" ||
+        result.error.message?.includes("applications"))
+    ) {
+      return [
+        normalizeApplication({
+          id: "default-ximo-pos",
+          code: "ximo_pos",
+          name: "Ximo POS",
+          description:
+            "Point of sale, catalogue, purchasing, inventory, branch operations and reporting.",
+          is_active: true,
+        }),
+      ];
+    }
+
+    const applications = assertResult(result, "Systems could not be loaded.");
     return (applications || []).map(normalizeApplication);
   },
 
