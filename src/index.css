@@ -1,62 +1,102 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html { scroll-behavior: smooth; }
+:root {
+  --ximo-brand: #1A593B;
+  --ximo-brand-deep: #164A32;
+  --ximo-brand-soft: #EAF2EE;
+  --ximo-canvas: #F8F9FA;
+  --ximo-panel: #FFFFFF;
+  --ximo-border: #DDE8E0;
+  --ximo-ink: #211D1A;
+  --ximo-muted: #6B756E;
+  --ximo-radius-control: 12px;
+  --ximo-radius-card: 16px;
+  --ximo-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
 
-  body { @apply bg-white font-sans text-neutral-800 antialiased; }
+@layer base {
+  html { scroll-behavior: auto; }
+
+  body { @apply bg-[#F8F9FA] font-sans text-[#211D1A] antialiased; }
 
   ::selection { @apply bg-primary text-white; }
 
   :focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2; }
+
+  button,
+  input,
+  select,
+  textarea { font: inherit; }
 }
 
 @layer components {
   .container-default { @apply mx-auto max-w-container px-5 sm:px-6 lg:px-8; }
-  .section-padding { @apply py-20 md:py-28 lg:py-32; }
+  .section-padding { @apply py-16 md:py-20 lg:py-24; }
 
+  .portal-shell .rounded-card,
   .admin-workspace .rounded-card {
-    @apply rounded-2xl border-[#E2E6EB] shadow-[0_12px_32px_rgba(31,39,52,0.035)];
+    @apply rounded-2xl border-[#DDE8E0] shadow-none;
   }
 
+  .portal-shell .rounded-button,
   .admin-workspace .rounded-button {
     @apply rounded-xl;
   }
 
+  .portal-shell .rounded-3xl,
+  .admin-workspace .rounded-3xl {
+    border-radius: var(--ximo-radius-card);
+  }
+
+  .portal-shell .shadow-sm,
+  .portal-shell .shadow-md,
+  .admin-workspace .shadow-sm,
+  .admin-workspace .shadow-md {
+    box-shadow: none;
+  }
+
+  .portal-shell input,
+  .portal-shell select,
+  .portal-shell textarea,
   .admin-workspace input,
   .admin-workspace select,
   .admin-workspace textarea {
-    @apply border-[#E0E4E8] bg-white text-[#303746] placeholder:text-[#A3ABB5];
+    @apply min-h-11 border-[#D7E1D9] bg-white text-[#25352B] placeholder:text-[#91A095];
   }
 
+  .portal-shell input:focus,
+  .portal-shell select:focus,
+  .portal-shell textarea:focus,
   .admin-workspace input:focus,
   .admin-workspace select:focus,
   .admin-workspace textarea:focus {
     @apply border-primary ring-primary/15;
   }
 
-  .admin-workspace table tbody tr:last-child td {
-    @apply border-b-0;
-  }
+  .portal-shell .font-bold { font-weight: 600; }
+  .portal-shell .font-semibold { font-weight: 600; }
+  .portal-shell .font-extrabold { font-weight: 600; }
+  .portal-shell .font-black { font-weight: 600; }
+
+  .portal-shell table tbody tr:last-child td,
+  .admin-workspace table tbody tr:last-child td { @apply border-b-0; }
+
+  .portal-surface { @apply overflow-hidden rounded-2xl border border-[#DDE8E0] bg-white shadow-none; }
+  .portal-section-heading { @apply text-lg font-semibold tracking-[-0.025em] text-[#25352B] sm:text-xl; }
+  .portal-supporting-copy { @apply text-sm leading-5 text-[#728077]; }
+  .portal-list-row { @apply min-h-14 border-b border-[#EDF1EE] px-4 py-3 transition-colors hover:bg-[#F8FAF8] sm:px-5; }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .scroll-transition {
-    opacity: 0;
-    transform: translateY(28px);
-    transition: opacity 720ms cubic-bezier(0.16, 1, 0.3, 1), transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: opacity, transform;
-  }
-
-  .scroll-transition.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Public pages and portals use state feedback rather than entrance animations. */
+.scroll-transition,
+.scroll-transition.is-visible {
+  opacity: 1;
+  transform: none;
+  transition: none;
 }

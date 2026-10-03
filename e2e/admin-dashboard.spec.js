@@ -16,6 +16,6 @@ test("authenticated admin can render the dashboard", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/admin(?:\?|$)/, { timeout: 20_000 });
   await expect(
-    page.getByRole("heading", { name: "Good morning, admin." }),
+    page.getByRole("heading", { name: "Platform overview" }),
   ).toBeVisible();
 });

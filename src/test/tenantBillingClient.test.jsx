@@ -1,124 +1,124 @@
-import { describe, test, expect } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
+import { describe, expect, test } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 
-describe('Phase E Step 5 Tenant Plan & Billing Management Client Tests', () => {
+const routesSource = fs.readFileSync(
+  path.resolve(__dirname, "../routes/AppRoutes.jsx"),
+  "utf8",
+);
+const billingSource = fs
+  .readFileSync(
+    path.resolve(__dirname, "../pages/Dashboard/Billing/TenantBillingPage.jsx"),
+    "utf8",
+  )
+  .replace(/\s+/g, " ");
 
-  test('1. Plan & Billing route is registered under tenant /settings/billing route outside super-admin console', () => {
-    const code = fs.readFileSync(path.resolve(__dirname, '../routes/AppRoutes.jsx'), 'utf8');
-    expect(code.includes('/settings/billing')).toBe(true);
-    expect(code.includes('TenantBillingPage')).toBe(true);
-    // Ensure tenant route is not inside AdminRoute tree
-    const adminIndex = code.indexOf('<Route element={<AdminRoute />}>');
-    const billingIndex = code.indexOf('/settings/billing');
-    expect(billingIndex).toBeLessThan(adminIndex);
+describe("Tenant billing workspace", () => {
+  test("keeps tenant billing outside the super-admin route tree", () => {
+    expect(routesSource.includes('path="/settings/billing"')).toBe(true);
+    expect(routesSource.includes("TenantBillingPage")).toBe(true);
+    expect(routesSource.indexOf("/settings/billing")).toBeLessThan(
+      routesSource.indexOf("<Route element={<AdminRoute />}>"),
+    );
   });
 
-  test('2. Active subscription renders plan name and next renewal date', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your subscription is active.')).toBe(true);
-    expect(pageCode.includes('Next Renewal / Period End')).toBe(true);
+  test("communicates each subscription state in plain language", () => {
+    [
+      "Your subscription is active.",
+      "Your trial is active.",
+      "We couldn’t renew your subscription.",
+      "Your subscription needs attention.",
+      "Your subscription will end soon.",
+    ].forEach((message) => expect(billingSource.includes(message)).toBe(true));
   });
 
-  test('3. Trialing status displays trial notice', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your trial is active.')).toBe(true);
+  test("shows the paid-through date and grace-period guidance", () => {
+    expect(billingSource.includes("Next Renewal / Period End")).toBe(true);
+    expect(billingSource.includes("Grace period ends:")).toBe(true);
+    expect(billingSource.includes("Your store data is safely preserved.")).toBe(
+      true,
+    );
   });
 
-  test('4. Past-due state shows grace period recovery guidance', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('We couldn’t renew your subscription.')).toBe(true);
-    expect(pageCode.includes('Grace period ends:')).toBe(true);
+  test("keeps paid provisioning recovery separate from another payment", () => {
+    expect(
+      billingSource.includes(
+        "Your payment was received, but store setup is not complete.",
+      ),
+    ).toBe(true);
+    expect(billingSource.includes("Retry Setup")).toBe(true);
+    expect(billingSource.includes("Pay Again")).toBe(false);
   });
 
-  test('5. Suspended state explains store data preservation', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your subscription needs attention.')).toBe(true);
-    expect(pageCode.includes('Your store data is safely preserved.')).toBe(true);
+  test("uses customer-facing capabilities and hides internal role codes", () => {
+    expect(billingSource.includes("Point of Sale Checkout")).toBe(true);
+    expect(billingSource.includes("Products & Inventory Management")).toBe(
+      true,
+    );
+    expect(billingSource.includes("mod_inventory_core")).toBe(false);
+    expect(billingSource.includes("recipes_internal")).toBe(false);
   });
 
-  test('6. Canceled state shows paid-through date', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your subscription will end soon.')).toBe(true);
+  test("does not fabricate payment credentials", () => {
+    expect(
+      billingSource.includes("Payment method details are not available yet."),
+    ).toBe(true);
+    expect(billingSource.includes("•••• 4242")).toBe(false);
   });
 
-  test('7. Paid provisioning failure does not show Pay Again or Pay Now button', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your payment was received, but store setup is not complete.')).toBe(true);
-    expect(pageCode.includes('Retry Setup')).toBe(true);
-    expect(pageCode.includes('Pay Again')).toBe(false);
+  test("explains unavailable and test-mode billing safely", () => {
+    expect(
+      billingSource.includes(
+        "Online billing management is not available yet. Contact Ximo support.",
+      ),
+    ).toBe(true);
+    expect(billingSource.includes("Contact Sales")).toBe(true);
+    expect(
+      billingSource.includes(
+        "Test billing action — no real payment will be processed.",
+      ),
+    ).toBe(true);
   });
 
-  test('8. Plan features use customer-friendly labels', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Point of Sale Checkout')).toBe(true);
-    expect(pageCode.includes('Products & Inventory Management')).toBe(true);
+  test("uses the server-provided plan price", () => {
+    expect(billingSource.includes("subscription.plan.monthlyPrice")).toBe(true);
+    expect(
+      billingSource.includes("Number(subscription.plan.monthlyPrice)"),
+    ).toBe(true);
   });
 
-  test('9. Raw internal module codes are omitted from normal UI', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('mod_inventory_core')).toBe(false);
-    expect(pageCode.includes('recipes_internal')).toBe(false);
+  test("describes the impact of a downgrade before confirmation", () => {
+    expect(billingSource.includes("Your data will not be deleted")).toBe(true);
+    expect(
+      billingSource.includes(
+        "Features outside the new plan will become unavailable",
+      ),
+    ).toBe(true);
   });
 
-  test('10. Payment method displays unavailable message without fabricating credentials', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Payment method details are not available yet.')).toBe(true);
-    expect(pageCode.includes('•••• 4242')).toBe(false);
+  test("validates and formats the cancellation paid-through date", () => {
+    expect(billingSource.includes('timeZone: "Asia/Manila"')).toBe(true);
+    expect(billingSource.includes('toLocaleDateString( "en-PH"')).toBe(true);
+    expect(
+      billingSource.includes(
+        "We couldn’t determine your paid-through date. Contact Ximo support before canceling.",
+      ),
+    ).toBe(true);
+    expect(
+      billingSource.includes(
+        "isNaN(new Date(subscription.currentPeriodEnd).getTime())",
+      ),
+    ).toBe(true);
   });
 
-  test('11. Production without provider displays Contact Support / Sales link', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Online billing management is not available yet. Contact Ximo support.')).toBe(true);
-    expect(pageCode.includes('Contact Sales')).toBe(true);
-  });
-
-  test('12. Test actions display explicit test-mode warning', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Test billing action — no real payment will be processed.')).toBe(true);
-  });
-
-  test('13. Plan comparison uses official monthly prices from API DTO', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('subscription.plan.monthlyPrice')).toBe(true);
-  });
-
-  test('14. URL or client price tampering is ignored by plan DTO renderer', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Number(subscription.plan.monthlyPrice)')).toBe(true);
-  });
-
-  test('15. Downgrade warning explicitly states store data will be preserved', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Your data will not be deleted')).toBe(true);
-    expect(pageCode.includes('Features outside the new plan will become unavailable')).toBe(true);
-  });
-
-  test('16. Cancellation preview validates currentPeriodEnd and formats with organization timezone', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('timeZone: "Asia/Manila"')).toBe(true);
-    expect(pageCode.includes('toLocaleDateString("en-PH"')).toBe(true);
-  });
-
-  test('17. Missing or invalid cancellation date displays safe error and blocks confirmation', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('We couldn’t determine your paid-through date. Contact Ximo support before canceling.')).toBe(true);
-    expect(pageCode.includes('isNaN(new Date(subscription.currentPeriodEnd).getTime())')).toBe(true);
-  });
-
-  test('18. Empty invoice history renders friendly empty state message', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('No invoices are available yet.')).toBe(true);
-  });
-
-  test('19. Permission denial state displays friendly administrative message', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Only your organization’s billing administrator can manage the subscription.')).toBe(true);
-  });
-
-  test('20. 320px responsive CSS container and target classes are present', () => {
-    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Billing/TenantBillingPage.jsx'), 'utf8');
-    expect(pageCode.includes('min-h-[44px]')).toBe(true);
-    expect(pageCode.includes('p-4')).toBe(true);
+  test("has clear empty, permission, and mobile states", () => {
+    expect(billingSource.includes("No invoices are available yet.")).toBe(true);
+    expect(
+      billingSource.includes(
+        "Only your organization’s billing administrator can manage the subscription.",
+      ),
+    ).toBe(true);
+    expect(billingSource.includes("min-h-[44px]")).toBe(true);
+    expect(billingSource.includes("portal-surface")).toBe(true);
   });
 });

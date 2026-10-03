@@ -1,16 +1,10 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Card from "../common/Card";
 import Badge from "../common/Badge";
 
 export default function ServiceCard({ service, index = 0 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-    >
+    <div>
       <Card className="h-full flex flex-col">
         <div className="flex items-start justify-between mb-4">
           <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -47,22 +41,9 @@ export default function ServiceCard({ service, index = 0 }) {
           to={`/services?service=${service.slug}`}
           className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-600 transition-colors"
         >
-          Learn more
-          <svg
-            className="w-4 h-4 ml-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          View service
         </Link>
       </Card>
-    </motion.div>
+    </div>
   );
 }

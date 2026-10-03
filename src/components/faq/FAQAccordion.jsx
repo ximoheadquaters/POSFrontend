@@ -1,5 +1,4 @@
 ﻿import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function FAQAccordion({ faq, index: _index = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +14,7 @@ export default function FAQAccordion({ faq, index: _index = 0 }) {
           {faq.question}
         </span>
         <svg
-          className={`w-5 h-5 text-neutral-400 transition-transform duration-200 flex-shrink-0 ${
+          className={`w-5 h-5 text-neutral-400 flex-shrink-0 ${
             isOpen ? "rotate-180" : ""
           }`}
           fill="none"
@@ -30,21 +29,13 @@ export default function FAQAccordion({ faq, index: _index = 0 }) {
           />
         </svg>
       </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
+      {isOpen && (
+          <div className="overflow-hidden">
             <p className="text-sm text-neutral-600 leading-relaxed pb-5 -mt-2">
               {faq.answer}
             </p>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }

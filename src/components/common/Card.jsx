@@ -7,8 +7,8 @@ export default function Card({
   return (
     <div
       className={`
-        rounded-2xl border border-[#E2E6EB] bg-white p-6
-        ${hover ? "transition duration-200 hover:-translate-y-0.5 hover:border-[#D2D7DE] hover:shadow-[0_18px_45px_rgba(31,39,52,0.08)]" : ""}
+        rounded-2xl border border-[#DDE8E0] bg-white p-4 sm:p-5
+        ${hover ? "transition-colors hover:border-[#C7D8CC]" : ""}
         ${className}
       `}
       {...props}

@@ -1,314 +1,208 @@
 import { Link, useOutletContext } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { PortalIcon } from "../../components/portal/PortalShell";
 
 export default function ClientHomePage() {
-  const context = useOutletContext() || {};
-  const { clientPreview = false, workspace = null } = context;
+  const { clientPreview = false, workspace = null } = useOutletContext() || {};
   const { user } = useAuth();
-
-  const firstName = String(
-    user?.user_metadata?.display_name ||
-      user?.user_metadata?.full_name ||
-      user?.email ||
-      "there",
-  ).split(/[\s@]/)[0];
-
+  const accountName =
+    user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email || "Client account";
   const totalRevenue = workspace?.storeData?.metrics?.totalRevenue ?? null;
-  const totalTransactions =
-    workspace?.storeData?.metrics?.totalTransactions ?? null;
+  const totalTransactions = workspace?.storeData?.metrics?.totalTransactions ?? null;
   const recentSales = workspace?.storeData?.recentSales || [];
-  const planName = workspace?.subscription?.planDisplayName || "Starter Plan";
+  const planName = workspace?.subscription?.planDisplayName || "No plan information";
+  const branchCount = workspace?.storeData?.branches?.length || 0;
 
-  const overviewCards = [
-    {
-      label: "Income",
-      value:
-        totalRevenue !== null
-          ? `₱${Number(totalRevenue).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
-          : "—",
-      detail:
-        totalRevenue !== null
-          ? "Gross sales across your store"
-          : "Waiting for POS sales data",
-    },
+  const summary = [
     {
       label: "Sales",
-      value:
-        totalRevenue !== null
-          ? `₱${Number(totalRevenue).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
-          : "—",
-      detail: workspace?.subscription
-        ? `${planName} active`
-        : "Waiting for POS sales data",
+      value: totalRevenue !== null ? formatCurrency(totalRevenue) : "—",
+      detail: totalRevenue !== null ? "Gross sales" : "Waiting for POS data",
+      icon: "reports",
     },
     {
       label: "Transactions",
       value: totalTransactions !== null ? String(totalTransactions) : "—",
-      detail:
-        totalTransactions !== null
-          ? "Completed POS transactions"
-          : "Waiting for POS sales data",
+      detail: totalTransactions !== null ? "Completed sales" : "Waiting for POS data",
+      icon: "pos",
+    },
+    {
+      label: "Branches",
+      value: branchCount ? String(branchCount) : "—",
+      detail: branchCount ? "Connected locations" : "No branch data",
+      icon: "branches",
     },
   ];
 
-  const setupItems = [
-    [
-      "Sales feed",
-      recentSales.length > 0
-        ? `${recentSales.length} recent transactions recorded.`
-        : "Connects daily sales and income to this dashboard.",
-    ],
-    ["Reports", "Makes daily, weekly, and monthly reporting available."],
-    [
-      "Branches",
-      workspace?.storeData?.branches?.length
-        ? `${workspace.storeData.branches.length} branch location${workspace.storeData.branches.length === 1 ? "" : "s"} connected.`
-        : "Keeps each business location in one shared workspace.",
-    ],
-  ];
-
   return (
-    <div className="space-y-7">
-      <section className="flex flex-col justify-between gap-5 border-b border-[#DDE7DF] pb-7 sm:flex-row sm:items-end">
+    <div className="space-y-5 sm:space-y-6">
+      <header className="flex flex-col gap-4 border-b border-[#DDE8E0] pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+          <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#17241C] sm:text-3xl">
             Business overview
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.055em] text-[#1A2C21] sm:text-5xl">
-            Good morning, {firstName}.
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#66766B] sm:text-base">
-            Your client workspace is ready for your sales, reporting, branch,
-            and day-to-day operations data.
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-[#6B756E]">
+            {clientPreview
+              ? "Preview the workspace structure without accessing business data."
+              : `Current business activity for ${firstName(accountName)}.`}
           </p>
         </div>
         <Link
           to="/client/reports"
-          className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-[#C9D9CC] bg-white px-4 text-sm font-semibold text-primary transition hover:border-primary hover:bg-[#F3F7F3]"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1A593B] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#164A32]"
         >
-          Open reports
+          Reports
         </Link>
-      </section>
+      </header>
 
-      {clientPreview && (
-        <div className="flex items-start gap-3 rounded-xl border border-[#E9D99D] bg-[#FFF9E7] p-4 text-sm leading-6 text-[#705713]">
-          <PreviewIcon className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>
-            <strong className="font-semibold">Development preview:</strong> this
-            route is temporarily available without a client session. It does not
-            load or expose business data.
-          </p>
+      {clientPreview ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-[#E8D99E] bg-[#FFF9E7] p-4 text-sm leading-5 text-[#705713]">
+          <PortalIcon name="home" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>Preview mode is active. Your business information is not shown here.</p>
         </div>
-      )}
+      ) : null}
 
-      <section
-        className="grid gap-3 sm:grid-cols-3 sm:gap-4"
-        aria-label="Business overview metrics"
-      >
-        {overviewCards.map((item) => (
-          <article
-            key={item.label}
-            className="rounded-xl border border-[#DDE7DF] bg-white p-5"
-          >
-            <p className="text-sm font-semibold text-[#4A5D50]">{item.label}</p>
-            <p className="mt-6 text-3xl font-semibold tracking-[-0.055em] text-[#203127]">
-              {item.value}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-[#86958B]">
-              {item.detail}
-            </p>
+      <section className="portal-surface grid divide-y divide-[#E8EEE9] sm:grid-cols-3 sm:divide-x sm:divide-y-0" aria-label="Business summary">
+        {summary.map((item) => (
+          <article key={item.label} className="flex items-center gap-3 px-4 py-4 sm:px-5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#F0F4F2] text-[#1A593B]">
+              <PortalIcon name={item.icon} className="h-[18px] w-[18px]" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xl font-semibold tracking-[-0.035em] text-[#25352B] sm:text-2xl">{item.value}</p>
+              <p className="text-sm font-medium text-[#4F5E54]">{item.label}</p>
+              <p className="mt-0.5 text-xs text-[#819087]">{item.detail}</p>
+            </div>
           </article>
         ))}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <article className="overflow-hidden rounded-xl border border-[#DDE7DF] bg-white">
-          <div className="flex flex-col gap-3 border-b border-[#E8EEE9] px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]">
+        <article className="portal-surface">
+          <div className="flex flex-col gap-3 border-b border-[#E8EEE9] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div>
-              <h2 className="text-xl font-semibold tracking-[-0.035em] text-[#203127]">
-                Sales activity
-              </h2>
-              <p className="mt-1 text-sm text-[#77877C]">
-                Income, sales, and transaction trends will appear here.
-              </p>
+              <h2 className="portal-section-heading">Recent sales</h2>
+              <p className="portal-supporting-copy mt-1">Completed POS transactions.</p>
             </div>
-            <span className="w-fit rounded-full bg-[#F1F5F1] px-3 py-1.5 text-xs font-semibold text-[#68786D]">
-              {recentSales.length > 0
-                ? `${recentSales.length} recent receipt${recentSales.length === 1 ? "" : "s"}`
-                : "No data connected"}
-            </span>
+            <Link to="/client/reports" className="text-sm font-semibold text-[#1A593B] hover:text-[#164A32]">
+              View reports
+            </Link>
           </div>
-
-          {recentSales.length > 0 ? (
-            <div className="divide-y divide-[#E8EEE9]">
-              {recentSales.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="flex items-center justify-between px-6 py-4 transition hover:bg-[#F9FBF9]"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#E8F1EA] text-sm font-bold text-primary">
-                      ₱
+          {recentSales.length ? (
+            <ul className="divide-y divide-[#EDF1EE]">
+              {recentSales.slice(0, 5).map((sale) => (
+                <li key={sale.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#F0F4F2] text-sm font-semibold text-[#1A593B]">₱</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-[#25352B]">
+                      Receipt {sale.receiptNumber || sale.id}
                     </span>
-                    <div>
-                      <p className="text-sm font-semibold text-[#203127]">
-                        Receipt #{sale.receiptNumber}
-                      </p>
-                      <p className="text-xs text-[#77877C]">
-                        {sale.completedAt || sale.createdAt
-                          ? new Date(
-                              sale.completedAt || sale.createdAt,
-                            ).toLocaleDateString("en-PH", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "Completed"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#203127]">
-                      ₱
-                      {Number(sale.total || 0).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                    <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 capitalize">
-                      {sale.status}
+                    <span className="mt-0.5 block truncate text-xs text-[#748177]">
+                      {formatDate(sale.completedAt || sale.createdAt)}
                     </span>
-                  </div>
-                </div>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="block text-sm font-semibold text-[#25352B]">{formatCurrency(sale.total || 0)}</span>
+                    <span className="mt-0.5 block text-xs capitalize text-[#748177]">{sale.status || "completed"}</span>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <div className="flex min-h-[250px] flex-col items-center justify-center px-6 py-10 text-center">
-              <SalesIcon className="h-9 w-9 text-[#A6B5AA]" />
-              <p className="mt-4 text-lg font-semibold tracking-[-0.025em] text-[#2A3C30]">
-                Your sales overview will appear here.
-              </p>
-              <p className="mt-2 max-w-md text-sm leading-6 text-[#77877C]">
-                This space is ready for the POS sales feed when it is connected to
-                the client workspace.
-              </p>
-            </div>
+            <EmptyPanel
+              icon="reports"
+              title="No sales activity yet"
+              message="Completed POS sales will appear here."
+              action="Open reports"
+              to="/client/reports"
+            />
           )}
         </article>
 
-        <aside className="rounded-xl border border-[#DDE7DF] bg-white p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-            Workspace setup
-          </p>
-          <h2 className="mt-3 text-xl font-semibold tracking-[-0.035em] text-[#203127]">
-            What will live here
-          </h2>
-          <div className="mt-5 divide-y divide-[#E8EEE9] border-y border-[#E8EEE9]">
-            {setupItems.map(([title, detail]) => (
-              <div key={title} className="py-4">
-                <p className="text-sm font-semibold text-[#2B3D31]">{title}</p>
-                <p className="mt-1 text-xs leading-5 text-[#77877C]">{detail}</p>
-              </div>
-            ))}
+        <aside className="portal-surface">
+          <div className="border-b border-[#E8EEE9] px-4 py-4 sm:px-5">
+            <h2 className="portal-section-heading">Workspace</h2>
+            <p className="portal-supporting-copy mt-1">Your Ximo connection and access.</p>
           </div>
-          <Link
-            to="/client/settings"
-            className="mt-5 inline-flex text-sm font-semibold text-primary transition hover:text-[#164F34]"
-          >
-            Workspace settings
-          </Link>
+          <dl className="divide-y divide-[#EDF1EE] px-4 sm:px-5">
+            <Detail label="Plan" value={planName} />
+            <Detail label="Branches" value={branchCount ? `${branchCount} connected` : "No branch data"} />
+            <Detail label="Account" value={clientPreview ? "Preview workspace" : accountName} />
+          </dl>
+          <div className="border-t border-[#E8EEE9] px-4 py-3 sm:px-5">
+            <Link to="/client/settings" className="text-sm font-semibold text-[#1A593B] hover:text-[#164A32]">
+              Workspace settings
+            </Link>
+          </div>
         </aside>
       </section>
 
-      <section className="rounded-xl border border-[#DDE7DF] bg-white">
-        <div className="flex flex-col gap-3 border-b border-[#E8EEE9] px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+      <section className="portal-surface">
+        <div className="flex flex-col gap-3 border-b border-[#E8EEE9] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <h2 className="text-xl font-semibold tracking-[-0.035em] text-[#203127]">
-              Recent activity
-            </h2>
-            <p className="mt-1 text-sm text-[#77877C]">
-              Important activity from your stores will be collected here.
-            </p>
+            <h2 className="portal-section-heading">Activity</h2>
+            <p className="portal-supporting-copy mt-1">Latest records from connected stores.</p>
           </div>
-          <span className="text-xs font-semibold text-[#86958B]">
-            {recentSales.length > 0 ? "Live activity feed" : "No activity yet"}
+          <span className="text-xs font-medium text-[#748177]">
+            {recentSales.length ? `${recentSales.length} recent transactions` : "No recent activity"}
           </span>
         </div>
-        {recentSales.length > 0 ? (
-          <div className="divide-y divide-[#E8EEE9]">
+        {recentSales.length ? (
+          <ul className="divide-y divide-[#EDF1EE]">
             {recentSales.slice(0, 5).map((sale) => (
-              <div
-                key={sale.id}
-                className="flex items-center justify-between px-6 py-4"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  <p className="text-sm text-[#203127]">
-                    Sale <span className="font-semibold">#{sale.receiptNumber}</span>{" "}
-                    completed for{" "}
-                    <span className="font-bold text-primary">
-                      ₱
-                      {Number(sale.total || 0).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </span>
-                  </p>
-                </div>
-                <span className="text-xs text-[#77877C]">
-                  {sale.completedAt || sale.createdAt
-                    ? new Date(
-                        sale.completedAt || sale.createdAt,
-                      ).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                      })
-                    : ""}
+              <li key={sale.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#1A593B]" />
+                <span className="min-w-0 flex-1 truncate text-sm text-[#435248]">
+                  Receipt <span className="font-semibold">{sale.receiptNumber || sale.id}</span> completed
                 </span>
-              </div>
+                <span className="shrink-0 text-sm font-semibold text-[#25352B]">{formatCurrency(sale.total || 0)}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
-          <div className="px-6 py-10 text-center text-sm text-[#77877C]">
-            No client activity has been loaded yet.
-          </div>
+          <p className="px-4 py-8 text-center text-sm text-[#748177]">Activity will appear as stores use Ximo POS.</p>
         )}
       </section>
     </div>
   );
 }
 
-function SalesIcon({ className }) {
+function Detail({ label, value }) {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 19.5V5.5m0 14h16M7.5 15l3-3 2.5 2.5 4-5"
-      />
-      <path strokeLinecap="round" d="M14.5 9.5h2.5V12" />
-    </svg>
+    <div className="flex min-h-14 items-center justify-between gap-4 py-3">
+      <dt className="text-sm text-[#748177]">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-sm font-semibold text-[#25352B]">{value}</dd>
+    </div>
   );
 }
-function PreviewIcon({ className }) {
+
+function EmptyPanel({ icon, title, message, action, to }) {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 8v4m0 4h.01M10.3 3.7 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"
-      />
-    </svg>
+    <div className="flex min-h-52 flex-col items-center justify-center px-5 py-8 text-center">
+      <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#F0F4F2] text-[#1A593B]">
+        <PortalIcon name={icon} className="h-5 w-5" />
+      </span>
+      <p className="mt-3 text-base font-semibold text-[#25352B]">{title}</p>
+      <p className="mt-1 max-w-sm text-sm leading-5 text-[#748177]">{message}</p>
+      <Link to={to} className="mt-4 text-sm font-semibold text-[#1A593B] hover:text-[#164A32]">{action}</Link>
+    </div>
   );
+}
+
+function firstName(value) {
+  return String(value || "there").trim().split(/[\s@]/)[0];
+}
+
+function formatCurrency(value) {
+  return `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+}
+
+function formatDate(value) {
+  if (!value) return "Completed";
+  return new Date(value).toLocaleDateString("en-PH", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

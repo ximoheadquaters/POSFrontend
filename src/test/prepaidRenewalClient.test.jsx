@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   formatSubscriptionDate,
-  getSubscriptionDaysRemaining,
   formatSubscriptionCountdown,
   getSubscriptionAccessState
 } from '../utils/subscriptionDateHelpers';

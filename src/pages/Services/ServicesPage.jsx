@@ -1,6 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import { getServiceBySlug, mockServices } from "../../data/services";
 
 function CheckIcon() {
@@ -49,12 +48,7 @@ export default function ServicesPage() {
   return (
     <div className="pt-20">
       <section className="overflow-hidden bg-[#17241C] px-5 py-16 text-white sm:px-6 md:py-24 lg:py-28">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto max-w-4xl text-center"
-        >
+        <div className="mx-auto max-w-4xl text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#C9E4CF]">
             Ximo services
           </p>
@@ -78,7 +72,7 @@ export default function ServicesPage() {
               Cancel anytime
             </span>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       <section className="bg-[#F8F7F1] py-16 md:py-24">
@@ -118,13 +112,10 @@ export default function ServicesPage() {
           </div>
 
           <div className="mt-12 grid items-stretch gap-4 lg:grid-cols-3">
-            {plans.map((plan, index) => (
-              <motion.article
+            {plans.map((plan) => (
+              <article
                 key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.08 }}
-                className={`relative flex min-h-[540px] flex-col border p-7 md:p-9 ${plan.popular ? "border-primary bg-primary text-white shadow-xl shadow-primary/15" : "border-[#DCE2DC] bg-white text-[#17241C]"}`}
+                className={`relative flex min-h-[540px] flex-col border p-7 md:p-9 ${plan.popular ? "border-primary bg-primary text-white" : "border-[#DCE2DC] bg-white text-[#17241C]"}`}
               >
                 {plan.popular && (
                   <span className="absolute right-0 top-0 bg-[#C9E4CF] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
@@ -180,11 +171,8 @@ export default function ServicesPage() {
                   className={`mt-auto inline-flex items-center justify-center px-5 py-3.5 text-sm font-semibold transition-colors ${plan.popular ? "bg-white text-primary hover:bg-[#E6F2E9]" : "bg-primary text-white hover:bg-[#164F34]"}`}
                 >
                   {plan.cta}
-                  <span className="ml-3" aria-hidden="true">
-                    
-                  </span>
                 </Link>
-              </motion.article>
+              </article>
             ))}
           </div>
         </div>

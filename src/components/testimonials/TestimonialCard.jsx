@@ -1,14 +1,8 @@
-import { motion } from "framer-motion";
 import Card from "../common/Card";
 
-export default function TestimonialCard({ testimonial, index = 0 }) {
+export default function TestimonialCard({ testimonial }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-    >
+    <div>
       <Card className="h-full flex flex-col">
         <div className="flex items-center gap-1 mb-4">
           {[...Array(5)].map((_, i) => (
@@ -44,6 +38,6 @@ export default function TestimonialCard({ testimonial, index = 0 }) {
           </div>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../../config/supabase";
 import useAuth from "../../hooks/useAuth";
@@ -188,7 +187,6 @@ function AccountField({
 export default function SignupPage({ initialMode = "signup" }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const reduceMotion = useReducedMotion();
   const {
     signIn,
     isLoading: signInLoading,
@@ -498,9 +496,8 @@ export default function SignupPage({ initialMode = "signup" }) {
             <span className="text-2xl font-semibold tracking-[-0.06em] text-[#1A593B]">ximo</span>
           </Link>
 
-          <motion.div layout="position" transition={reduceMotion ? { duration: 0 } : { layout: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }} className="rounded-[30px] border border-white/80 bg-white/90 p-5 shadow-[0_28px_80px_rgba(29,66,43,0.12)] backdrop-blur-sm sm:p-8 lg:p-9">
-            <AnimatePresence initial={false} mode="wait">
-              <motion.div key={mode + (verificationSent ? "-verified" : "-form")} initial={reduceMotion ? false : { opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={reduceMotion ? undefined : { opacity: 0, x: -8 }} transition={reduceMotion ? { duration: 0 } : { duration: 0.2 }}>
+          <div className="rounded-2xl border border-white/80 bg-white/90 p-5 shadow-[0_10px_28px_rgba(29,66,43,0.08)] backdrop-blur-sm sm:p-8 lg:p-9">
+              <div>
                 <div className="flex items-start gap-4">
                   <span className="mt-1 hidden h-12 w-1.5 rounded-full bg-[#1A593B] sm:block" />
                   <div>
@@ -546,9 +543,8 @@ export default function SignupPage({ initialMode = "signup" }) {
                 )}
 
                 {!verificationSent && isResetMode && <div className="mt-6 text-center"><button type="button" onClick={() => switchAuthMode("signin")} className="text-sm font-semibold text-[#1A593B] hover:underline">Back to sign in</button></div>}
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
+              </div>
+          </div>
           <div className="mt-5 flex items-center justify-center gap-5 text-[11px] font-medium text-[#7A877E]"><span className="flex items-center gap-1.5"><span className="text-[#1A593B]">✓</span> Secure access</span><span className="h-3 w-px bg-[#C9D4CC]" /><span>Built for Ximo businesses</span></div>
         </div>
       </section>

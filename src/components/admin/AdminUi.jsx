@@ -29,7 +29,7 @@ export function AdminBreadcrumbs({ items = [] }) {
 
 export function AdminLoading() {
   return (
-    <div className="flex min-h-48 items-center justify-center rounded-2xl border border-[#E2E6EB] bg-white">
+    <div className="flex min-h-48 items-center justify-center rounded-2xl border border-[#DDE8E0] bg-white">
       <Spinner size="lg" />
       <span className="sr-only">Loading</span>
     </div>
@@ -40,7 +40,7 @@ export function AdminError({ error, retry }) {
   return (
     <div
       role="alert"
-      className="rounded-[20px] border border-[#EDC5C0] bg-[#FCECEA] p-5 text-[#8A3028]"
+      className="rounded-2xl border border-[#EDC5C0] bg-[#FCECEA] p-4 text-[#8A3028]"
     >
       <p className="font-medium">Data could not be loaded</p>
       <p className="mt-1 text-sm">{error?.message}</p>

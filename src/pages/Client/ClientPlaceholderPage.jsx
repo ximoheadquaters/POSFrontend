@@ -1,88 +1,52 @@
 import { Link, useOutletContext } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { PortalIcon } from "../../components/portal/PortalShell";
 
 const content = {
   reports: {
-    eyebrow: "Reporting",
-    title: "Reports, ready when your data is.",
-    detail:
-      "Daily, weekly, and monthly views will bring the numbers behind your business into one place.",
-    panelTitle: "No reports are available yet",
-    panelDetail:
-      "Once reporting is connected, this page will hold saved reports, date ranges, exports, and the metrics that matter to your business.",
-    notes: [
-      "Daily sales summaries",
-      "Date-range reporting",
-      "Downloadable exports",
-    ],
-    icon: ReportsIcon,
+    title: "Reports",
+    detail: "Sales summaries and completed transactions from connected stores.",
+    emptyTitle: "No reports available",
+    emptyDetail: "Reports will appear when your POS sales data is connected.",
+    icon: "reports",
   },
   branches: {
-    eyebrow: "Locations",
-    title: "Keep every branch in view.",
-    detail:
-      "Branch details, operating status, and location-level performance will be managed here.",
-    panelTitle: "No branches are available yet",
-    panelDetail:
-      "When branch management is connected, each location will appear here with the details needed to manage it day to day.",
-    notes: [
-      "Location directory",
-      "Branch-level performance",
-      "Central operational view",
-    ],
-    icon: BranchesIcon,
+    title: "Branches",
+    detail: "Connected store locations and their operational status.",
+    emptyTitle: "No branches available",
+    emptyDetail: "Connected branch locations will appear here.",
+    icon: "branches",
   },
   inventory: {
-    eyebrow: "Stock",
-    title: "Inventory that stays close to the work.",
-    detail:
-      "Product availability, stock movement, and replenishment signals will be available here.",
-    panelTitle: "No inventory data is available yet",
-    panelDetail:
-      "This page is ready for product counts, stock movement, and the signals that help your team stay ahead.",
-    notes: ["Product availability", "Stock movement", "Reorder attention"],
-    icon: InventoryIcon,
+    title: "Inventory",
+    detail: "Products and current availability from connected stores.",
+    emptyTitle: "No inventory data",
+    emptyDetail: "Product and stock data will appear here when available.",
+    icon: "inventory",
   },
   customers: {
-    eyebrow: "Customers",
-    title: "A clearer picture of who you serve.",
-    detail:
-      "Customer profiles, visit history, and relationship notes will be collected in this workspace.",
-    panelTitle: "No customer data is available yet",
-    panelDetail:
-      "When customer data is connected, your team will be able to find profiles, view history, and support the next visit with context.",
-    notes: ["Customer profiles", "Visit history", "Purchase context"],
-    icon: CustomersIcon,
+    title: "Customers",
+    detail: "Customer records collected from the connected workspace.",
+    emptyTitle: "No customers available",
+    emptyDetail: "Customer records will appear here when the feature is connected.",
+    icon: "customers",
   },
 };
 
 export default function ClientPlaceholderPage({ section }) {
-  const context = useOutletContext() || {};
-  const { clientPreview = false, workspace = null } = context;
+  const { clientPreview = false, workspace = null } = useOutletContext() || {};
   const { user } = useAuth();
 
   if (section === "settings") {
-    return (
-      <SettingsPage
-        clientPreview={clientPreview}
-        user={user}
-        workspace={workspace}
-      />
-    );
+    return <SettingsPage clientPreview={clientPreview} user={user} workspace={workspace} />;
   }
 
   const page = content[section] || content.reports;
-  const Icon = page.icon;
-
   const branches = workspace?.storeData?.branches || [];
   const products = workspace?.storeData?.products || [];
   const customers = workspace?.storeData?.customers || [];
   const recentSales = workspace?.storeData?.recentSales || [];
-  const metrics = workspace?.storeData?.metrics || {
-    totalRevenue: 0,
-    totalTransactions: 0,
-  };
-
+  const metrics = workspace?.storeData?.metrics || { totalRevenue: 0, totalTransactions: 0 };
   const hasData =
     (section === "branches" && branches.length > 0) ||
     (section === "inventory" && products.length > 0) ||
@@ -90,365 +54,210 @@ export default function ClientPlaceholderPage({ section }) {
     (section === "reports" && recentSales.length > 0);
 
   return (
-    <div className="space-y-7">
-      <section className="flex flex-col justify-between gap-5 border-b border-[#DDE7DF] pb-7 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-            {page.eyebrow}
-          </p>
-          <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-[-0.055em] text-[#1A2C21] sm:text-5xl">
-            {page.title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#66766B] sm:text-base">
-            {page.detail}
-          </p>
-        </div>
-        <span className="w-fit rounded-full bg-[#E8F1EA] px-3 py-1.5 text-xs font-semibold text-primary">
-          {hasData ? "Live store data" : "Active workspace"}
-        </span>
+    <div className="space-y-5 sm:space-y-6">
+      <header className="border-b border-[#DDE8E0] pb-5">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#17241C] sm:text-3xl">{page.title}</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-5 text-[#6B756E]">{page.detail}</p>
+      </header>
+
+      {clientPreview ? (
+        <p className="rounded-xl border border-[#E8D99E] bg-[#FFF9E7] px-4 py-3 text-sm text-[#705713]">
+          Preview mode is active. Business data is not loaded.
+        </p>
+      ) : null}
+
+      <section className="portal-surface">
+        {section === "branches" && branches.length ? <BranchList branches={branches} /> : null}
+        {section === "inventory" && products.length ? <InventoryList products={products} /> : null}
+        {section === "reports" && recentSales.length ? <ReportsList sales={recentSales} metrics={metrics} /> : null}
+        {section === "customers" && customers.length ? <CustomerList customers={customers} /> : null}
+        {!hasData ? <EmptyPanel page={page} /> : null}
       </section>
+    </div>
+  );
+}
 
-      <section className="overflow-hidden rounded-xl border border-[#DDE7DF] bg-white">
-        {/* Branches Data View */}
-        {section === "branches" && branches.length > 0 && (
-          <div className="divide-y divide-[#E8EEE9]">
-            <div className="px-6 py-4 bg-[#F9FBF9] border-b border-[#E8EEE9] flex justify-between items-center text-xs font-bold text-[#5A685D] uppercase tracking-wider">
-              <span>Branch Name & Location</span>
-              <span>Status</span>
-            </div>
-            {branches.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center justify-between px-6 py-4 transition hover:bg-[#F9FBF9]"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#E8F1EA] text-primary">
-                    <BranchesIcon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[#1F2923]">
-                      {b.name}
-                    </p>
-                    <p className="text-xs text-[#77877C]">
-                      Code: <span className="font-mono">{b.code}</span>
-                      {b.address ? ` · ${b.address}` : ""}
-                    </p>
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Active
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Inventory Data View */}
-        {section === "inventory" && products.length > 0 && (
-          <div className="divide-y divide-[#E8EEE9]">
-            <div className="px-6 py-4 bg-[#F9FBF9] border-b border-[#E8EEE9] flex justify-between items-center text-xs font-bold text-[#5A685D] uppercase tracking-wider">
-              <span>Product Item</span>
-              <span>Selling Price</span>
-            </div>
-            {products.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between px-6 py-4 transition hover:bg-[#F9FBF9]"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#E8F1EA] text-primary">
-                    <InventoryIcon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[#1F2923]">
-                      {p.name}
-                    </p>
-                    <p className="text-xs text-[#77877C]">
-                      {p.sku ? (
-                        <span className="font-mono">SKU: {p.sku}</span>
-                      ) : (
-                        "Standard product"
-                      )}
-                      {p.unit ? ` · ${p.unit}` : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-bold text-[#1F2923]">
-                    ₱
-                    {Number(p.sellingPrice || 0).toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span className="block text-[10px] text-emerald-700 font-bold capitalize">
-                    {p.status || "active"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Reports Data View */}
-        {section === "reports" && recentSales.length > 0 && (
-          <div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#E8EEE9] border-b border-[#E8EEE9] bg-[#F9FBF9]">
-              <div className="p-5 text-center">
-                <p className="text-xs text-[#5A685D] font-medium">
-                  Total Sales Revenue
-                </p>
-                <p className="mt-1 text-2xl font-bold text-[#1F2923]">
-                  ₱
-                  {Number(metrics.totalRevenue || 0).toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-              <div className="p-5 text-center">
-                <p className="text-xs text-[#5A685D] font-medium">
-                  Total Receipts
-                </p>
-                <p className="mt-1 text-2xl font-bold text-[#1F2923]">
-                  {metrics.totalTransactions || 0}
-                </p>
-              </div>
-              <div className="p-5 text-center">
-                <p className="text-xs text-[#5A685D] font-medium">
-                  Average Ticket
-                </p>
-                <p className="mt-1 text-2xl font-bold text-[#1F2923]">
-                  ₱
-                  {metrics.totalTransactions > 0
-                    ? (
-                        Number(metrics.totalRevenue) /
-                        metrics.totalTransactions
-                      ).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    : "0.00"}
-                </p>
-              </div>
-            </div>
-
-            <div className="divide-y divide-[#E8EEE9]">
-              <div className="px-6 py-4 bg-white flex justify-between items-center text-xs font-bold text-[#5A685D] uppercase tracking-wider">
-                <span>Recent Transactions Report</span>
-                <span>Amount (PHP)</span>
-              </div>
-              {recentSales.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between px-6 py-4 transition hover:bg-[#F9FBF9]"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-[#1F2923]">
-                      Receipt #{s.receiptNumber}
-                    </p>
-                    <p className="text-xs text-[#77877C]">
-                      {s.completedAt || s.createdAt
-                        ? new Date(
-                            s.completedAt || s.createdAt,
-                          ).toLocaleDateString("en-PH", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Completed"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#1F2923]">
-                      ₱
-                      {Number(s.total || 0).toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                    <span className="text-[10px] font-bold text-emerald-700 capitalize">
-                      {s.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Customers Data View */}
-        {section === "customers" && customers.length > 0 && (
-          <div className="divide-y divide-[#E8EEE9]">
-            {customers.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between px-6 py-4 transition hover:bg-[#F9FBF9]"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#E8F1EA] text-primary">
-                    <CustomersIcon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[#1F2923]">
-                      {c.name}
-                    </p>
-                    <p className="text-xs text-[#77877C]">
-                      {c.email || c.phone || "Customer record"}
-                    </p>
-                  </div>
-                </div>
-                <span className="inline-flex px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700">
-                  Active
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Fallback empty panel if no data yet */}
-        {!hasData && (
-          <div className="grid min-h-[340px] place-items-center px-6 py-12 text-center">
-            <div className="max-w-xl">
-              <span className="mx-auto grid h-14 w-14 place-items-center rounded-xl bg-[#E8F1EA] text-primary">
-                <Icon className="h-7 w-7" />
-              </span>
-              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.04em] text-[#24362A]">
-                {page.panelTitle}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-[#77877C]">
-                {page.panelDetail}
+function BranchList({ branches }) {
+  return (
+    <>
+      <SectionIntro title="Locations" detail="Branch access and connection status." count={branches.length} />
+      <ul className="divide-y divide-[#EDF1EE]">
+        {branches.map((branch) => (
+          <li key={branch.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+            <IconBox name="branches" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#25352B]">{branch.name}</p>
+              <p className="mt-0.5 truncate text-xs text-[#748177]">
+                {branch.code ? `Code: ${branch.code}` : "Connected location"}
+                {branch.address ? ` · ${branch.address}` : ""}
               </p>
             </div>
-          </div>
-        )}
+            <StatusLabel value="Active" />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
-        <div className="grid border-t border-[#E8EEE9] sm:grid-cols-3">
-          {page.notes.map((note) => (
-            <p
-              key={note}
-              className="border-b border-[#E8EEE9] px-6 py-5 text-sm font-semibold text-[#4A5B50] last:border-b-0 sm:border-b-0 sm:not-last:border-r"
-            >
-              {note}
-            </p>
-          ))}
-        </div>
-      </section>
+function InventoryList({ products }) {
+  return (
+    <>
+      <SectionIntro title="Products" detail="Current product catalog." count={products.length} />
+      <ul className="divide-y divide-[#EDF1EE]">
+        {products.map((product) => (
+          <li key={product.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+            <IconBox name="inventory" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#25352B]">{product.name}</p>
+              <p className="mt-0.5 truncate text-xs text-[#748177]">
+                {product.sku ? `SKU: ${product.sku}` : "Standard product"}
+                {product.unit ? ` · ${product.unit}` : ""}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-sm font-semibold text-[#25352B]">{formatCurrency(product.sellingPrice || 0)}</p>
+              <p className="mt-0.5 text-xs capitalize text-[#748177]">{product.status || "active"}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
-      {clientPreview && (
-        <p className="text-sm leading-6 text-[#77877C]">
-          Development preview mode does not load business data.
-        </p>
-      )}
+function ReportsList({ sales, metrics }) {
+  const totalTransactions = Number(metrics.totalTransactions || 0);
+  const totalRevenue = Number(metrics.totalRevenue || 0);
+  return (
+    <>
+      <SectionIntro title="Sales summary" detail="Current connected sales data." count={`${sales.length} receipts`} />
+      <div className="grid divide-y divide-[#E8EEE9] border-b border-[#E8EEE9] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <Summary label="Sales" value={formatCurrency(totalRevenue)} />
+        <Summary label="Receipts" value={String(totalTransactions)} />
+        <Summary label="Average sale" value={formatCurrency(totalTransactions ? totalRevenue / totalTransactions : 0)} />
+      </div>
+      <ul className="divide-y divide-[#EDF1EE]">
+        {sales.map((sale) => (
+          <li key={sale.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+            <IconBox name="reports" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#25352B]">Receipt {sale.receiptNumber || sale.id}</p>
+              <p className="mt-0.5 truncate text-xs text-[#748177]">{formatDate(sale.completedAt || sale.createdAt)}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-sm font-semibold text-[#25352B]">{formatCurrency(sale.total || 0)}</p>
+              <p className="mt-0.5 text-xs capitalize text-[#748177]">{sale.status || "completed"}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function CustomerList({ customers }) {
+  return (
+    <>
+      <SectionIntro title="Customer records" detail="People saved in the connected workspace." count={customers.length} />
+      <ul className="divide-y divide-[#EDF1EE]">
+        {customers.map((customer) => (
+          <li key={customer.id} className="portal-list-row flex items-center gap-3 sm:px-5">
+            <IconBox name="customers" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#25352B]">{customer.name}</p>
+              <p className="mt-0.5 truncate text-xs text-[#748177]">{customer.email || customer.phone || "Customer record"}</p>
+            </div>
+            <StatusLabel value="Active" />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function SectionIntro({ title, detail, count }) {
+  return (
+    <div className="flex flex-col gap-2 border-b border-[#E8EEE9] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div>
+        <h2 className="portal-section-heading">{title}</h2>
+        <p className="portal-supporting-copy mt-1">{detail}</p>
+      </div>
+      <span className="text-sm font-semibold text-[#1A593B]">{count}</span>
+    </div>
+  );
+}
+
+function Summary({ label, value }) {
+  return (
+    <div className="px-4 py-4 text-left sm:px-5">
+      <p className="text-xs font-medium text-[#748177]">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#25352B]">{value}</p>
+    </div>
+  );
+}
+
+function IconBox({ name }) {
+  return (
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#F0F4F2] text-[#1A593B]">
+      <PortalIcon name={name} className="h-[18px] w-[18px]" />
+    </span>
+  );
+}
+
+function StatusLabel({ value }) {
+  return <span className="shrink-0 rounded-lg bg-[#EAF2EE] px-2.5 py-1 text-xs font-semibold text-[#1A593B]">{value}</span>;
+}
+
+function EmptyPanel({ page }) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center px-5 py-8 text-center">
+      <IconBox name={page.icon} />
+      <h2 className="mt-3 text-base font-semibold text-[#25352B]">{page.emptyTitle}</h2>
+      <p className="mt-1 max-w-md text-sm leading-5 text-[#748177]">{page.emptyDetail}</p>
     </div>
   );
 }
 
 function SettingsPage({ clientPreview, user, workspace }) {
-  const accountName =
-    user?.user_metadata?.display_name ||
-    user?.user_metadata?.full_name ||
-    "Client account";
+  const accountName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || "Client account";
   const accountEmail = user?.email || "Development preview";
-
   const subscription = workspace?.subscription;
-  const planName = subscription?.planDisplayName || "Starter Plan";
-  const monthlyPrice = subscription?.monthlyPrice || "499.00";
+  const planName = subscription?.planDisplayName || "No plan information";
+  const monthlyPrice = subscription?.monthlyPrice || 0;
   const status = subscription?.status || "active";
   const currentPeriodEnd = subscription?.currentPeriodEnd;
-  const daysRemaining = subscription?.daysRemaining;
 
   return (
-    <div className="space-y-7">
-      <section className="border-b border-[#DDE7DF] pb-7">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-          Account
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.055em] text-[#1A2C21] sm:text-5xl">
-          Workspace settings.
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#66766B] sm:text-base">
-          Your account, workspace preferences, and plan controls will be managed
-          here.
-        </p>
-      </section>
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(320px,0.7fr)]">
-        <section className="rounded-xl border border-[#DDE7DF] bg-white p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-            Signed-in account
-          </p>
-          <dl className="mt-5 divide-y divide-[#E8EEE9] border-y border-[#E8EEE9]">
-            <div className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <dt className="text-sm text-[#77877C]">Name</dt>
-              <dd className="text-sm font-semibold text-[#27392C]">
-                {clientPreview ? "Preview workspace" : accountName}
-              </dd>
-            </div>
-            <div className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <dt className="text-sm text-[#77877C]">Email</dt>
-              <dd className="text-sm font-semibold text-[#27392C]">
-                {accountEmail}
-              </dd>
-            </div>
-            <div className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <dt className="text-sm text-[#77877C]">Workspace access</dt>
-              <dd className="text-sm font-semibold text-[#27392C]">
-                Store Owner
-              </dd>
-            </div>
+    <div className="space-y-5 sm:space-y-6">
+      <header className="border-b border-[#DDE8E0] pb-5">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#17241C] sm:text-3xl">Settings</h1>
+        <p className="mt-1.5 text-sm leading-5 text-[#6B756E]">Account and subscription information for this workspace.</p>
+      </header>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.7fr)]">
+        <section className="portal-surface">
+          <div className="border-b border-[#E8EEE9] px-4 py-4 sm:px-5">
+            <h2 className="portal-section-heading">Account</h2>
+          </div>
+          <dl className="divide-y divide-[#EDF1EE] px-4 sm:px-5">
+            <SettingsRow label="Name" value={clientPreview ? "Preview workspace" : accountName} />
+            <SettingsRow label="Email" value={accountEmail} />
+            <SettingsRow label="Access" value="Store owner" />
           </dl>
         </section>
-
-        <aside className="rounded-xl border border-[#DDE7DF] bg-white p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                Plan & billing
-              </p>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {status.toUpperCase()}
-              </span>
+        <aside className="portal-surface">
+          <div className="border-b border-[#E8EEE9] px-4 py-4 sm:px-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="portal-section-heading">Plan & billing</h2>
+              <StatusLabel value={String(status).replaceAll("_", " ")} />
             </div>
-
-            <h2 className="mt-3 text-xl font-semibold tracking-[-0.035em] text-[#27392C]">
-              {planName}
-            </h2>
-
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-2xl font-black text-[#1F2923]">
-                ₱
-                {Number(monthlyPrice).toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-              <span className="text-xs text-[#77877C]">/ month</span>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-[#E8EEE9] space-y-1.5 text-xs text-[#5A685D]">
-              {currentPeriodEnd && (
-                <p>
-                  Paid through:{" "}
-                  <strong className="text-[#1F2923]">
-                    {new Date(currentPeriodEnd).toLocaleDateString("en-PH", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </strong>
-                  {daysRemaining !== undefined ? ` (${daysRemaining} days remaining)` : ""}
-                </p>
-              )}
-              <p>Payment Mode: QR Ph (PayMongo)</p>
-            </div>
+            <p className="mt-3 text-lg font-semibold text-[#25352B]">{planName}</p>
+            <p className="mt-1 text-sm text-[#748177]">{formatCurrency(monthlyPrice)} per month</p>
+            {currentPeriodEnd ? <p className="mt-2 text-xs text-[#748177]">Paid through {formatDate(currentPeriodEnd)}</p> : null}
           </div>
-
-          <div className="mt-6 pt-4 border-t border-[#E8EEE9]">
-            <Link
-              to="/client/billing"
-              className="inline-flex min-h-[42px] w-full items-center justify-center rounded-xl bg-primary px-4 text-xs font-bold text-white shadow-sm transition hover:bg-[#164F34]"
-            >
-              Manage Full Billing & Renewal →
+          <div className="px-4 py-3 sm:px-5">
+            <Link to="/client/billing" className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#1A593B] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#164A32]">
+              Billing
             </Link>
           </div>
         </aside>
@@ -457,72 +266,24 @@ function SettingsPage({ clientPreview, user, workspace }) {
   );
 }
 
-function ReportsIcon({ className }) {
+function SettingsRow({ label, value }) {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 20.5V10.8m7 9.7V3.5m7 17V14.3"
-      />
-      <path strokeLinecap="round" d="M3.5 20.5h17" />
-    </svg>
+    <div className="flex min-h-14 items-center justify-between gap-4 py-3">
+      <dt className="text-sm text-[#748177]">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-sm font-semibold text-[#25352B]">{value}</dd>
+    </div>
   );
 }
-function BranchesIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 20V9.5l8-5 8 5V20M8 20v-5h8v5M9 10h.01M15 10h.01"
-      />
-    </svg>
-  );
+
+function formatCurrency(value) {
+  return `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
 }
-function InventoryIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m4 7.5 8-4 8 4-8 4-8-4Zm0 4.5 8 4 8-4m-16 4.5 8 4 8-4"
-      />
-    </svg>
-  );
-}
-function CustomersIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <circle cx="9" cy="8" r="3" />
-      <path
-        strokeLinecap="round"
-        d="M3.8 20c.7-3.4 2.5-5.2 5.2-5.2s4.5 1.8 5.2 5.2M16.5 5.5a2.6 2.6 0 0 1 0 5.1M16 15.1c2.1.5 3.5 2.1 4.1 4.9"
-      />
-    </svg>
-  );
+
+function formatDate(value) {
+  if (!value) return "Completed";
+  return new Date(value).toLocaleDateString("en-PH", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }

@@ -11,15 +11,18 @@ export default function ClientRoute() {
   const location = useLocation();
   const { isInitialized, isAuthenticated, role } = useAuth();
 
-  if (!isInitialized) {
+  // The local workspace preview is intentionally available without a remote
+  // session so product and responsive QA never depend on Supabase being online.
+  // Production still waits for the session check before granting workspace access.
+  const isPreview = !isAuthenticated && ALLOW_CLIENT_WORKSPACE_PREVIEW;
+
+  if (!isInitialized && !isPreview) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <Spinner />
       </div>
     );
   }
-
-  const isPreview = !isAuthenticated && ALLOW_CLIENT_WORKSPACE_PREVIEW;
 
   if (!isAuthenticated && !isPreview) {
     return <Navigate to="/login" replace state={{ from: location }} />;

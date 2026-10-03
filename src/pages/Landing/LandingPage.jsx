@@ -1,5 +1,4 @@
 ﻿import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Input from "../../components/common/Input";
@@ -64,20 +63,8 @@ const conversationTopics = [
   "The right place to start with Ximo",
 ];
 
-function Reveal({ children, className = "", delay = 0 }) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
-      whileInView={reduceMotion ? {} : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.14 }}
-      transition={{ duration: 0.72, delay, ease: [0.16, 1, 0.3, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
+function Reveal({ children, className = "" }) {
+  return <div className={className}>{children}</div>;
 }
 function SectionIntro({ eyebrow, title, body, light = false, align = "left" }) {
   return (
@@ -144,15 +131,15 @@ function Hero() {
             onClick={() =>
               document
                 .getElementById("services")
-                ?.scrollIntoView({ behavior: "smooth" })
+                ?.scrollIntoView({ behavior: "auto" })
             }
-            className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[14px] bg-[#242424] px-5 text-[15px] font-medium tracking-[-0.045em] text-white shadow-[0_10px_13px_rgba(0,0,0,0.30)] transition-transform hover:-translate-y-0.5 hover:bg-black focus-visible:ring-black sm:min-h-[52px] sm:text-[17px] lg:text-[18px]"
+            className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-[#242424] px-5 text-[15px] font-medium tracking-[-0.045em] text-white transition-colors hover:bg-black focus-visible:ring-black sm:min-h-[52px] sm:text-[17px] lg:text-[18px]"
           >
-            Explore Services
+            View services
           </button>
           <Link
             to="/signup"
-            className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-[14px] bg-primary px-5 text-[15px] font-medium tracking-[-0.045em] text-white shadow-[0_10px_13px_rgba(23,70,48,0.34)] transition-transform hover:-translate-y-0.5 hover:bg-[#164F34] focus-visible:ring-primary sm:min-h-[52px] sm:text-[17px] lg:text-[18px]"
+            className="inline-flex min-h-[48px] flex-1 items-center justify-center rounded-xl bg-primary px-5 text-[15px] font-medium tracking-[-0.045em] text-white transition-colors hover:bg-[#164F34] focus-visible:ring-primary sm:min-h-[52px] sm:text-[17px] lg:text-[18px]"
           >
             Create account
           </Link>
@@ -247,9 +234,9 @@ function Services() {
               </div>
               <Link
                 to={`/services?service=${pos.slug}`}
-                className="mt-6 inline-flex min-h-[46px] items-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#164F34]"
+                className="mt-6 inline-flex min-h-[46px] items-center rounded-xl bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-[#164F34]"
               >
-                Explore Ximo POS
+                Ximo POS
               </Link>
             </div>
           </div>
@@ -331,7 +318,7 @@ function About() {
             </div>
           </div>
 
-          <aside className="relative overflow-hidden bg-[#1A472F] p-7 text-white shadow-[0_18px_40px_rgba(23,70,48,0.14)] md:p-9 lg:min-h-[380px]">
+          <aside className="relative overflow-hidden bg-[#1A472F] p-7 text-white md:p-9 lg:min-h-[380px]">
             <div
               className="absolute -right-16 -top-16 h-56 w-56 rounded-full border border-white/15"
               aria-hidden="true"
@@ -475,7 +462,7 @@ function Contact() {
       className="scroll-transition scroll-mt-20 bg-[#155A3B] py-16 text-white md:py-20 lg:py-24"
     >
       <Reveal className="container-default lg:max-w-[1152px]">
-        <div className="overflow-hidden border border-white/20 bg-[#174D35] shadow-[0_22px_54px_rgba(10,48,30,0.22)] lg:grid lg:grid-cols-[0.84fr_1.16fr]">
+        <div className="overflow-hidden border border-white/20 bg-[#174D35] lg:grid lg:grid-cols-[0.84fr_1.16fr]">
           <div className="relative overflow-hidden p-7 md:p-9 lg:p-10">
             <div
               className="absolute -left-20 -top-24 h-72 w-72 rounded-full border border-white/10"
@@ -599,7 +586,7 @@ function Contact() {
             </div>
             <button
               type="submit"
-              className="mt-5 inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#164F34]"
+              className="mt-5 inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#164F34]"
             >
               Send inquiry
             </button>
@@ -613,33 +600,6 @@ function Contact() {
 export default function LandingPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    const sections = [...document.querySelectorAll(".scroll-transition")];
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (reduceMotion) {
-      sections.forEach((section) => section.classList.add("is-visible"));
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -8%", threshold: 0.06 },
-    );
-
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
   }, []);
 
   return (

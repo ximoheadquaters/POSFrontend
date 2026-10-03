@@ -45,9 +45,17 @@ export default {
           800: '#1F2937',
           900: '#111827',
         },
+        surface: {
+          canvas: '#F8F9FA',
+          warm: '#F8F7F5',
+          panel: '#FFFFFF',
+          border: '#DDE8E0',
+          muted: '#6B756E',
+          ink: '#211D1A',
+        },
       },
       fontFamily: {
-        sans: ['DM Sans', 'Aptos', 'Segoe UI', 'sans-serif'],
+        sans: ['Aptos', 'Segoe UI', 'sans-serif'],
       },
       fontSize: {
         'hero': ['3.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
@@ -65,8 +73,13 @@ export default {
         'container': '1280px',
       },
       borderRadius: {
-        'button': '8px',
-        'card': '12px',
+        'button': '12px',
+        'card': '16px',
+        'panel': '20px',
+      },
+      boxShadow: {
+        'ximo-sm': '0 1px 2px rgba(15, 23, 42, 0.05)',
+        'ximo-md': '0 4px 12px rgba(15, 23, 42, 0.07)',
       },
     },
   },

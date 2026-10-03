@@ -24,9 +24,9 @@ export default function Textarea({
         placeholder={placeholder}
         {...(register ? register(name) : {})}
         className={`
-          w-full px-4 py-3 rounded-button border resize-none
+          min-h-24 w-full px-3.5 py-3 rounded-button border resize-none
           bg-white text-neutral-800 placeholder-neutral-400
-          transition-colors duration-200
+          transition-colors
           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
           ${error ? "border-red-400 focus:ring-red-400" : "border-neutral-200 hover:border-neutral-300"}
           ${className}

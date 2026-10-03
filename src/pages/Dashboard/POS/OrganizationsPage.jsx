@@ -1,21 +1,29 @@
 import { Link } from "react-router-dom";
-import {
-  Breadcrumbs,
-  ErrorPanel,
-  LoadingPanel,
-  PageHeader,
-  StatusBadge,
-} from "../../../components/pos/PosUi";
+import { ErrorPanel, LoadingPanel, PageHeader, StatusBadge } from "../../../components/pos/PosUi";
+import { PortalIcon } from "../../../components/portal/PortalShell";
 import usePosResource from "../../../hooks/usePosResource";
-import {
-  posPlatformApi,
-  unwrapCollection,
-} from "../../../services/posPlatformApi";
+import { posPlatformApi, unwrapCollection } from "../../../services/posPlatformApi";
 
 function value(organization, ...keys) {
-  return keys
-    .map((key) => organization?.[key])
-    .find((item) => item !== undefined && item !== null);
+  return keys.map((key) => organization?.[key]).find((item) => item !== undefined && item !== null);
+}
+
+function organizationDetails(organization) {
+  const organizationId = value(organization, "id", "organizationId", "organization_id");
+  const businessName = value(organization, "businessName", "business_name", "name") || "Unnamed organization";
+  const plan = value(organization, "planCode", "plan_code", "subscriptionPlan", "plan") || "Unassigned";
+  const status = value(organization, "subscriptionStatus", "subscription_status", "status");
+  const enabledModules = value(organization, "enabledModuleCount", "enabled_module_count", "enabledModulesCount") ?? 0;
+  const currency = value(organization, "currency", "currencyCode", "currency_code") || "—";
+  const timezone = value(organization, "timezone", "timeZone", "time_zone") || "—";
+  return {
+    organizationId,
+    businessName,
+    plan: typeof plan === "object" ? plan.name || plan.code : plan,
+    status,
+    enabledModules,
+    locale: `${currency} · ${timezone}`,
+  };
 }
 
 export default function OrganizationsPage() {
@@ -24,16 +32,15 @@ export default function OrganizationsPage() {
 
   return (
     <>
-      <Breadcrumbs />
       <PageHeader
         title="Ximo POS"
-        description="Manage Ximo POS organizations, subscriptions, and module access through the Express Platform API."
+        description="Organizations, subscriptions, and module access managed through the platform."
         actions={
           <Link
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-[#D9DFE4] bg-white px-3.5 text-sm font-semibold text-[#303746] transition hover:border-[#BFC8D0] hover:bg-[#F8F9FA]"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#C9D9CC] bg-white px-4 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#F0F4F2]"
             to="/admin/systems/pos/plans"
           >
-            Manage plan modules
+            Plans & modules
           </Link>
         }
       />
@@ -42,129 +49,94 @@ export default function OrganizationsPage() {
       ) : resource.error ? (
         <ErrorPanel error={resource.error} onRetry={resource.refresh} />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#E2E6EB] bg-white shadow-[0_14px_38px_rgba(31,39,52,0.045)]">
-          <div className="flex flex-col justify-between gap-3 border-b border-[#E7ECE7] px-5 py-5 sm:flex-row sm:items-end sm:px-6">
+        <section className="portal-surface">
+          <div className="flex flex-col gap-2 border-b border-[#E8EEE9] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9AA2AD]">POS operations</p>
-              <p className="mt-1 text-sm text-[#68736A]">Subscriptions, module access, and the operational context behind each POS organization.</p>
+              <h2 className="portal-section-heading">Organizations</h2>
+              <p className="portal-supporting-copy mt-1">Subscription and access status for each POS business.</p>
             </div>
-            <p className="text-sm font-semibold text-[#39443D]">{organizations.length} organizations</p>
+            <p className="text-sm font-semibold text-[#1A593B]">{organizations.length} total</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-[#E7ECE7]">
-              <thead className="bg-[#F8F7F1]">
-                <tr>
-                  {[
-                    "Business",
-                    "Plan",
-                    "Status",
-                    "Modules",
-                    "Locale",
-                    "Actions",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      scope="col"
-                      className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-[#758176]"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EDF0ED]">
+
+          {organizations.length ? (
+            <>
+              <ul className="divide-y divide-[#EDF1EE] md:hidden">
                 {organizations.map((organization) => {
-                  const organizationId = value(
-                    organization,
-                    "id",
-                    "organizationId",
-                    "organization_id",
-                  );
-                  const businessName = value(
-                    organization,
-                    "businessName",
-                    "business_name",
-                    "name",
-                  );
-                  const plan =
-                    value(
-                      organization,
-                      "planCode",
-                      "plan_code",
-                      "subscriptionPlan",
-                      "plan",
-                    ) || "Unassigned";
-                  const status = value(
-                    organization,
-                    "subscriptionStatus",
-                    "subscription_status",
-                    "status",
-                  );
-                  const enabledModules =
-                    value(
-                      organization,
-                      "enabledModuleCount",
-                      "enabled_module_count",
-                      "enabledModulesCount",
-                    ) ?? 0;
+                  const item = organizationDetails(organization);
                   return (
-                    <tr key={organizationId} className="transition hover:bg-[#F8F7F1]">
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <p className="font-semibold text-[#17241C]">
-                          {businessName || "Unnamed organization"}
-                        </p>
-                        <p className="mt-1 text-xs text-[#879187]">
-                          {organizationId}
-                        </p>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm capitalize text-[#59645C]">
-                        {typeof plan === "object"
-                          ? plan.name || plan.code
-                          : plan}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <StatusBadge value={status} />
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm font-medium text-[#39443D]">
-                        {enabledModules} enabled
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm text-[#59645C]">
-                        {value(
-                          organization,
-                          "currency",
-                          "currencyCode",
-                          "currency_code",
-                        ) || "—"}{" "}
-                        ·{" "}
-                        {value(
-                          organization,
-                          "timezone",
-                          "timeZone",
-                          "time_zone",
-                        ) || "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <Link
-                          className="text-sm font-semibold text-primary transition hover:text-[#17241C]"
-                          to={`/admin/systems/pos/organizations/${organizationId}`}
-                        >
-                          View & manage
-                          <span className="sr-only"> {businessName}</span>
-                        </Link>
-                      </td>
-                    </tr>
+                    <li key={item.organizationId}>
+                      <Link
+                        to={`/admin/systems/pos/organizations/${item.organizationId}`}
+                        className="block px-4 py-4 transition-colors hover:bg-[#F8FAF8]"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-[#1A593B]">
+                            <PortalIcon name="pos" className="h-[18px] w-[18px]" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="min-w-0 truncate text-sm font-semibold text-[#25352B]">{item.businessName}</p>
+                              <StatusBadge value={item.status} />
+                            </div>
+                            <p className="mt-1 truncate text-xs text-[#748177]">{item.plan}</p>
+                          </div>
+                        </div>
+                        <dl className="mt-3 grid grid-cols-2 gap-x-4 border-t border-[#EDF1EE] pt-3 text-xs">
+                          <div><dt className="text-[#819087]">Modules</dt><dd className="mt-1 font-semibold text-[#435248]">{item.enabledModules} enabled</dd></div>
+                          <div><dt className="text-[#819087]">Locale</dt><dd className="mt-1 truncate font-semibold text-[#435248]">{item.locale}</dd></div>
+                        </dl>
+                      </Link>
+                    </li>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-          {!organizations.length && (
-            <div className="p-12 text-center">
-              <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">No POS organizations yet.</p>
-              <p className="mt-2 text-sm text-[#68736A]">Organizations will appear here when they are provisioned for a client.</p>
+              </ul>
+
+              <div className="hidden overflow-x-auto md:block">
+                <table className="min-w-full divide-y divide-[#E7ECE7]">
+                  <thead className="bg-[#F8F9FA]">
+                    <tr>
+                      {["Business", "Plan", "Status", "Modules", "Locale", ""].map((heading) => (
+                        <th key={heading || "action"} scope="col" className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-[#758176]">
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#EDF0ED]">
+                    {organizations.map((organization) => {
+                      const item = organizationDetails(organization);
+                      return (
+                        <tr key={item.organizationId} className="transition-colors hover:bg-[#F8FAF8]">
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-[#25352B]">{item.businessName}</p>
+                            <p className="mt-1 max-w-[210px] truncate text-xs text-[#879187]">{item.organizationId}</p>
+                          </td>
+                          <td className="px-5 py-4 text-sm capitalize text-[#59645C]">{item.plan}</td>
+                          <td className="px-5 py-4"><StatusBadge value={item.status} /></td>
+                          <td className="px-5 py-4 text-sm font-medium text-[#39443D]">{item.enabledModules} enabled</td>
+                          <td className="max-w-[230px] truncate px-5 py-4 text-sm text-[#59645C]">{item.locale}</td>
+                          <td className="px-5 py-4 text-right">
+                            <Link className="text-sm font-semibold text-[#1A593B] hover:text-[#164A32]" to={`/admin/systems/pos/organizations/${item.organizationId}`}>
+                              Manage<span className="sr-only"> {item.businessName}</span>
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-56 flex-col items-center justify-center px-5 py-8 text-center">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#F0F4F2] text-[#1A593B]">
+                <PortalIcon name="pos" className="h-5 w-5" />
+              </span>
+              <p className="mt-3 text-base font-semibold text-[#25352B]">No POS organizations</p>
+              <p className="mt-1 text-sm text-[#748177]">Organizations appear here after they are provisioned for a client.</p>
             </div>
           )}
-        </div>
+        </section>
       )}
     </>
   );

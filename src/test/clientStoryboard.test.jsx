@@ -65,29 +65,30 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
   test('9. Unauthenticated checkout stops at Account step', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
     expect(pageCode.includes('!isAuthenticated')).toBe(true);
-    expect(pageCode.includes('You must be signed in to set up a subscription.')).toBe(true);
+    expect(pageCode.includes('Create an account')).toBe(true);
+    expect(pageCode.includes('Sign in')).toBe(true);
   });
 
   test('10. Unverified account is prevented from continuing', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('Email verification is required before provisioning.')).toBe(true);
-    expect(pageCode.includes('!isEmailVerified')).toBe(true);
+    expect(pageCode.includes('Verify your email using the link in your inbox')).toBe(true);
+    expect(pageCode.includes('!isVerified')).toBe(true);
   });
 
   test('11. Verified account permits continuation to business setup', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('Signed in as owner:')).toBe(true);
+    expect(pageCode.includes('Subscription owner:')).toBe(true);
   });
 
   test('12. Official plan details from server replace stale session or URL values', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
     expect(pageCode.includes('publicApi.getPublicPlans()')).toBe(true);
-    expect(pageCode.includes('Official price resolved directly from Ximo server')).toBe(true);
+    expect(pageCode.includes('available.some((plan) => plan.code === requested)')).toBe(true);
   });
 
   test('13. URL price manipulation is ignored by checkout creation', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('planCode: selectedPlan.code')).toBe(true);
+    expect(pageCode.includes("const requested = params.get('plan') || previous.planCode;")).toBe(true);
     expect(pageCode.includes('price:')).toBe(false); // Price excluded from client payload
   });
 
@@ -99,17 +100,18 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
 
   test('15. Double-click prevention flag disables repeat submissions', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('if (submitting) return;')).toBe(true);
+    expect(pageCode.includes('if (busy) return;')).toBe(true);
+    expect(pageCode.includes('disabled={busy || !isAuthenticated || !isVerified || !config.enabled}')).toBe(true);
   });
 
   test('16. Test environment displays "no real payment" notice', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('Test checkout — no real payment will be charged.')).toBe(true);
+    expect(pageCode.includes('Test checkout — no real payment is collected.')).toBe(true);
   });
 
   test('17. Production environment disables online checkout when unconfigured', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
-    expect(pageCode.includes('Online subscription checkout is not available yet.')).toBe(true);
+    expect(pageCode.includes('Online payment is currently unavailable.')).toBe(true);
   });
 
   test('18. Processing page polls using an opaque token parameter', () => {

@@ -1,9 +1,9 @@
 ﻿import { Link } from "react-router-dom";
-import XimoIcon from "../../assets/ximoIcon2.PNG";
+import XimoIcon from "../../assets/greenXimo.PNG";
 
 const columns = [
   {
-    title: "Explore",
+    title: "Product",
     links: [
       { label: "About Ximo", path: "/about" },
       { label: "Ximo POS", path: "/services?service=pos-system" },
@@ -36,8 +36,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="mt-3 max-w-sm text-sm leading-6 text-white/65">
-              Practical business technology for the work that has to move well,
-              every day.
+              Ximo brings client management and point-of-sale work into one connected system.
             </p>
           </div>
           {columns.map((column) => (

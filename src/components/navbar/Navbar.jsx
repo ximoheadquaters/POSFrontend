@@ -1,6 +1,5 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { mockServices } from "../../data/services";
 
 const navLinks = [
@@ -76,8 +75,8 @@ export default function Navbar() {
     };
   }, []);
 
-  const navItem = "text-[#4B574E] hover:bg-[#E6F2E9] hover:text-primary";
-  const activeNavItem = "bg-[#E6F2E9] text-primary";
+  const navItem = "text-[#4B574E] hover:bg-[#F0F4F2] hover:text-primary";
+  const activeNavItem = "bg-[#EAF2EE] text-primary";
   const loginStyle =
     "border-[#B7CEBD] text-primary hover:border-primary hover:bg-[#E6F2E9]";
   const ctaStyle = "bg-primary text-white hover:bg-[#164F34]";
@@ -122,7 +121,7 @@ export default function Navbar() {
                 key={link.path}
                 to={link.path}
                 onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
+                className={`rounded-xl px-2.5 py-2 text-[12px] font-semibold transition-colors xl:px-3 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
               </Link>
@@ -130,7 +129,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsServicesOpen((open) => !open)}
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${isServicesPage || isServicesOpen ? activeNavItem : navItem}`}
+              className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-2 text-[12px] font-semibold transition-colors xl:px-3 xl:text-[13px] ${isServicesPage || isServicesOpen ? activeNavItem : navItem}`}
               aria-expanded={isServicesOpen}
               aria-controls="services-menu"
             >
@@ -154,7 +153,7 @@ export default function Navbar() {
                 key={link.path}
                 to={link.path}
                 onClick={link.path === "/" ? handleHomeClick : undefined}
-                className={`rounded-full px-2 py-1.5 text-[12px] font-semibold transition-colors xl:px-2.5 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
+                className={`rounded-xl px-2.5 py-2 text-[12px] font-semibold transition-colors xl:px-3 xl:text-[13px] ${location.pathname === link.path ? activeNavItem : navItem}`}
               >
                 {link.label}
               </Link>
@@ -167,7 +166,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               to="/signup"
-              className={`inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[12px] font-semibold transition-colors xl:h-[40px] xl:px-[18px] xl:text-[12px] ${ctaStyle}`}
+              className={`inline-flex h-10 items-center justify-center rounded-xl px-4 text-[12px] font-semibold transition-colors ${ctaStyle}`}
             >
               Create account
             </Link>
@@ -175,7 +174,7 @@ export default function Navbar() {
               to="/login"
               aria-label="Log in"
               title="Log in"
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors xl:h-[40px] xl:w-[40px] ${loginStyle}`}
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${loginStyle}`}
             >
               <ProfileIcon />
             </Link>
@@ -186,12 +185,12 @@ export default function Navbar() {
           <Link
             to="/login"
             aria-label="Log in"
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${loginStyle}`}
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${loginStyle}`}
           >
             <ProfileIcon />
           </Link>
           <button
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#B7CEBD] text-primary transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#B7CEBD] text-primary transition-colors"
             onClick={() => setIsMobileOpen((open) => !open)}
             aria-label="Toggle menu"
           >
@@ -216,15 +215,10 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <AnimatePresence>
-        {isServicesOpen && (
-          <motion.div
+      {isServicesOpen && (
+          <div
             id="services-menu"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-            className="absolute inset-x-0 top-full hidden max-h-[calc(100vh-80px)] overflow-y-auto border-t border-[#E1E6E1] bg-white shadow-2xl shadow-[#17241C]/10 lg:block"
+            className="absolute inset-x-0 top-full hidden max-h-[calc(100vh-80px)] overflow-y-auto border-t border-[#E1E6E1] bg-white shadow-[0_10px_24px_rgba(15,23,42,0.08)] lg:block"
           >
             <div className="container-default py-5">
               <div className="grid gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
@@ -252,16 +246,11 @@ export default function Navbar() {
                 ))}
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
 
-      <AnimatePresence>
-        {isMobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+      {isMobileOpen && (
+          <div
             className="border-t border-[#DDE5DE] bg-white lg:hidden"
           >
             <div className="container-default space-y-1 py-4">
@@ -328,14 +317,13 @@ export default function Navbar() {
               ))}
               <Link
                 to="/signup"
-                className="mt-3 flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
+                className="mt-3 flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white"
               >
                 Create account
               </Link>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
     </header>
   );
 }

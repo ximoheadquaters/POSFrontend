@@ -35,16 +35,13 @@ export function Breadcrumbs({ organization }) {
 
 export function PageHeader({ title, description, actions, mobileCompact = false }) {
   return (
-    <div className={`mb-8 flex flex-col justify-between gap-5 border-b border-[#E2E6EB] pb-7 sm:flex-row sm:items-end ${mobileCompact ? "max-md:mb-5 max-md:gap-0 max-md:border-b-0 max-md:pb-0" : ""}`}>
-      <div>
-        <p className={`text-[10px] font-bold uppercase tracking-[0.2em] text-[#9AA2AD] ${mobileCompact ? "max-md:hidden" : ""}`}>
-          Ximo operations
-        </p>
-        <h1 className={`mt-3 text-3xl font-semibold tracking-[-0.055em] text-[#17241C] sm:text-4xl ${mobileCompact ? "max-md:hidden" : ""}`}>
+    <div className={`mb-6 flex flex-col justify-between gap-4 border-b border-[#DDE8E0] pb-5 sm:flex-row sm:items-end ${mobileCompact ? "max-md:mb-4 max-md:gap-0 max-md:border-b-0 max-md:pb-0" : ""}`}>
+      <div className="min-w-0">
+        <h1 className={`text-2xl font-semibold tracking-[-0.035em] text-[#17241C] sm:text-3xl ${mobileCompact ? "max-md:hidden" : ""}`}>
           {title}
         </h1>
         {description && (
-          <p className={`mt-3 max-w-2xl text-sm leading-6 text-[#68736A] sm:text-base ${mobileCompact ? "max-md:mt-0 max-md:text-[#4C4239]" : ""}`}>
+          <p className={`mt-2 max-w-2xl text-sm leading-5 text-[#68736A] ${mobileCompact ? "max-md:mt-0 max-md:text-[#4C4239]" : ""}`}>
             {description}
           </p>
         )}
@@ -67,7 +64,7 @@ export function StatusBadge({ value, tone }) {
         : "bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15");
   return (
     <span
-      className={`inline-flex h-7 w-[92px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[11px] font-semibold capitalize ring-1 ring-inset ${color}`}
+      className={`inline-flex min-h-7 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold capitalize ring-1 ring-inset ${color}`}
     >
       {String(value || "Unknown").replaceAll("_", " ")}
     </span>

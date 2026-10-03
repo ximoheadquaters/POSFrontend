@@ -3,6 +3,7 @@ import api from "../app/axios";
 import { logStage } from "../utils/logger";
 
 const SESSION_TIMEOUT_MS = 10_000;
+const ROLE_LOOKUP_TIMEOUT_MS = 5_000;
 
 function withTimeout(promise, stage, timeoutMs = SESSION_TIMEOUT_MS) {
   let timeoutId;
@@ -139,12 +140,23 @@ export async function resolveSessionAuth(session) {
     }
   }
 
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role_code")
-    .eq("user_id", session.user.id);
+  let data;
+  try {
+    const response = await withTimeout(
+      supabase
+        .from("user_roles")
+        .select("role_code")
+        .eq("user_id", session.user.id),
+      "fallback role lookup",
+      ROLE_LOOKUP_TIMEOUT_MS,
+    );
 
-  if (error) {
+    if (response.error) {
+      logStage("fallback role lookup", response.error);
+      return auth;
+    }
+    data = response.data;
+  } catch (error) {
     logStage("fallback role lookup", error);
     return auth;
   }
