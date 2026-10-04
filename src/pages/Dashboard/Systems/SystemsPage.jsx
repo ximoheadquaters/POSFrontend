@@ -41,7 +41,10 @@ export default function SystemsPage() {
                       <p className="mt-1 max-w-2xl text-sm leading-5 text-[#748177]">{system.description || "Ximo product"}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                      <StatusBadge value={system.availability} />
+                      <StatusBadge
+                        value={system.availability}
+                        className="h-10 min-h-10 rounded-xl px-3.5 text-sm"
+                      />
                       {available ? (
                         <Link
                           className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#C9D9CC] bg-white px-3.5 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#F0F4F2]"
