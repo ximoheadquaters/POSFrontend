@@ -65,6 +65,40 @@ const BUSINESS_PROFILES = [
   },
 ];
 
+function assignmentName(assignment) {
+  if (assignment.system_code === "pos") return "Ximo POS";
+  return assignment.systems?.name || assignment.system_code;
+}
+
+function SystemIcon({ code }) {
+  const shared = {
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: "1.8",
+    "aria-hidden": true,
+  };
+
+  if (code === "pos") {
+    return (
+      <svg {...shared} className="h-5 w-5">
+        <rect x="4" y="3.5" width="16" height="17" rx="2" />
+        <path strokeLinecap="round" d="M7.5 7.5h9M7.5 11h9M8 16h3M15 16h1" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...shared} className="h-5 w-5">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m4 7.5 8-4 8 4-8 4-8-4Zm0 4.5 8 4 8-4m-16 4.5 8 4 8-4"
+      />
+    </svg>
+  );
+}
+
 export default function ClientDetailsPage() {
   const { clientId } = useParams();
   const resource = usePosResource(
@@ -372,8 +406,8 @@ export default function ClientDetailsPage() {
         </section>
       </div>
       <section className="mt-5 rounded-card border border-neutral-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-5">
-          <div>
+        <div className="flex flex-col gap-3 border-b border-neutral-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold">Assigned systems</h2>
             <p className="mt-1 text-sm text-neutral-500">
               Products enabled for this client.
@@ -381,6 +415,7 @@ export default function ClientDetailsPage() {
           </div>
           <Button
             size="sm"
+            className="w-full sm:w-auto"
             onClick={openAddSystem}
             disabled={!availableSystems.length}
           >
@@ -391,37 +426,52 @@ export default function ClientDetailsPage() {
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="flex flex-col justify-between gap-3 px-6 py-5 sm:flex-row sm:items-center"
+              className="px-5 py-4 sm:px-6 sm:py-5"
             >
-              <div>
-                <p className="font-medium">
-                  {assignment.systems?.name || assignment.system_code}
-                </p>
-                <p className="text-xs text-neutral-400">
-                  External tenant: {assignment.external_tenant_id}
-                </p>
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-primary">
+                  <SystemIcon code={assignment.system_code} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="min-w-0 font-semibold text-[#26342A]">
+                      {assignmentName(assignment)}
+                    </p>
+                    <StatusBadge value={assignment.status} />
+                  </div>
+                  {assignment.external_tenant_id ? (
+                    <div className="mt-2 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#879187]">
+                        Organization ID
+                      </p>
+                      <code
+                        className="mt-1 block max-w-full truncate text-xs text-[#68736A]"
+                        title={assignment.external_tenant_id}
+                      >
+                        {assignment.external_tenant_id}
+                      </code>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <StatusBadge value={assignment.status} />
-                {assignment.system_code === "pos" && (
-                  <>
-                    <button
-                      type="button"
-                      className="text-sm font-semibold text-primary"
-                      onClick={() => openResendInvitation(assignment)}
-                      disabled={resending}
-                    >
-                      Resend owner email
-                    </button>
-                    <Link
-                      className="text-sm font-semibold text-primary"
-                      to={`/admin/systems/pos/organizations/${assignment.external_tenant_id}`}
-                    >
-                      Manage POS
-                    </Link>
-                  </>
-                )}
-              </div>
+              {assignment.system_code === "pos" && (
+                <div className="mt-4 grid gap-2 border-t border-[#E7ECE8] pt-3 sm:flex sm:justify-end">
+                  <Link
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary px-3.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    to={`/admin/systems/pos/organizations/${assignment.external_tenant_id}`}
+                  >
+                    Manage POS
+                  </Link>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#DCE8E1] bg-white px-3.5 text-sm font-semibold text-primary transition-colors hover:bg-[#F0F4F2] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => openResendInvitation(assignment)}
+                    disabled={resending}
+                  >
+                    {resending ? "Preparing email…" : "Resend setup link"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           {!assignments.length && (
