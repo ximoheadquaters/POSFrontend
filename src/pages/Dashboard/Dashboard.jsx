@@ -21,10 +21,19 @@ export default function Dashboard() {
   const availableSystems = systems.filter(
     (system) => system.availability === "available",
   ).length;
+  const unassignedClients = clients.filter(
+    (client) => !(client.client_systems || []).length,
+  ).length;
+  const clientCount = clientsLoading || clientsError ? "—" : clients.length;
+  const unassignedClientCount =
+    clientsLoading || clientsError ? "—" : unassignedClients;
+  const assignmentCount = clientsLoading || clientsError ? "—" : assignedSystems;
+  const availableSystemCount =
+    systemsLoading || systemsError ? "—" : availableSystems;
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <header className="flex flex-col gap-4 border-b border-[#DDE8E0] pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="border-b border-[#DDE8E0] pb-5">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#17241C] sm:text-3xl">
             Platform overview
@@ -33,43 +42,58 @@ export default function Dashboard() {
             Client access, product availability, and current platform activity.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <nav
+          className="mt-4 flex flex-wrap gap-2"
+          aria-label="Platform overview destinations"
+        >
           <Link
             to="/admin/clients"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1A593B] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#164A32]"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#1A593B] px-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#164A32]"
           >
             Clients
           </Link>
           <Link
             to="/admin/systems"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#C9D9CC] bg-white px-4 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#F0F4F2]"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#C9D9CC] bg-white px-3.5 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#F0F4F2]"
           >
             Systems
           </Link>
-        </div>
+          <Link
+            to="/admin/billing"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#C9D9CC] bg-white px-3.5 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#F0F4F2]"
+          >
+            Billing
+          </Link>
+        </nav>
       </header>
 
       <section
-        className="portal-surface grid divide-y divide-[#E8EEE9] sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+        className="grid grid-cols-2 gap-2.5 sm:gap-3"
         aria-label="Platform totals"
       >
-        <Summary
+        <MetricCard
           label="Clients"
-          value={clientsLoading ? "—" : clients.length}
+          value={clientCount}
           detail="Client records"
           icon="clients"
         />
-        <Summary
+        <MetricCard
           label="Assignments"
-          value={clientsLoading ? "—" : assignedSystems}
+          value={assignmentCount}
           detail="Product connections"
           icon="pos"
         />
-        <Summary
+        <MetricCard
           label="Available systems"
-          value={systemsLoading ? "—" : availableSystems}
+          value={availableSystemCount}
           detail="Ready to assign"
           icon="systems"
+        />
+        <MetricCard
+          label="Unassigned clients"
+          value={unassignedClientCount}
+          detail="Needs assignment"
+          icon="clients"
         />
       </section>
 
@@ -228,18 +252,24 @@ const previewSystems = [
   },
 ];
 
-function Summary({ label, value, detail, icon }) {
+function MetricCard({ label, value, detail, icon }) {
   return (
-    <article className="flex items-center gap-3 px-4 py-4 sm:px-5">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#F0F4F2] text-[#1A593B]">
-        <PortalIcon name={icon} className="h-[18px] w-[18px]" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-xl font-semibold tracking-[-0.035em] text-[#25352B] sm:text-2xl">
+    <article className="min-w-0 rounded-card border border-[#DDE8E0] bg-white p-3 shadow-ximo-sm sm:p-4">
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 text-[11px] font-medium leading-4 text-[#59665D] sm:text-xs">
+          {label}
+        </p>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#F0F4F2] text-[#1A593B]">
+          <PortalIcon name={icon} className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="mt-3 min-w-0">
+        <p className="text-2xl font-semibold tracking-[-0.04em] text-[#25352B] sm:text-[28px]">
           {value}
         </p>
-        <p className="text-sm font-medium text-[#4F5E54]">{label}</p>
-        <p className="mt-0.5 text-xs text-[#819087]">{detail}</p>
+        <p className="mt-1 text-[11px] leading-4 text-[#748177] sm:text-xs">
+          {detail}
+        </p>
       </div>
     </article>
   );
