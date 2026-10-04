@@ -156,7 +156,7 @@ export default function Dashboard() {
           )}
         </article>
 
-        <aside className="portal-surface">
+        <aside className="portal-surface self-start overflow-hidden">
           <div className="flex items-start justify-between gap-3 border-b border-[#E8EEE9] px-4 py-4 sm:px-5">
             <div>
               <h2 className="portal-section-heading">Systems</h2>
@@ -204,10 +204,10 @@ export default function Dashboard() {
             />
           )}
           {systems.length ? (
-            <div className="border-t border-[#E8EEE9] px-4 py-3 sm:px-5">
+            <div className="border-t border-[#E8EEE9] p-3 sm:p-4">
               <Link
                 to="/admin/systems"
-                className="text-sm font-semibold text-[#1A593B] hover:text-[#164A32]"
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-[#C9D9CC] bg-[#F8FBF8] px-3 text-sm font-semibold text-[#1A593B] transition-colors hover:bg-[#EEF5F0]"
               >
                 Manage systems
               </Link>
