@@ -91,9 +91,9 @@ describe("Platform billing workspace", () => {
     );
   });
 
-  test("uses mobile record cards instead of a horizontal table scroll", () => {
-    expect(billingSource.includes("xl:hidden")).toBe(true);
-    expect(billingSource.includes("xl:table")).toBe(true);
+  test("uses record cards until the table layout has enough room", () => {
+    expect(billingSource.includes("min-[1440px]:hidden")).toBe(true);
+    expect(billingSource.includes("min-[1440px]:table")).toBe(true);
     expect(billingSource.includes("overflow-x-auto")).toBe(false);
   });
 

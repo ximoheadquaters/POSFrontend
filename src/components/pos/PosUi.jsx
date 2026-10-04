@@ -53,8 +53,9 @@ export function PageHeader({ title, description, actions, mobileCompact = false 
   );
 }
 
-export function StatusBadge({ value, tone }) {
-  const normalized = String(value || "unknown").toLowerCase();
+export function StatusBadge({ value, tone, className = "", wrap = false }) {
+  const label = String(value || "Unknown").replaceAll("_", " ");
+  const normalized = label.toLowerCase();
   const color =
     tone ||
     (["active", "enabled", "available"].includes(normalized)
@@ -64,9 +65,20 @@ export function StatusBadge({ value, tone }) {
         : "bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15");
   return (
     <span
-      className={`inline-flex min-h-7 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold capitalize ring-1 ring-inset ${color}`}
+      title={label}
+      className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center overflow-hidden rounded-lg px-2.5 text-[11px] font-semibold capitalize ring-1 ring-inset ${
+        wrap ? "whitespace-normal" : "whitespace-nowrap"
+      } ${color} ${className}`}
     >
-      {String(value || "Unknown").replaceAll("_", " ")}
+      <span
+        className={
+          wrap
+            ? "min-w-0 break-words text-center leading-4"
+            : "min-w-0 truncate"
+        }
+      >
+        {label}
+      </span>
     </span>
   );
 }

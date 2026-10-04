@@ -685,20 +685,28 @@ function SubscriptionsPanel({
         <EmptyBlock text="No subscriptions match this filter." />
       ) : (
         <>
-          <ul className="divide-y divide-[#EDF1EE] xl:hidden">
+          <ul className="divide-y divide-[#EDF1EE] min-[1440px]:hidden">
             {items.map((item) => (
               <SubscriptionCard key={item.id} item={item} onAction={onAction} />
             ))}
           </ul>
-          <table className="hidden w-full table-fixed text-left text-sm xl:table">
+          <table className="hidden w-full table-fixed text-left text-sm min-[1440px]:table">
+            <colgroup>
+              <col className="w-[22%]" />
+              <col className="w-[19%]" />
+              <col className="w-[14%]" />
+              <col className="w-[16%]" />
+              <col className="w-[14%]" />
+              <col className="w-[15%]" />
+            </colgroup>
             <thead className="border-b border-[#E8EEE9] bg-[#F8FAF8] text-xs font-semibold text-[#66736A]">
               <tr>
-                <th className="w-[22%] px-5 py-3">Organization</th>
-                <th className="w-[21%] px-4 py-3">Owner</th>
-                <th className="w-[13%] px-4 py-3">Plan</th>
-                <th className="w-[13%] px-4 py-3">Status</th>
-                <th className="w-[14%] px-4 py-3">Period end</th>
-                <th className="w-[17%] px-4 py-3">Actions</th>
+                <th className="px-5 py-3">Organization</th>
+                <th className="px-4 py-3">Owner</th>
+                <th className="px-4 py-3">Plan</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Period end</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EDF1EE]">
@@ -753,19 +761,29 @@ function SubscriptionRow({ item, onAction }) {
   return (
     <tr className="align-top hover:bg-[#FAFCFA]">
       <td className="px-5 py-4 font-semibold text-[#25352B]">
-        <span className="block truncate">{item.organizationName}</span>
+        <span className="block truncate" title={item.organizationName}>
+          {item.organizationName}
+        </span>
         {item.operationalWarning ? (
-          <span className="mt-1 block text-xs font-normal text-[#8A5C16]">
+          <span className="mt-1 block break-words text-xs font-normal text-[#8A5C16]">
             {item.operationalWarning}
           </span>
         ) : null}
       </td>
-      <td className="truncate px-4 py-4 text-[#65736A]">{item.ownerEmail}</td>
+      <td className="px-4 py-4 text-[#65736A]">
+        <span className="block truncate" title={item.ownerEmail}>
+          {item.ownerEmail}
+        </span>
+      </td>
       <td className="px-4 py-4 capitalize text-[#435248]">
-        {item.planDisplayName || item.planCode}
+        <span className="block break-words leading-5" title={item.planDisplayName || item.planCode}>
+          {item.planDisplayName || item.planCode}
+        </span>
       </td>
       <td className="px-4 py-4">
-        <StatusBadge value={item.status} />
+        <div className="min-w-0">
+          <StatusBadge value={item.status} wrap />
+        </div>
       </td>
       <td className="px-4 py-4 text-[#65736A]">
         {formatDate(item.currentPeriodEnd)}
@@ -779,22 +797,32 @@ function SubscriptionRow({ item, onAction }) {
 
 function ActionButtons({ item, onAction, compact = false }) {
   return (
-    <div className={`mt-4 flex flex-wrap gap-2 ${compact ? "mt-0" : ""}`}>
+    <div
+      className={`mt-4 flex flex-wrap gap-2 ${
+        compact ? "mt-0 flex-col items-stretch" : ""
+      }`}
+    >
       <Button
         variant="secondary"
         size="sm"
+        className={compact ? "w-full whitespace-nowrap" : ""}
         onClick={() => onAction("extend_trial", item)}
       >
         Extend trial
       </Button>
       {item.status === "suspended" ? (
-        <Button size="sm" onClick={() => onAction("reactivate", item)}>
+        <Button
+          size="sm"
+          className={compact ? "w-full whitespace-nowrap" : ""}
+          onClick={() => onAction("reactivate", item)}
+        >
           Reactivate
         </Button>
       ) : (
         <Button
           variant="danger"
           size="sm"
+          className={compact ? "w-full whitespace-nowrap" : ""}
           onClick={() => onAction("suspend", item)}
         >
           Suspend
@@ -820,20 +848,28 @@ function CheckoutsPanel({
         <EmptyBlock text="No checkout sessions are available." />
       ) : (
         <>
-          <ul className="divide-y divide-[#EDF1EE] xl:hidden">
+          <ul className="divide-y divide-[#EDF1EE] min-[1440px]:hidden">
             {items.map((item) => (
               <CheckoutCard key={item.id} item={item} onAction={onAction} />
             ))}
           </ul>
-          <table className="hidden w-full table-fixed text-left text-sm xl:table">
+          <table className="hidden w-full table-fixed text-left text-sm min-[1440px]:table">
+            <colgroup>
+              <col className="w-[14%]" />
+              <col className="w-[13%]" />
+              <col className="w-[22%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[15%]" />
+            </colgroup>
             <thead className="border-b border-[#E8EEE9] bg-[#F8FAF8] text-xs font-semibold text-[#66736A]">
               <tr>
-                <th className="w-[19%] px-5 py-3">Session</th>
-                <th className="w-[16%] px-4 py-3">Token</th>
-                <th className="w-[24%] px-4 py-3">Organization</th>
-                <th className="w-[13%] px-4 py-3">Status</th>
-                <th className="w-[15%] px-4 py-3">Payment</th>
-                <th className="w-[13%] px-4 py-3">Action</th>
+                <th className="px-5 py-3">Session</th>
+                <th className="px-4 py-3">Token</th>
+                <th className="px-4 py-3">Organization</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Payment</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EDF1EE]">
@@ -909,13 +945,23 @@ function CheckoutCard({ item, onAction }) {
 function CheckoutRow({ item, onAction }) {
   const canRetry =
     item.paymentConfirmedAt && item.emailVerifiedAt && item.status !== "active";
+  const payment = item.paymentConfirmedAt
+    ? formatDate(item.paymentConfirmedAt, {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Unpaid";
   return (
     <tr className="align-top hover:bg-[#FAFCFA]">
-      <td className="truncate px-5 py-4 font-mono text-xs font-semibold text-[#25352B]">
-        {item.id}
+      <td className="px-5 py-4 font-mono text-xs font-semibold text-[#25352B]">
+        <span className="block truncate" title={item.id}>
+          {item.id}
+        </span>
       </td>
-      <td className="truncate px-4 py-4 font-mono text-xs text-[#65736A]">
-        {item.publicTokenMasked}
+      <td className="px-4 py-4 font-mono text-xs text-[#65736A]">
+        <span className="block truncate" title={item.publicTokenMasked}>
+          {item.publicTokenMasked}
+        </span>
       </td>
       <td className="px-4 py-4">
         <p className="truncate font-semibold text-[#25352B]">
@@ -926,15 +972,14 @@ function CheckoutRow({ item, onAction }) {
         </p>
       </td>
       <td className="px-4 py-4">
-        <StatusBadge value={item.status} />
+        <div className="min-w-0">
+          <StatusBadge value={item.status} wrap />
+        </div>
       </td>
       <td className="px-4 py-4 text-[#65736A]">
-        {item.paymentConfirmedAt
-          ? formatDate(item.paymentConfirmedAt, {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "Unpaid"}
+        <span className="block truncate" title={payment}>
+          {payment}
+        </span>
       </td>
       <td className="px-4 py-4">
         {canRetry ? (
@@ -975,20 +1020,28 @@ function WebhooksPanel({
         <EmptyBlock text="No webhook events are available." />
       ) : (
         <>
-          <ul className="divide-y divide-[#EDF1EE] xl:hidden">
+          <ul className="divide-y divide-[#EDF1EE] min-[1440px]:hidden">
             {items.map((item) => (
               <WebhookCard key={item.id} item={item} onAction={onAction} />
             ))}
           </ul>
-          <table className="hidden w-full table-fixed text-left text-sm xl:table">
+          <table className="hidden w-full table-fixed text-left text-sm min-[1440px]:table">
+            <colgroup>
+              <col className="w-[17%]" />
+              <col className="w-[19%]" />
+              <col className="w-[15%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[13%]" />
+            </colgroup>
             <thead className="border-b border-[#E8EEE9] bg-[#F8FAF8] text-xs font-semibold text-[#66736A]">
               <tr>
-                <th className="w-[22%] px-5 py-3">Provider event</th>
-                <th className="w-[18%] px-4 py-3">Event type</th>
-                <th className="w-[13%] px-4 py-3">Status</th>
-                <th className="w-[18%] px-4 py-3">Received</th>
-                <th className="w-[19%] px-4 py-3">Error summary</th>
-                <th className="w-[10%] px-4 py-3">Action</th>
+                <th className="px-5 py-3">Provider event</th>
+                <th className="px-4 py-3">Event type</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Received</th>
+                <th className="px-4 py-3">Error summary</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EDF1EE]">
@@ -1046,20 +1099,28 @@ function WebhookCard({ item, onAction }) {
 function WebhookRow({ item, onAction }) {
   return (
     <tr className="align-top hover:bg-[#FAFCFA]">
-      <td className="truncate px-5 py-4 font-mono text-xs font-semibold text-[#25352B]">
-        {item.providerEventId}
+      <td className="px-5 py-4 font-mono text-xs font-semibold text-[#25352B]">
+        <span className="block truncate" title={item.providerEventId}>
+          {item.providerEventId}
+        </span>
       </td>
-      <td className="truncate px-4 py-4 font-mono text-xs text-[#435248]">
-        {item.eventType}
+      <td className="px-4 py-4 font-mono text-xs text-[#435248]">
+        <span className="block truncate" title={item.eventType}>
+          {item.eventType}
+        </span>
       </td>
       <td className="px-4 py-4">
-        <StatusBadge value={item.processingStatus} />
+        <div className="min-w-0">
+          <StatusBadge value={item.processingStatus} wrap />
+        </div>
       </td>
       <td className="px-4 py-4 text-[#65736A]">
         {formatDate(item.receivedAt, { hour: "2-digit", minute: "2-digit" })}
       </td>
-      <td className="truncate px-4 py-4 font-mono text-xs text-[#8A3028]">
-        {item.errorSummary || "—"}
+      <td className="px-4 py-4 font-mono text-xs text-[#8A3028]">
+        <span className="block truncate" title={item.errorSummary || "—"}>
+          {item.errorSummary || "—"}
+        </span>
       </td>
       <td className="px-4 py-4">
         {item.processingStatus === "failed" ? (
