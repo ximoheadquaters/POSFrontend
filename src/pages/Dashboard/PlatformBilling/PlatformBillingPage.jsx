@@ -36,6 +36,11 @@ function actionTitle(type) {
   );
 }
 
+function metricCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) ? count : 0;
+}
+
 export default function PlatformBillingPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [overview, setOverview] = useState(null);
@@ -73,6 +78,7 @@ export default function PlatformBillingPage() {
   const [reasonInput, setReasonInput] = useState("");
   const [trialDaysInput, setTrialDaysInput] = useState("14");
   const [submittingAction, setSubmittingAction] = useState(false);
+  const [showOverviewDetails, setShowOverviewDetails] = useState(false);
 
   const fetchOverview = useCallback(async () => {
     setLoadingOverview(true);
@@ -304,10 +310,20 @@ export default function PlatformBillingPage() {
     }
   };
 
-  const metrics = [
+  const attentionCount = [
+    overview?.paidProvisioningFailuresCount,
+    overview?.failedWebhooksCount,
+    overview?.checkoutsAwaitingVerificationCount,
+    overview?.checkoutsAwaitingPaymentCount,
+  ].reduce((total, value) => total + metricCount(value), 0);
+
+  const summaryMetrics = [
     ["Active subscriptions", overview?.activeSubscriptionsCount],
     ["Active trials", overview?.trialsCount],
     ["Past due", overview?.pastDueCount],
+    ["Needs review", attentionCount],
+  ];
+  const detailMetrics = [
     ["Suspended", overview?.suspendedCount],
     ["Canceled", overview?.canceledCount],
     ["Setup failures", overview?.paidProvisioningFailuresCount],
@@ -355,21 +371,19 @@ export default function PlatformBillingPage() {
       ) : null}
 
       <section className="portal-surface">
-        <div className="flex flex-col gap-3 border-b border-[#E8EEE9] px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
-          <div>
+        <div className="flex items-center justify-between gap-3 border-b border-[#E8EEE9] px-4 py-3 sm:px-5 sm:py-4">
+          <div className="min-w-0">
             <h2 className="portal-section-heading">Operations</h2>
-            <p className="portal-supporting-copy mt-1">
+            <p className="portal-supporting-copy mt-0.5 hidden sm:block">
               Choose a billing area to review or act on.
             </p>
           </div>
-          <label className="block w-full sm:w-56">
-            <span className="mb-1 block text-xs font-medium text-[#65736A]">
-              Billing section
-            </span>
+          <label className="block w-40 shrink-0 sm:w-56">
+            <span className="sr-only">Billing section</span>
             <select
               value={activeTab}
               onChange={(event) => setActiveTab(event.target.value)}
-              className="w-full rounded-xl border border-[#D7E1D9] bg-white px-3 text-sm font-medium text-[#25352B]"
+              className="min-h-10 w-full rounded-xl border border-[#D7E1D9] bg-white px-3 text-sm font-medium text-[#25352B]"
             >
               {sections.map((section) => (
                 <option key={section.key} value={section.key}>
@@ -384,15 +398,68 @@ export default function PlatformBillingPage() {
           loadingOverview ? (
             <LoadingBlock />
           ) : (
-            <div className="grid divide-y divide-[#E8EEE9] sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-5 xl:divide-x">
-              {metrics.map(([label, value]) => (
-                <article key={label} className="px-4 py-4 sm:px-5">
-                  <p className="text-2xl font-semibold tracking-[-0.035em] text-[#25352B]">
-                    {value ?? 0}
-                  </p>
-                  <p className="mt-1 text-sm text-[#65736A]">{label}</p>
-                </article>
-              ))}
+            <div>
+              <div className="grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-4 sm:gap-3 sm:p-5">
+                {summaryMetrics.map(([label, value]) => (
+                  <article
+                    key={label}
+                    className="min-w-0 rounded-xl border border-[#E1EAE3] bg-[#FCFDFC] px-3 py-3 sm:px-4"
+                  >
+                    <p className="text-[11px] font-medium leading-4 text-[#65736A] sm:text-xs">
+                      {label}
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#25352B] sm:text-[28px]">
+                      {value ?? 0}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-4 text-[#748177] sm:text-xs">
+                      {label === "Needs review"
+                        ? "Setup and checkout"
+                        : "Billing status"}
+                    </p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="border-t border-[#E8EEE9]">
+                <button
+                  type="button"
+                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F8FAF8] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-5"
+                  onClick={() => setShowOverviewDetails((open) => !open)}
+                  aria-expanded={showOverviewDetails}
+                  aria-controls="billing-overview-details"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-[#25352B]">
+                      Additional status
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-[#748177]">
+                      Suspended, setup, and checkout counts
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right text-xs font-semibold text-primary">
+                    {showOverviewDetails ? "Hide details" : "View details"}
+                    {attentionCount ? ` · ${attentionCount} to review` : ""}
+                  </span>
+                </button>
+
+                {showOverviewDetails ? (
+                  <div
+                    id="billing-overview-details"
+                    className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-[#E8EEE9] px-4 py-4 sm:grid-cols-4 sm:px-5"
+                  >
+                    {detailMetrics.map(([label, value]) => (
+                      <dl key={label} className="min-w-0">
+                        <dt className="text-[11px] leading-4 text-[#65736A] sm:text-xs">
+                          {label}
+                        </dt>
+                        <dd className="mt-1 text-lg font-semibold tracking-[-0.025em] text-[#25352B]">
+                          {value ?? 0}
+                        </dd>
+                      </dl>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           )
         ) : null}
