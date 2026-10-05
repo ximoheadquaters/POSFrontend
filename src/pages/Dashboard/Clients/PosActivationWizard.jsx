@@ -49,23 +49,29 @@ function Notice({ message }) {
   );
 }
 
-function Stepper({ step }) {
+function Stepper({ step, recovery = false }) {
+  const steps = recovery
+    ? ["Owner", "Existing workspace"]
+    : ["Owner", "Workspace", "Review"];
+  const activeStep = recovery ? 2 : step;
+
   return (
     <ol
-      className="mb-5 grid grid-cols-3 gap-2"
+      className={`mb-5 grid gap-2 ${recovery ? "grid-cols-2" : "grid-cols-3"}`}
       aria-label="POS activation progress"
     >
-      {["Access", "Workspace", "Review"].map((label, index) => {
-        const current = index + 1 === step;
+      {steps.map((label, index) => {
+        const position = index + 1;
+        const current = position === activeStep;
         return (
           <li key={label}>
             <div
-              className={`h-1 rounded-full ${index + 1 <= step ? "bg-primary" : "bg-[#E3EAE5]"}`}
+              className={`h-1 rounded-full ${position <= activeStep ? "bg-primary" : "bg-[#E3EAE5]"}`}
             />
             <p
               className={`mt-2 text-xs font-semibold ${current ? "text-primary" : "text-[#7A877F]"}`}
             >
-              {index + 1}. {label}
+              {position}. {label}
             </p>
           </li>
         );
@@ -138,6 +144,7 @@ export default function PosActivationWizard({
     "active",
   ];
   const outcome = outcomeFor(preview);
+  const recoveringWorkspace = isRecovery(outcome);
 
   function reset() {
     setStep(1);
@@ -154,6 +161,12 @@ export default function PosActivationWizard({
   }
   function update(name, value) {
     setValues((current) => ({ ...current, [name]: value }));
+  }
+
+  function chooseAnotherOwnerEmail() {
+    setNotice(null);
+    setPreview(null);
+    setStep(1);
   }
 
   async function continueFromOwner() {
@@ -238,14 +251,17 @@ export default function PosActivationWizard({
         className="w-full sm:w-auto"
         disabled={checking || saving}
         onClick={() => {
-          if (step === 1 || isDone(outcome) || isBlocked(outcome)) close();
+          if (recoveringWorkspace) chooseAnotherOwnerEmail();
+          else if (step === 1 || isDone(outcome) || isBlocked(outcome)) close();
           else {
             setNotice(null);
             setStep(step - 1);
           }
         }}
       >
-        {step === 1 || isDone(outcome) || isBlocked(outcome)
+        {recoveringWorkspace
+          ? "Use another owner email"
+          : step === 1 || isDone(outcome) || isBlocked(outcome)
           ? "Cancel"
           : "Back"}
       </Button>
@@ -270,8 +286,8 @@ export default function PosActivationWizard({
           loading={saving}
           onClick={activate}
         >
-          {isRecovery(outcome)
-            ? "Assign existing POS"
+          {recoveringWorkspace
+            ? "Link existing workspace"
             : "Create and assign POS"}
         </Button>
       ) : null}
@@ -286,7 +302,7 @@ export default function PosActivationWizard({
       footer={footer}
       className="max-w-xl"
     >
-      <Stepper step={step} />
+      <Stepper step={step} recovery={recoveringWorkspace} />
       <Notice message={notice} />
       {step === 1 ? <Access values={values} update={update} /> : null}
       {step === 2 ? (
@@ -318,6 +334,33 @@ function Access({ values, update }) {
           new one.
         </p>
       </div>
+      <fieldset>
+        <legend className="text-sm font-medium text-[#26342A]">
+          Account use
+        </legend>
+        <p className="mt-1 text-xs leading-5 text-[#637168]">
+          Both options follow the same secure setup flow. This label keeps the
+          client assignment clear for your team.
+        </p>
+        <div
+          className="mt-3 grid gap-3 sm:grid-cols-2"
+          role="radiogroup"
+          aria-label="Account use"
+        >
+          <Choice
+            selected={values.purpose === "client_access"}
+            title="Client account"
+            description="Provide POS access to a customer manually."
+            onClick={() => update("purpose", "client_access")}
+          />
+          <Choice
+            selected={values.purpose === "qa_workspace"}
+            title="QA test account"
+            description="Issue a controlled workspace for your team to test."
+            onClick={() => update("purpose", "qa_workspace")}
+          />
+        </div>
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           id="pos-owner-name"
@@ -490,7 +533,7 @@ function Review({ values, preview, plan }) {
     : alreadyAssigned
       ? "This POS workspace is already assigned to this client. No second workspace will be created."
       : recovery
-        ? "An existing POS workspace was found for this owner and can be safely assigned to this client."
+        ? "This email already owns a POS workspace. Link it to this client, or use another owner email to create a different workspace."
         : "A new Ximo POS workspace will be created and assigned to this client.";
   return (
     <div className="space-y-5">
@@ -500,7 +543,9 @@ function Review({ values, preview, plan }) {
             ? "Workspace already belongs elsewhere"
             : alreadyAssigned
               ? "POS already active"
-              : "Review activation"}
+              : recovery
+                ? "Existing POS workspace found"
+                : "Review activation"}
         </h4>
         <p className="mt-1 text-sm leading-5 text-neutral-500">{message}</p>
       </div>
@@ -558,8 +603,8 @@ function Review({ values, preview, plan }) {
       ) : null}
       {recovery ? (
         <div className="rounded-xl bg-[#F4F8F5] p-3 text-sm leading-5 text-[#486052]">
-          This recovery only connects the existing workspace to this client. It
-          does not create a duplicate organization or replace its owner.
+          Workspace settings are only used when creating a new POS workspace.
+          They are not applied to the workspace shown above.
         </div>
       ) : null}
       {alreadyAssigned ? (
@@ -590,6 +635,7 @@ function initialValues(client) {
     planCode: "",
     subscriptionStatus: "",
     businessProfile: "",
+    purpose: "client_access",
     ownerEmail: client?.primary_email || "",
     ownerName: client?.display_name || client?.legal_name || "",
   };
