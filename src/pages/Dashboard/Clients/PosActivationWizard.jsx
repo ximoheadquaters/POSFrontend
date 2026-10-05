@@ -156,7 +156,7 @@ export default function PosActivationWizard({
     setValues((current) => ({ ...current, [name]: value }));
   }
 
-  async function continueFromAccess() {
+  async function continueFromOwner() {
     if (!values.ownerName.trim() || !values.ownerEmail.trim()) {
       setNotice({
         type: "error",
@@ -254,7 +254,7 @@ export default function PosActivationWizard({
           className="w-full sm:w-auto"
           loading={checking}
           disabled={saving}
-          onClick={continueFromAccess}
+          onClick={continueFromOwner}
         >
           Continue
         </Button>
@@ -272,9 +272,7 @@ export default function PosActivationWizard({
         >
           {isRecovery(outcome)
             ? "Assign existing POS"
-            : values.purpose === "qa_workspace"
-              ? "Activate QA workspace"
-              : "Create and assign POS"}
+            : "Create and assign POS"}
         </Button>
       ) : null}
     </div>
@@ -313,30 +311,12 @@ function Access({ values, update }) {
     <div className="space-y-5">
       <div>
         <h4 className="text-base font-semibold text-[#17241C]">
-          Who is this workspace for?
+          Confirm the POS owner
         </h4>
         <p className="mt-1 text-sm leading-5 text-neutral-500">
-          Choose the provisioning path, then confirm the person who will own the
-          POS workspace.
+          We use this email to find an existing POS workspace before creating a
+          new one.
         </p>
-      </div>
-      <div
-        className="grid gap-3 sm:grid-cols-2"
-        role="radiogroup"
-        aria-label="Workspace purpose"
-      >
-        <Choice
-          selected={values.purpose === "client_access"}
-          title="Client access"
-          description="Set up the client’s production or trial workspace."
-          onClick={() => update("purpose", "client_access")}
-        />
-        <Choice
-          selected={values.purpose === "qa_workspace"}
-          title="QA workspace"
-          description="Create an admin-provisioned test workspace without payment."
-          onClick={() => update("purpose", "qa_workspace")}
-        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
@@ -356,9 +336,9 @@ function Access({ values, update }) {
         />
       </div>
       <div className="rounded-xl border border-[#DDE8E0] bg-[#F4F8F5] p-3 text-sm leading-5 text-[#486052]">
-        {values.purpose === "qa_workspace"
-          ? "QA owners do not need a landing-page account. If this email has no POS account, Ximo sends a secure setup link after activation."
-          : "A landing-page account alone does not create POS access. If this email has no POS account, Ximo sends a secure setup link after activation."}
+        A landing-page account alone does not create a POS workspace. If a POS
+        workspace already uses this email, it is safely connected to this
+        client. Otherwise, Ximo sends a secure setup link after activation.
       </div>
     </div>
   );
@@ -562,14 +542,6 @@ function Review({ values, preview, plan }) {
             value={`${values.ownerName} · ${values.ownerEmail}`}
           />
           <Row
-            label="Purpose"
-            value={
-              values.purpose === "qa_workspace"
-                ? "QA workspace"
-                : "Client access"
-            }
-          />
-          <Row
             label="Business type"
             value={
               PROFILES.find(
@@ -612,7 +584,6 @@ function Row({ label, value }) {
 
 function initialValues(client) {
   return {
-    purpose: "client_access",
     name: client?.legal_name || client?.display_name || "",
     currency: client?.preferred_currency || "PHP",
     timezone: client?.timezone || "Asia/Manila",

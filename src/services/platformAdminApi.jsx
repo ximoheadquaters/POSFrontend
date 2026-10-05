@@ -187,7 +187,7 @@ export const platformAdminApi = {
       const legacySystems = assertResult(
         await supabase
           .from("systems")
-          .select("id, code, name, description, display_order")
+          .select("code, name, description, display_order")
           .order("display_order"),
         "Systems could not be loaded.",
       );
