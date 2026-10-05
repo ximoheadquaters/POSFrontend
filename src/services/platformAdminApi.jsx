@@ -177,6 +177,32 @@ export const platformAdminApi = {
       )
       .order("name");
 
+    // Older platform databases still expose the legacy systems catalogue while
+    // the canonical applications migration is being deployed. Read that real
+    // catalogue instead of showing an error for a known transition state.
+    if (
+      result.error?.code === "PGRST205" &&
+      result.error.message?.includes("public.applications")
+    ) {
+      const legacySystems = assertResult(
+        await supabase
+          .from("systems")
+          .select("id, code, name, description, display_order")
+          .order("display_order"),
+        "Systems could not be loaded.",
+      );
+      return (legacySystems || []).map((system, index) =>
+        normalizeApplication(
+          {
+            ...system,
+            code: system.code === "pos" ? "ximo_pos" : system.code,
+            is_active: true,
+          },
+          system.display_order ?? index,
+        ),
+      );
+    }
+
     const applications = assertResult(result, "Systems could not be loaded.");
     return (applications || []).map(normalizeApplication);
   },
