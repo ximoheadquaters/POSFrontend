@@ -2,10 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
-import {
-  AdminError,
-  AdminLoading,
-} from "../../../components/admin/AdminUi";
+import { AdminError, AdminLoading } from "../../../components/admin/AdminUi";
 import { PageHeader, StatusBadge } from "../../../components/pos/PosUi";
 import usePosResource from "../../../hooks/usePosResource";
 import { platformAdminApi } from "../../../services/platformAdminApi";
@@ -28,18 +25,24 @@ export default function ClientsPage() {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialForm);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   async function create(event) {
     event.preventDefault();
     setSaving(true);
-    setError("");
+    setError(null);
     try {
       const client = await platformAdminApi.createClient(form);
       setCreating(false);
       navigate(`/admin/clients/${client.id}`);
     } catch (requestError) {
-      setError(requestError.message);
+      setError({
+        text: requestError.message,
+        existingClient:
+          requestError.code === "CLIENT_EMAIL_EXISTS"
+            ? requestError.details?.client || null
+            : null,
+      });
     } finally {
       setSaving(false);
     }
@@ -61,12 +64,34 @@ export default function ClientsPage() {
           <div className="flex items-center justify-between gap-3 border-b border-[#1A593B]/10 px-4 py-4 sm:px-6 sm:py-5">
             <div>
               <h2 className="portal-section-heading">Client records</h2>
-              <p className="portal-supporting-copy mt-1">Profiles and Ximo access.</p>
+              <p className="portal-supporting-copy mt-1">
+                Profiles and Ximo access.
+              </p>
             </div>
-            <p className="shrink-0 text-sm font-semibold text-[#1A593B]">{resource.data?.length || 0} total</p>
+            <p className="shrink-0 text-sm font-semibold text-[#1A593B]">
+              {resource.data?.length || 0} total
+            </p>
           </div>
           <div className="divide-y divide-[#1A593B]/10 md:hidden">
-            {resource.data?.map((client) => <Link key={client.id} to={`/admin/clients/${client.id}`} className="portal-list-row flex items-center gap-3"><ClientAvatar name={client.display_name || client.legal_name} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#25352B]">{client.display_name || client.legal_name}</p><p className="mt-0.5 truncate text-xs text-[#748177]">{client.kind} · {client.client_systems?.length || 0} system{(client.client_systems?.length || 0) === 1 ? "" : "s"}</p></div><StatusBadge value={client.status} /></Link>)}
+            {resource.data?.map((client) => (
+              <Link
+                key={client.id}
+                to={`/admin/clients/${client.id}`}
+                className="portal-list-row flex items-center gap-3"
+              >
+                <ClientAvatar name={client.display_name || client.legal_name} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-[#25352B]">
+                    {client.display_name || client.legal_name}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-[#748177]">
+                    {client.kind} · {client.client_systems?.length || 0} system
+                    {(client.client_systems?.length || 0) === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <StatusBadge value={client.status} />
+              </Link>
+            ))}
           </div>
           <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-[#E7ECE7]">
@@ -91,7 +116,10 @@ export default function ClientsPage() {
               </thead>
               <tbody className="divide-y divide-[#EDF0ED]">
                 {resource.data?.map((client) => (
-                  <tr key={client.id} className="transition-colors hover:bg-[#F8FAF8]">
+                  <tr
+                    key={client.id}
+                    className="transition-colors hover:bg-[#F8FAF8]"
+                  >
                     <td className="px-5 py-4">
                       <p className="font-semibold text-[#17241C]">
                         {client.display_name || client.legal_name}
@@ -127,8 +155,12 @@ export default function ClientsPage() {
           </div>
           {!resource.data?.length && (
             <div className="p-8 text-center sm:p-12">
-              <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">No client records yet.</p>
-              <p className="mt-2 text-sm text-[#68736A]">Add the first client to begin connecting Ximo systems.</p>
+              <p className="text-lg font-semibold tracking-[-0.03em] text-[#17241C]">
+                No client records yet.
+              </p>
+              <p className="mt-2 text-sm text-[#68736A]">
+                Add the first client to begin connecting Ximo systems.
+              </p>
             </div>
           )}
         </div>
@@ -144,7 +176,16 @@ export default function ClientsPage() {
               role="alert"
               className="rounded-button bg-red-50 p-3 text-sm text-red-800"
             >
-              {error}
+              <p>{error.text}</p>
+              {error.existingClient?.id && (
+                <Link
+                  to={`/admin/clients/${error.existingClient.id}`}
+                  onClick={() => setCreating(false)}
+                  className="mt-2 inline-flex font-semibold text-primary underline underline-offset-4"
+                >
+                  Open existing client
+                </Link>
+              )}
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -220,7 +261,13 @@ export default function ClientsPage() {
 }
 
 function ClientAvatar({ name }) {
-  return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-sm font-semibold text-[#1A593B]">{String(name || "C").slice(0, 1).toUpperCase()}</span>;
+  return (
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-sm font-semibold text-[#1A593B]">
+      {String(name || "C")
+        .slice(0, 1)
+        .toUpperCase()}
+    </span>
+  );
 }
 
 function Field({ label, onChange, ...props }) {

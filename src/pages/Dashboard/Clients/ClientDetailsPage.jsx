@@ -14,60 +14,13 @@ import {
 } from "../../../components/pos/PosUi";
 import usePosResource from "../../../hooks/usePosResource";
 import { platformAdminApi } from "../../../services/platformAdminApi";
-import {
-  posPlatformApi,
-  unwrapCollection,
-  unwrapEntity,
-} from "../../../services/posPlatformApi";
-
-function orgValue(org, ...keys) {
-  return keys.map((key) => org?.[key]).find((value) => value != null);
-}
-
-function organizationOwnerEmail(organization) {
-  return String(
-    organization?.owner?.email ||
-      organization?.ownerEmail ||
-      organization?.owner_email ||
-      "",
-  )
-    .trim()
-    .toLowerCase();
-}
-
-function isExistingOwnerAccountError(error) {
-  const text = `${error?.message || ""} ${error?.code || ""}`.toLowerCase();
-  return (
-    text.includes("authentication account") &&
-    (text.includes("already exists") || text.includes("already exist"))
-  );
-}
-
-function newProvisioningKey() {
-  return `ximo-web-${crypto.randomUUID()}`;
-}
-
-const BUSINESS_PROFILES = [
-  {
-    value: "retail",
-    label: "Retail",
-    description: "Barcode sales, products, purchasing, and stock control.",
-  },
-  {
-    value: "food_service",
-    label: "Food service",
-    description: "Ingredients, recipes, prepared food, and production.",
-  },
-  {
-    value: "hybrid",
-    label: "Hybrid",
-    description: "Retail products and food-service workflows in one POS.",
-  },
-];
+import { posPlatformApi, unwrapEntity } from "../../../services/posPlatformApi";
+import PosActivationWizard from "./PosActivationWizard";
 
 function assignmentName(assignment) {
-  if (assignment.system_code === "pos") return "Ximo POS";
-  return assignment.systems?.name || assignment.system_code;
+  return assignment.system_code === "pos"
+    ? "Ximo POS"
+    : assignment.systems?.name || assignment.system_code;
 }
 
 function SystemIcon({ code }) {
@@ -78,16 +31,13 @@ function SystemIcon({ code }) {
     strokeWidth: "1.8",
     "aria-hidden": true,
   };
-
-  if (code === "pos") {
+  if (code === "pos")
     return (
       <svg {...shared} className="h-5 w-5">
         <rect x="4" y="3.5" width="16" height="17" rx="2" />
         <path strokeLinecap="round" d="M7.5 7.5h9M7.5 11h9M8 16h3M15 16h1" />
       </svg>
     );
-  }
-
   return (
     <svg {...shared} className="h-5 w-5">
       <path
@@ -107,175 +57,20 @@ export default function ClientDetailsPage() {
   );
   const systemsResource = usePosResource(platformAdminApi.listSystems, []);
   const [adding, setAdding] = useState(false);
-  const [mode, setMode] = useState("create");
-  const [systemCode, setSystemCode] = useState("pos");
-  const [externalTenantId, setExternalTenantId] = useState("");
-  const [idempotencyKey, setIdempotencyKey] = useState(newProvisioningKey);
-  const [provisioning, setProvisioning] = useState({
-    name: "",
-    currency: "PHP",
-    timezone: "Asia/Manila",
-    planCode: "",
-    subscriptionStatus: "",
-    businessProfile: "",
-    ownerEmail: "",
-    ownerName: "",
-  });
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [resendAssignment, setResendAssignment] = useState(null);
   const [resending, setResending] = useState(false);
-  const posOrganizations = usePosResource(
-    () =>
-      adding && mode === "link"
-        ? posPlatformApi.listOrganizations()
-        : Promise.resolve([]),
-    [adding, mode],
-  );
-  const plansResource = usePosResource(
-    () =>
-      adding && mode === "create"
-        ? posPlatformApi.listPlans()
-        : Promise.resolve([]),
-    [adding, mode],
-  );
 
   if (resource.loading) return <AdminLoading />;
   if (resource.error)
     return <AdminError error={resource.error} retry={resource.refresh} />;
+
   const client = resource.data;
   const name = client.display_name || client.legal_name;
   const assignments = client.client_systems || [];
-  const assignedCodes = new Set(assignments.map((item) => item.system_code));
-  const availableSystems = (systemsResource.data || []).filter(
-    (system) =>
-      system.availability === "available" && !assignedCodes.has(system.code),
+  const hasPos = assignments.some(
+    (assignment) => assignment.system_code === "pos",
   );
-  const organizations = unwrapCollection(posOrganizations.data, [
-    "organizations",
-  ]);
-  const plans = unwrapCollection(plansResource.data, ["plans"]).filter(
-    (plan) =>
-      plan.isAvailableForOnboarding !== false && plan.isActive !== false,
-  );
-  const selectedPlan = plans.find(
-    (plan) => plan.code === provisioning.planCode,
-  );
-  const allowedStatuses = selectedPlan?.allowedOnboardingStatuses || [
-    "trialing",
-    "active",
-  ];
-
-  function openAddSystem() {
-    setMessage(null);
-    setMode("create");
-    setExternalTenantId("");
-    setIdempotencyKey(newProvisioningKey());
-    setProvisioning({
-      name: client.legal_name,
-      currency: client.preferred_currency || "PHP",
-      timezone: client.timezone || "Asia/Manila",
-      planCode: "",
-      subscriptionStatus: "",
-      businessProfile: "",
-      ownerEmail: client.primary_email || "",
-      ownerName: client.display_name || client.legal_name,
-    });
-    setAdding(true);
-  }
-
-  async function submit(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage(null);
-    let organizationId = externalTenantId;
-    try {
-      if (mode === "create") {
-        const payload = await posPlatformApi.createOrganization(
-          provisioning,
-          idempotencyKey,
-        );
-        const organization = unwrapEntity(payload, ["organization"]);
-        organizationId = orgValue(
-          organization,
-          "id",
-          "organizationId",
-          "organization_id",
-        );
-        if (!organizationId)
-          throw new Error(
-            "POS created the organization but did not return its ID.",
-          );
-        setExternalTenantId(organizationId);
-      }
-      await platformAdminApi.assignSystem(clientId, {
-        systemCode,
-        externalTenantId: organizationId,
-        metadata:
-          mode === "create"
-            ? {
-                ownerEmail: provisioning.ownerEmail,
-                ownerName: provisioning.ownerName,
-                businessProfile: provisioning.businessProfile,
-                invitationStatus: "pending",
-              }
-            : {},
-      });
-      setAdding(false);
-      setMessage({
-        type: "success",
-        text:
-          mode === "create"
-            ? `Ximo POS was created and assigned. A setup link was sent to ${provisioning.ownerEmail} so they can verify email and create their own password.`
-            : "Existing POS organization assigned successfully.",
-      });
-      await resource.refresh();
-    } catch (error) {
-      if (mode === "create" && isExistingOwnerAccountError(error)) {
-        try {
-          const payload = await posPlatformApi.listOrganizations();
-          const organizations = unwrapCollection(payload, ["organizations"]);
-          const ownerEmail = provisioning.ownerEmail.trim().toLowerCase();
-          const existingOrganization = organizations.find(
-            (organization) => organizationOwnerEmail(organization) === ownerEmail,
-          );
-          const existingOrganizationId = existingOrganization && orgValue(
-            existingOrganization,
-            "id",
-            "organizationId",
-            "organization_id",
-          );
-
-          if (existingOrganizationId) {
-            setMode("link");
-            setExternalTenantId(existingOrganizationId);
-            setMessage({
-              type: "success",
-              text: "An existing POS organization was found for this owner. Review it below, then choose Assign existing POS.",
-            });
-            return;
-          }
-        } catch {
-          // Keep the original provisioning error when the recovery lookup fails.
-        }
-
-        setMessage({
-          type: "error",
-          text: "This owner already has a Ximo authentication account, but no POS organization was found. The POS Platform must attach the existing account before an organization can be created.",
-        });
-        return;
-      }
-      setMessage({
-        type: "error",
-        text:
-          organizationId && mode === "create"
-            ? `${error.message} The POS organization ID is ${organizationId}; retrying will safely reuse it.`
-            : error.message,
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function openResendInvitation(assignment) {
     setMessage(null);
@@ -285,12 +80,10 @@ export default function ClientDetailsPage() {
         await posPlatformApi.getOrganization(assignment.external_tenant_id),
         ["organization"],
       );
-      const ownerEmail = organization?.owner?.email?.trim() || "";
       setResendAssignment({
         ...assignment,
-        resolvedOwnerEmail: ownerEmail,
+        resolvedOwnerEmail: organization?.owner?.email?.trim() || "",
         resolvedOwnerName: organization?.owner?.displayName || "",
-        invitationStatus: organization?.owner?.invitationStatus || "",
       });
     } catch (error) {
       setMessage({
@@ -315,20 +108,14 @@ export default function ClientDetailsPage() {
       setResendAssignment(null);
       return;
     }
-
     setResending(true);
-    setMessage(null);
     try {
       const payload = await posPlatformApi.resendOwnerInvitation(
         resendAssignment.external_tenant_id,
         email,
       );
       const result = unwrapEntity(payload, []);
-      const sentTo =
-        result?.sentTo ||
-        result?.owner?.email ||
-        email;
-
+      const sentTo = result?.sentTo || result?.owner?.email || email;
       if (resendAssignment?.id) {
         try {
           await platformAdminApi.updateSystemMetadata(resendAssignment.id, {
@@ -341,15 +128,14 @@ export default function ClientDetailsPage() {
             invitationStatus: "pending",
           });
         } catch {
-          // Invitation delivery already succeeded; metadata sync is best-effort.
+          /* Delivery succeeded; this metadata refresh is non-blocking. */
         }
       }
-
-      setResendAssignment(null);
       setMessage({
         type: "success",
-        text: `A POS setup link was sent to ${sentTo}. They should open it, verify their email, then create their own password on Ximo POS.`,
+        text: `A POS setup link was sent to ${sentTo}.`,
       });
+      setResendAssignment(null);
       await resource.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -376,7 +162,7 @@ export default function ClientDetailsPage() {
           </Link>
         }
       />
-      {message && !adding && <Notice message={message} />}
+      {message ? <Notice message={message} /> : null}
       <div className="grid gap-5 lg:grid-cols-3">
         <section className="rounded-card border border-neutral-200 bg-white p-6 shadow-sm lg:col-span-2">
           <h2 className="mb-5 text-lg font-semibold">Client information</h2>
@@ -407,7 +193,7 @@ export default function ClientDetailsPage() {
       </div>
       <section className="mt-5 rounded-card border border-neutral-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-neutral-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div className="min-w-0">
+          <div>
             <h2 className="text-lg font-semibold">Assigned systems</h2>
             <p className="mt-1 text-sm text-neutral-500">
               Products enabled for this client.
@@ -416,45 +202,47 @@ export default function ClientDetailsPage() {
           <Button
             size="sm"
             className="w-full sm:w-auto"
-            onClick={openAddSystem}
-            disabled={!availableSystems.length}
+            onClick={() => {
+              setMessage(null);
+              setAdding(true);
+            }}
+            disabled={hasPos || systemsResource.loading}
           >
-            Add system
+            Add Ximo POS
           </Button>
         </div>
+        {systemsResource.error ? (
+          <div className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-800 sm:px-6">
+            The system catalog could not be loaded. The secure activation
+            service will prepare it when you continue.{" "}
+            {systemsResource.error.message}
+          </div>
+        ) : null}
         <div className="divide-y divide-neutral-100">
           {assignments.map((assignment) => (
-            <div
-              key={assignment.id}
-              className="px-5 py-4 sm:px-6 sm:py-5"
-            >
+            <div key={assignment.id} className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex min-w-0 items-start gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-primary">
                   <SystemIcon code={assignment.system_code} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="min-w-0 font-semibold text-[#26342A]">
+                    <p className="font-semibold text-[#26342A]">
                       {assignmentName(assignment)}
                     </p>
                     <StatusBadge value={assignment.status} />
                   </div>
                   {assignment.external_tenant_id ? (
-                    <div className="mt-2 min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#879187]">
-                        Organization ID
-                      </p>
-                      <code
-                        className="mt-1 block max-w-full truncate text-xs text-[#68736A]"
-                        title={assignment.external_tenant_id}
-                      >
-                        {assignment.external_tenant_id}
-                      </code>
-                    </div>
+                    <p
+                      className="mt-1 truncate text-xs text-[#68736A]"
+                      title={assignment.external_tenant_id}
+                    >
+                      Workspace {assignment.external_tenant_id}
+                    </p>
                   ) : null}
                 </div>
               </div>
-              {assignment.system_code === "pos" && (
+              {assignment.system_code === "pos" ? (
                 <div className="mt-4 grid gap-2 border-t border-[#E7ECE8] pt-3 sm:flex sm:justify-end">
                   <Link
                     className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary px-3.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -471,160 +259,73 @@ export default function ClientDetailsPage() {
                     {resending ? "Preparing email…" : "Resend setup link"}
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           ))}
-          {!assignments.length && (
-            <div className="p-10 text-center text-sm text-neutral-500">
-              No systems assigned. Add Ximo POS to provision a new organization
-              and its plan modules.
+          {!assignments.length ? (
+            <div className="px-5 py-8 text-sm text-neutral-500 sm:px-6">
+              No systems are assigned yet. Activate Ximo POS when this client is
+              ready to use it.
             </div>
-          )}
+          ) : null}
         </div>
       </section>
-      <Modal
+      <PosActivationWizard
         isOpen={adding}
-        onClose={() => !saving && setAdding(false)}
-        title="Add Ximo system"
-      >
-        <form onSubmit={submit} className="space-y-5">
-          {message && <Notice message={message} />}
-          <div>
-            <label
-              htmlFor="system"
-              className="mb-1.5 block text-sm font-medium"
-            >
-              System
-            </label>
-            <select
-              id="system"
-              value={systemCode}
-              onChange={(event) => setSystemCode(event.target.value)}
-              className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5"
-            >
-              {availableSystems.map((system) => (
-                <option key={system.code} value={system.code}>
-                  {system.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div
-            className="grid grid-cols-2 gap-2 rounded-button bg-neutral-100 p-1"
-            role="group"
-            aria-label="POS onboarding method"
-          >
-            <button
-              type="button"
-              onClick={() => setMode("create")}
-              className={`rounded-md px-3 py-2 text-sm font-medium ${mode === "create" ? "bg-white text-primary shadow-sm" : "text-neutral-500"}`}
-            >
-              Create new
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("link")}
-              className={`rounded-md px-3 py-2 text-sm font-medium ${mode === "link" ? "bg-white text-primary shadow-sm" : "text-neutral-500"}`}
-            >
-              Link existing
-            </button>
-          </div>
-          {mode === "create" ? (
-            <ProvisioningFields
-              values={provisioning}
-              setValues={setProvisioning}
-              plans={plans}
-              plansResource={plansResource}
-              selectedPlan={selectedPlan}
-              allowedStatuses={allowedStatuses}
-            />
-          ) : (
-            <ExistingOrganizationField
-              resource={posOrganizations}
-              organizations={organizations}
-              value={externalTenantId}
-              setValue={setExternalTenantId}
-            />
-          )}
-          <div className="rounded-button bg-neutral-50 p-3 text-xs text-neutral-500">
-            {mode === "create"
-              ? "POS creates the organization, subscription, owner invitation, and default branch atomically. Available modules are the features included in both the selected plan and business type."
-              : "Use this only when the client already has a POS organization."}
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => setAdding(false)}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              loading={saving}
-              disabled={
-                mode === "create"
-                  ? !provisioning.planCode ||
-                    !provisioning.subscriptionStatus ||
-                    !provisioning.businessProfile ||
-                    !provisioning.ownerEmail ||
-                    !provisioning.ownerName
-                  : !externalTenantId
-              }
-            >
-              {mode === "create"
-                ? "Create and assign POS"
-                : "Assign existing POS"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        onClose={() => setAdding(false)}
+        clientId={clientId}
+        client={client}
+        onComplete={async (nextMessage) => {
+          setMessage(nextMessage);
+          await resource.refresh();
+        }}
+      />
       <Modal
         isOpen={Boolean(resendAssignment)}
         onClose={() => !resending && setResendAssignment(null)}
-        title="Resend POS owner email?"
+        title="Resend POS setup link?"
       >
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm leading-6 text-neutral-600">
           Send a new setup link to{" "}
           <strong>
             {resendAssignment?.resolvedOwnerEmail ||
               resendAssignment?.metadata?.ownerEmail ||
               "the POS owner"}
           </strong>
-          ? They will verify their email on Ximo POS, then create their own
-          password. Old setup links stop working after a resend.
+          ? Old setup links stop working after a resend.
         </p>
         {resendAssignment?.resolvedOwnerEmail &&
-          client.primary_email &&
-          resendAssignment.resolvedOwnerEmail.toLowerCase() !==
-            client.primary_email.toLowerCase() && (
-            <div
-              role="status"
-              className="mt-4 rounded-button bg-amber-50 p-3 text-sm text-amber-900"
-            >
-              Client primary email is{" "}
-              <strong>{client.primary_email}</strong>, but POS will email the
-              organization owner above.
-            </div>
-          )}
-        {!resendAssignment?.resolvedOwnerEmail && (
+        client.primary_email &&
+        resendAssignment.resolvedOwnerEmail.toLowerCase() !==
+          client.primary_email.toLowerCase() ? (
+          <div
+            role="status"
+            className="mt-4 rounded-button bg-amber-50 p-3 text-sm text-amber-900"
+          >
+            The client record uses <strong>{client.primary_email}</strong>,
+            while the setup link will go to the POS owner above.
+          </div>
+        ) : null}
+        {!resendAssignment?.resolvedOwnerEmail ? (
           <div
             role="alert"
             className="mt-4 rounded-button bg-red-50 p-3 text-sm text-red-800"
           >
-            No POS owner email was found for this organization. Check the POS
-            organization owner before resending.
+            No POS owner email was found for this workspace. Check the workspace
+            owner before resending.
           </div>
-        )}
-        <div className="mt-6 flex justify-end gap-3">
+        ) : null}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="ghost"
+            className="w-full sm:w-auto"
             onClick={() => setResendAssignment(null)}
             disabled={resending}
           >
             Cancel
           </Button>
           <Button
+            className="w-full sm:w-auto"
             onClick={resendInvitation}
             loading={resending}
             disabled={!resendAssignment?.resolvedOwnerEmail}
@@ -637,252 +338,11 @@ export default function ClientDetailsPage() {
   );
 }
 
-function ProvisioningFields({
-  values,
-  setValues,
-  plans,
-  plansResource,
-  selectedPlan,
-  allowedStatuses,
-}) {
-  const set = (key) => (event) =>
-    setValues((current) => ({ ...current, [key]: event.target.value }));
-  if (plansResource.loading)
-    return (
-      <p className="text-sm text-neutral-500">Loading subscription plans…</p>
-    );
-  if (plansResource.error)
-    return (
-      <div
-        role="alert"
-        className="rounded-button border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-      >
-        {plansResource.error.message}
-      </div>
-    );
-  return (
-    <div className="space-y-4">
-      <Input
-        label="Business name"
-        value={values.name}
-        onChange={set("name")}
-        required
-      />
-      <fieldset>
-        <legend className="text-sm font-medium">Business type</legend>
-        <p className="mt-1 text-xs text-neutral-500">
-          Choose how this business operates. Ximo will activate the relevant
-          workflows that are also included in its subscription plan.
-        </p>
-        <div
-          className="mt-3 grid gap-3 sm:grid-cols-3"
-          role="radiogroup"
-          aria-label="Business type"
-        >
-          {BUSINESS_PROFILES.map((profile) => {
-            const selected = values.businessProfile === profile.value;
-            return (
-              <button
-                key={profile.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() =>
-                  setValues((current) => ({
-                    ...current,
-                    businessProfile: profile.value,
-                  }))
-                }
-                className={`min-h-28 rounded-button border p-3 text-left transition-colors ${
-                  selected
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-neutral-300 bg-white hover:border-primary/50"
-                }`}
-              >
-                <span className="block text-sm font-semibold text-neutral-900">
-                  {profile.label}
-                </span>
-                <span className="mt-1 block text-xs leading-5 text-neutral-500">
-                  {profile.description}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="Currency"
-          value={values.currency}
-          onChange={set("currency")}
-          required
-          maxLength={3}
-        />
-        <Input
-          label="Timezone"
-          value={values.timezone}
-          onChange={set("timezone")}
-          required
-        />
-      </div>
-      <div>
-        <label htmlFor="planCode" className="mb-1.5 block text-sm font-medium">
-          Subscription plan
-        </label>
-        <select
-          id="planCode"
-          required
-          value={values.planCode}
-          onChange={(event) =>
-            setValues((current) => {
-              const plan = plans.find(
-                (candidate) => candidate.code === event.target.value,
-              );
-              return {
-                ...current,
-                planCode: event.target.value,
-                subscriptionStatus:
-                  plan?.allowedOnboardingStatuses?.[0] || "active",
-              };
-            })
-          }
-          className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5"
-        >
-          <option value="">Select a plan</option>
-          {plans.map((plan) => (
-            <option key={plan.code} value={plan.code}>
-              {plan.name}
-              {plan.priceMonthly ? ` — ${plan.priceMonthly}/month` : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-      {selectedPlan && (
-        <div className="rounded-button border border-[#E2E6EB] bg-[#F7F8FA] p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#8B94A0]">
-            Plan coverage
-          </p>
-          <p className="mt-1 text-sm text-[#596273]">
-            {selectedPlan.modules?.map((module) => module.name).join(", ") ||
-              "No modules listed"}
-          </p>
-          <p className="mt-2 text-xs text-[#8B94A0]">
-            The selected business type filters this plan to the workflows that
-            apply to the store.
-          </p>
-        </div>
-      )}
-      <div>
-        <label
-          htmlFor="subscriptionStatus"
-          className="mb-1.5 block text-sm font-medium"
-        >
-          Starting status
-        </label>
-        <select
-          id="subscriptionStatus"
-          required
-          disabled={!values.planCode}
-          value={values.subscriptionStatus}
-          onChange={set("subscriptionStatus")}
-          className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5"
-        >
-          <option value="">Select a status</option>
-          {allowedStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </div>
-      <Input
-        label="Owner email"
-        type="email"
-        value={values.ownerEmail}
-        onChange={set("ownerEmail")}
-        required
-      />
-      <p className="-mt-3 text-xs text-neutral-500">
-        They receive a Ximo POS setup link to verify email and create their
-        password there.
-      </p>
-      <Input
-        label="Owner name"
-        value={values.ownerName}
-        onChange={set("ownerName")}
-        required
-      />
-    </div>
-  );
-}
-
-function ExistingOrganizationField({
-  resource,
-  organizations,
-  value,
-  setValue,
-}) {
-  if (resource.loading)
-    return <p className="text-sm text-neutral-500">Loading organizations…</p>;
-  if (resource.error)
-    return (
-      <div
-        role="alert"
-        className="rounded-button border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-      >
-        {resource.error.message}
-      </div>
-    );
-  return (
-    <div>
-      <label
-        htmlFor="organization"
-        className="mb-1.5 block text-sm font-medium"
-      >
-        Existing POS organization
-      </label>
-      <select
-        id="organization"
-        required
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5"
-      >
-        <option value="">Select an organization</option>
-        {organizations.map((org) => {
-          const id = orgValue(org, "id", "organizationId", "organization_id");
-          return (
-            <option key={id} value={id}>
-              {orgValue(org, "businessName", "business_name", "name") || id}
-            </option>
-          );
-        })}
-      </select>
-    </div>
-  );
-}
-
-function Input({ label, ...props }) {
-  const id = label.toLowerCase().replaceAll(" ", "-");
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
-        {label}
-      </label>
-      <input
-        id={id}
-        className="w-full rounded-button border border-neutral-300 px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-        {...props}
-      />
-    </div>
-  );
-}
-
 function Notice({ message }) {
   return (
     <div
       role={message.type === "error" ? "alert" : "status"}
-      className={`rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-[#E2E6EB] bg-[#F3F5F6] text-[#596273]"}`}
+      className={`mb-5 rounded-card border p-4 text-sm ${message.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-[#DCE8E1] bg-[#F4F8F5] text-[#486052]"}`}
     >
       {message.text}
     </div>

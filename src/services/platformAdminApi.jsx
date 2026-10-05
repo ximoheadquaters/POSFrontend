@@ -1,16 +1,22 @@
 import { supabase } from "../config/supabase";
 
 export class PlatformAdminError extends Error {
-  constructor(message, code = "PLATFORM_REQUEST_FAILED") {
+  constructor(message, code = "PLATFORM_REQUEST_FAILED", details = null) {
     super(message);
     this.name = "PlatformAdminError";
     this.code = code;
+    this.details = details;
   }
 }
 
 function assertResult({ data, error }, fallback) {
-  if (error)
-    throw new PlatformAdminError(error.message || fallback, error.code);
+  if (error) {
+    throw new PlatformAdminError(
+      error.message || fallback,
+      error.code,
+      error.details || error.hint || null,
+    );
+  }
   return data;
 }
 
@@ -20,10 +26,6 @@ async function currentUserId() {
     throw new PlatformAdminError("Your session has expired.", "UNAUTHORIZED");
   }
   return data.user.id;
-}
-
-function applicationCodeForDatabase(code) {
-  return code === "pos" ? "ximo_pos" : code;
 }
 
 function applicationCodeForUi(code) {
@@ -58,6 +60,10 @@ function normalizeClient(client) {
     ...client,
     client_systems: (client.client_systems || []).map(normalizeAssignment),
   };
+}
+
+function clientDisplayName(client) {
+  return client?.display_name || client?.legal_name || "another client";
 }
 
 export const platformAdminApi = {
@@ -111,6 +117,36 @@ export const platformAdminApi = {
 
   async createClient(values) {
     const userId = await currentUserId();
+    const primaryEmail = values.primaryEmail.trim().toLowerCase();
+
+    if (primaryEmail) {
+      const { data: existingClients, error: existingClientsError } =
+        await supabase
+          .from("clients")
+          .select("id, legal_name, display_name, status")
+          .ilike("primary_email", primaryEmail)
+          .neq("status", "archived")
+          .limit(1);
+
+      if (existingClientsError) {
+        throw new PlatformAdminError(
+          existingClientsError.message ||
+            "Existing clients could not be checked.",
+          existingClientsError.code,
+          existingClientsError.details || existingClientsError.hint || null,
+        );
+      }
+
+      if (existingClients?.[0]) {
+        const existing = existingClients[0];
+        throw new PlatformAdminError(
+          `${clientDisplayName(existing)} already has a client record for ${primaryEmail}. Open that client instead of creating a duplicate.`,
+          "CLIENT_EMAIL_EXISTS",
+          { client: existing },
+        );
+      }
+    }
+
     return assertResult(
       await supabase
         .from("clients")
@@ -119,7 +155,7 @@ export const platformAdminApi = {
           status: values.status,
           legal_name: values.legalName.trim(),
           display_name: values.displayName.trim() || null,
-          primary_email: values.primaryEmail.trim() || null,
+          primary_email: primaryEmail || null,
           primary_phone: values.primaryPhone.trim() || null,
           industry: values.industry.trim() || null,
           preferred_currency: values.currency.toUpperCase(),
@@ -141,47 +177,8 @@ export const platformAdminApi = {
       )
       .order("name");
 
-    if (
-      result.error &&
-      (result.error.code === "PGRST205" ||
-        result.error.code === "42P01" ||
-        result.error.message?.includes("applications"))
-    ) {
-      return [
-        normalizeApplication({
-          id: "default-ximo-pos",
-          code: "ximo_pos",
-          name: "Ximo POS",
-          description:
-            "Point of sale, catalogue, purchasing, inventory, branch operations and reporting.",
-          is_active: true,
-        }),
-      ];
-    }
-
     const applications = assertResult(result, "Systems could not be loaded.");
     return (applications || []).map(normalizeApplication);
-  },
-
-  async assignSystem(clientId, values) {
-    const userId = await currentUserId();
-    return assertResult(
-      await supabase
-        .from("client_systems")
-        .insert({
-          client_id: clientId,
-          system_code: applicationCodeForDatabase(values.systemCode),
-          external_tenant_id: values.externalTenantId,
-          status: "active",
-          activated_at: new Date().toISOString(),
-          metadata: values.metadata || {},
-          created_by: userId,
-          updated_by: userId,
-        })
-        .select()
-        .single(),
-      "The system could not be assigned.",
-    );
   },
 
   async removeSystem(assignmentId) {

@@ -45,6 +45,19 @@ async function request(config) {
 }
 
 export const posPlatformApi = {
+  previewClientPosActivation: (clientId, body) =>
+    request({
+      method: "post",
+      url: `/admin/clients/${encodeURIComponent(clientId)}/pos-activation/preview`,
+      data: body,
+    }),
+  activateClientPos: (clientId, body, idempotencyKey) =>
+    request({
+      method: "post",
+      url: `/admin/clients/${encodeURIComponent(clientId)}/pos-activation`,
+      data: body,
+      headers: { "Idempotency-Key": idempotencyKey },
+    }),
   listPlans: () => request({ url: "/admin/pos/plans" }),
   listModulesCatalog: () => request({ url: "/admin/pos/modules" }),
   updatePlanModules: (planCode, body) =>

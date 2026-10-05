@@ -27,7 +27,8 @@ export default function Dashboard() {
   const clientCount = clientsLoading || clientsError ? "—" : clients.length;
   const unassignedClientCount =
     clientsLoading || clientsError ? "—" : unassignedClients;
-  const assignmentCount = clientsLoading || clientsError ? "—" : assignedSystems;
+  const assignmentCount =
+    clientsLoading || clientsError ? "—" : assignedSystems;
   const availableSystemCount =
     systemsLoading || systemsError ? "—" : availableSystems;
 
@@ -141,7 +142,7 @@ export default function Dashboard() {
                     <span className="hidden text-xs text-[#748177] sm:inline">
                       {client.client_systems?.length || 0} systems
                     </span>
-                    <StatusBadge value={client.status} />
+                    <StatusBadge value={client.status} className="min-w-20" />
                   </Link>
                 </li>
               ))}
