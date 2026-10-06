@@ -43,6 +43,39 @@ function readDraft() {
   return defaults;
 }
 
+function PaymentModeIcon({ testMode }) {
+  return (
+    <span
+      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${testMode ? 'bg-amber-100 text-amber-800' : 'bg-[#E7F2EA] text-primary'}`}
+      aria-hidden="true"
+    >
+      <svg fill="none" viewBox="0 0 24 24" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 5 6.6v4.7c0 4.2 2.9 7.8 7 9.2 4.1-1.4 7-5 7-9.2V6.6l-7-3.1Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
+      </svg>
+    </span>
+  );
+}
+
+function FlowItem({ label, detail, complete = false, current = false }) {
+  return (
+    <li className="flex min-w-0 gap-3">
+      <span
+        className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${complete || current ? 'border-primary bg-primary text-white' : 'border-[#C9D7CD] bg-white text-transparent'}`}
+        aria-hidden="true"
+      >
+        <svg fill="none" viewBox="0 0 24 24" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4.2 4.2L19 6.8" />
+        </svg>
+      </span>
+      <span className="min-w-0">
+        <strong className="block text-sm text-[#223127]">{label}</strong>
+        <span className="mt-0.5 block text-xs leading-5 text-[#5D6D62]">{detail}</span>
+      </span>
+    </li>
+  );
+}
+
 export default function CheckoutPage() {
   const [params] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
@@ -63,6 +96,8 @@ export default function CheckoutPage() {
   const [accepted, setAccepted] = useState(false);
   const selectedPlan = plans.find((plan) => plan.code === order.planCode);
   const catalog = config?.orderConfiguration;
+  const testCheckout = Boolean(config?.testMode || config?.mode === 'test');
+  const paymentAvailable = Boolean(config?.enabled);
   const includedModules = new Set(selectedPlan?.modules?.map((module) => module.code) || []);
   const isVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
 
@@ -464,11 +499,16 @@ export default function CheckoutPage() {
               </div>
             )}
             {step === 6 && (
-              <div className="space-y-5">
-                <p className="text-sm text-[#5A685D]">
-                  Your order is confirmed for {money(quote?.amount || 0)}. Identify the subscription
-                  owner, then continue to secure payment.
-                </p>
+              <div className="space-y-6">
+                <div className="border-b border-[#E1E8E2] pb-5">
+                  <p className="text-sm text-[#5A685D]">
+                    Your order is ready for payment. We activate the workspace only after PayMongo
+                    confirms the exact amount.
+                  </p>
+                  <p className="mt-3 text-2xl font-bold tracking-[-0.03em] text-[#17241C]">
+                    {money(quote?.amount || 0)} <span className="text-sm font-medium text-[#5A685D]">for the first month</span>
+                  </p>
+                </div>
                 {!isAuthenticated ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Link
@@ -485,45 +525,64 @@ export default function CheckoutPage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-[#F0F6F1] p-4">
-                    <p className="text-sm">
-                      Subscription owner: <strong>{user?.email}</strong>
-                    </p>
+                  <div className="flex flex-wrap gap-3 border border-[#DCE8E1] bg-[#F7FAF8] p-4">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-primary" aria-hidden="true">
+                      <svg fill="none" viewBox="0 0 24 24" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 20a7 7 0 0 1 14 0M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#607467]">Subscription owner:</p>
+                      <p className="mt-1 break-all text-sm font-semibold text-[#223127]">{user?.email}</p>
+                    </div>
                     {!isVerified && (
-                      <p className="mt-3 text-sm text-amber-800">
-                        Verify your email using the link in your inbox, then return to pay.
-                      </p>
+                      <p className="sm:ml-auto sm:max-w-52 text-sm leading-5 text-amber-800">Verify your email using the link in your inbox, then return to pay.</p>
                     )}
                   </div>
                 )}
-                <div className="rounded-xl border p-4 text-sm">
-                  <h3 className="font-bold">QR Ph via PayMongo</h3>
-                  <p className="mt-2 text-[#5A685D]">
-                    On your first purchase, enter or confirm your billing details on PayMongo, then
-                    scan the QR code with your bank or e-wallet. QR Ph requires a new authorization
-                    for every purchase.
-                  </p>
-                  <p className="mt-2 text-[#5A685D]">
-                    After payment, you’ll receive a receipt and see your activation status.
-                  </p>
-                  {config.testMode && (
-                    <p className="mt-3 font-semibold text-amber-800">
-                      Test checkout — no real payment is collected.
-                    </p>
-                  )}
-                </div>
-                {!config.enabled && (
-                  <p role="status" className="text-sm text-amber-800">
-                    Online payment is currently unavailable.
-                  </p>
+                <section className={`border p-5 ${testCheckout ? 'border-amber-200 bg-amber-50/50' : 'border-[#DCE8E1] bg-[#FAFCFB]'}`} aria-labelledby="paymongo-heading">
+                  <div className="flex items-start gap-3">
+                    <PaymentModeIcon testMode={testCheckout} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 id="paymongo-heading" className="font-semibold text-[#17241C]">PayMongo QR Ph</h3>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${testCheckout ? 'bg-amber-100 text-amber-900' : paymentAvailable ? 'bg-[#E4F1E8] text-[#1C633F]' : 'bg-[#EEF1EF] text-[#5D6D62]'}`}>
+                          {!paymentAvailable ? 'Setup required' : testCheckout ? 'Test checkout' : 'Live payment'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm leading-5 text-[#5D6D62]">
+                        {!paymentAvailable
+                          ? 'Secure checkout will be available when the payment service is configured.'
+                          : testCheckout
+                          ? 'Test checkout — no real payment is collected. This opens PayMongo’s sandbox; use its simulation control and no bank account is charged.'
+                          : 'PayMongo handles the QR code and your bank or e-wallet authorization. Ximo never receives those credentials.'}
+                      </p>
+                    </div>
+                  </div>
+                  <ol className="mt-5 grid gap-4 border-t border-[#D9E4DC] pt-5 sm:grid-cols-3">
+                    <FlowItem label="Open checkout" detail="PayMongo shows the QR code." current />
+                    <FlowItem label="Confirm payment" detail="We verify the provider result." />
+                    <FlowItem label="Activate Ximo POS" detail="Your workspace is created and linked." />
+                  </ol>
+                </section>
+                {!paymentAvailable && (
+                  <p role="status" className="border border-red-200 bg-red-50 p-4 text-sm leading-5 text-red-800">Online payment is currently unavailable. No charge can be made until the payment service is configured.</p>
                 )}
                 <Button
                   className="w-full"
+                  size="lg"
                   disabled={busy || !isAuthenticated || !isVerified || !config.enabled}
                   onClick={pay}
                 >
-                  {busy ? 'Opening secure payment…' : `Pay ${money(quote?.amount || 0)} with QR Ph`}
+                  {busy
+                    ? 'Opening secure checkout…'
+                    : testCheckout
+                      ? 'Open PayMongo test checkout'
+                      : `Pay ${money(quote?.amount || 0)} with QR Ph`}
                 </Button>
+                <p className="text-center text-xs leading-5 text-[#5D6D62]">
+                  A receipt comes from PayMongo. Ximo continues automatically only after its payment result is verified.
+                </p>
               </div>
             )}
             <div className="flex gap-3 border-t pt-5">
