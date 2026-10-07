@@ -64,9 +64,18 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
 
   test('signup verification returns to the current website instead of the auth project default', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Signup/SignupPage.jsx'), 'utf8');
-    expect(pageCode.includes('emailRedirectTo: new URL(')).toBe(true);
+    expect(pageCode.includes('emailRedirectTo: signupEmailRedirectTo()')).toBe(true);
     expect(pageCode.includes('authenticatedSignupPath,')).toBe(true);
-    expect(pageCode.includes('window.location.origin,')).toBe(true);
+    expect(pageCode.includes('window.location.origin')).toBe(true);
+  });
+
+  test('signup confirmation can be resent with the same website redirect', () => {
+    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Signup/SignupPage.jsx'), 'utf8');
+    expect(pageCode.includes('supabase.auth.resend({')).toBe(true);
+    expect(pageCode.includes('type: "signup"')).toBe(true);
+    expect(pageCode.includes('options: { emailRedirectTo: signupEmailRedirectTo() }')).toBe(true);
+    expect(pageCode.includes('Resend verification email')).toBe(true);
+    expect(pageCode.includes('/confirm your email address/i.test(visibleError || "")')).toBe(true);
   });
 
   test('9. Unauthenticated checkout stops at Account step', () => {

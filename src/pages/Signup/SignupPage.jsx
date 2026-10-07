@@ -205,6 +205,8 @@ export default function SignupPage({ initialMode = "signup" }) {
     confirmPassword: "",
   });
   const [signupLoading, setSignupLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendStatus, setResendStatus] = useState(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [notice, setNotice] = useState("");
@@ -226,6 +228,7 @@ export default function SignupPage({ initialMode = "signup" }) {
     setNotice("");
     setExistingUserNotice(false);
     setVerificationSent(false);
+    setResendStatus(null);
     clearError();
   }, [clearError, routeMode]);
 
@@ -236,6 +239,8 @@ export default function SignupPage({ initialMode = "signup" }) {
     (planFromUrl ? "?plan=" + encodeURIComponent(planFromUrl) : "");
   const loginPath = planFromUrl ? "/login?redirect=/checkout" : "/login";
   const authenticatedSignupPath = planFromUrl ? checkoutPath : "/pricing";
+  const signupEmailRedirectTo = () =>
+    new URL(authenticatedSignupPath, window.location.origin).toString();
 
   const switchAuthMode = (nextMode) => {
     clearError();
@@ -243,6 +248,7 @@ export default function SignupPage({ initialMode = "signup" }) {
     setNotice("");
     setExistingUserNotice(false);
     setVerificationSent(false);
+    setResendStatus(null);
     setMode(nextMode);
     navigate(nextMode === "signup" ? signupPath : loginPath);
   };
@@ -285,6 +291,7 @@ export default function SignupPage({ initialMode = "signup" }) {
     setFormError(null);
     setNotice("");
     setExistingUserNotice(false);
+    setResendStatus(null);
     clearError();
   };
 
@@ -322,10 +329,7 @@ export default function SignupPage({ initialMode = "signup" }) {
         email: formData.email.trim(),
         password: formData.password,
         options: {
-          emailRedirectTo: new URL(
-            authenticatedSignupPath,
-            window.location.origin,
-          ).toString(),
+          emailRedirectTo: signupEmailRedirectTo(),
           data: {
             display_name: formData.ownerName.trim(),
           },
@@ -374,12 +378,39 @@ export default function SignupPage({ initialMode = "signup" }) {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    if (resendLoading || resendStatus?.type === "success") return;
+
+    setResendLoading(true);
+    setResendStatus(null);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: formData.email.trim(),
+        options: { emailRedirectTo: signupEmailRedirectTo() },
+      });
+      if (error) throw error;
+      setResendStatus({
+        type: "success",
+        message: "A new verification link is on its way. Use the newest email.",
+      });
+    } catch (error) {
+      setResendStatus({
+        type: "error",
+        message: error?.message || "Could not resend the email. Please try again later.",
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSignIn = async (event) => {
     event.preventDefault();
     if (signInLoading) return;
 
     setFormError(null);
     setNotice("");
+    setResendStatus(null);
     clearError();
 
     if (!formData.email.trim() || !formData.email.includes("@")) {
@@ -530,12 +561,15 @@ export default function SignupPage({ initialMode = "signup" }) {
                     <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#E5F1E8] text-2xl text-[#1A593B]">✓</span>
                     <h2 className="mt-5 text-xl font-semibold text-[#15251B]">Check your email</h2>
                     <p className="mt-2 text-sm leading-6 text-[#647168]">We sent a confirmation link to <span className="font-semibold text-[#15251B]">{formData.email}</span>.</p>
+                    <button type="button" onClick={handleResendConfirmation} disabled={resendLoading || resendStatus?.type === "success"} className="mt-4 text-sm font-semibold text-[#1A593B] hover:underline disabled:cursor-not-allowed disabled:opacity-60">{resendLoading ? "Sending..." : "Resend verification email"}</button>
+                    {resendStatus && <p role={resendStatus.type === "error" ? "alert" : "status"} className={`mt-2 text-sm ${resendStatus.type === "error" ? "text-red-700" : "text-[#1A593B]"}`}>{resendStatus.message}</p>}
                     <button type="button" onClick={() => switchAuthMode("signin")} className="mt-6 min-h-12 w-full rounded-xl bg-[#1A593B] px-5 text-sm font-semibold text-white transition hover:bg-[#12472E]">I've verified my email — sign in</button>
                     {!planFromUrl && <Link to="/pricing" className="mt-4 inline-flex text-sm font-semibold text-[#1A593B] hover:underline">View plans</Link>}
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
                     {visibleError && <div role="alert" aria-live="polite" className="rounded-2xl border border-[#EDC5C0] bg-[#FCECEA] p-4 text-sm text-[#8A3028]"><p className="font-semibold">Sign in could not continue</p><p className="mt-1 leading-5">{visibleError}</p></div>}
+                    {isSignInMode && /confirm your email address/i.test(visibleError || "") && <div className="rounded-xl border border-[#C7DBCC] bg-white p-4 text-sm"><button type="button" onClick={handleResendConfirmation} disabled={resendLoading || resendStatus?.type === "success"} className="font-semibold text-[#1A593B] hover:underline disabled:cursor-not-allowed disabled:opacity-60">{resendLoading ? "Sending..." : "Resend verification email"}</button>{resendStatus && <p role={resendStatus.type === "error" ? "alert" : "status"} className={`mt-2 ${resendStatus.type === "error" ? "text-red-700" : "text-[#1A593B]"}`}>{resendStatus.message}</p>}</div>}
                     {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">{notice}</div>}
                     {isSignupMode && <AccountField label="Full name" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Your name" autoComplete="name" icon="person" />}
                     <AccountField label="Email address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@company.com" autoComplete="email" icon="email" />
