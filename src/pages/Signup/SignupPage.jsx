@@ -322,6 +322,10 @@ export default function SignupPage({ initialMode = "signup" }) {
         email: formData.email.trim(),
         password: formData.password,
         options: {
+          emailRedirectTo: new URL(
+            authenticatedSignupPath,
+            window.location.origin,
+          ).toString(),
           data: {
             display_name: formData.ownerName.trim(),
           },
