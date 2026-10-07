@@ -106,10 +106,12 @@ export const platformAdminApi = {
   },
 
   async getClient(clientId) {
+    const accountColumns =
+      "client_auth_accounts(user_id, email, email_confirmed_at, source)";
     const primaryResult = await supabase
       .from("clients")
       .select(
-        "*, client_auth_accounts(user_id, email, email_confirmed_at, source), client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
+        `*, ${accountColumns}, client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))`,
       )
       .eq("id", clientId)
       .single();
@@ -120,11 +122,28 @@ export const platformAdminApi = {
         primaryResult.error.code === "PGRST205" ||
         primaryResult.error.message?.includes("applications"))
     ) {
-      const fallbackResult = await supabase
+      // The live Ximo website uses the earlier `systems` catalogue, while
+      // newer platform installations use `applications`. Keep the website
+      // account relation in this fallback so an email-pending customer does
+      // not disappear from the client detail screen during that transition.
+      let fallbackResult = await supabase
         .from("clients")
-        .select("*, client_contacts(*), client_addresses(*), client_systems(*)")
+        .select(
+          `*, ${accountColumns}, client_contacts(*), client_addresses(*), client_systems(*, systems(*))`,
+        )
         .eq("id", clientId)
         .single();
+
+      if (
+        fallbackResult.error &&
+        fallbackResult.error.message?.includes("client_auth_accounts")
+      ) {
+        fallbackResult = await supabase
+          .from("clients")
+          .select("*, client_contacts(*), client_addresses(*), client_systems(*, systems(*))")
+          .eq("id", clientId)
+          .single();
+      }
       const client = assertResult(
         fallbackResult,
         "The client could not be loaded.",
@@ -252,6 +271,56 @@ export const platformAdminApi = {
         .select()
         .single(),
       "The system assignment could not be updated.",
+    );
+  },
+
+  async updateSystemAccess(assignmentId, values) {
+    const userId = await currentUserId();
+    const update = {
+      status: values.status,
+      updated_by: userId,
+      updated_at: new Date().toISOString(),
+    };
+    if (Object.hasOwn(values, "activatedAt")) {
+      update.activated_at = values.activatedAt;
+    }
+    if (Object.hasOwn(values, "deactivatedAt")) {
+      update.deactivated_at = values.deactivatedAt;
+    }
+    if (Object.hasOwn(values, "metadata")) {
+      update.metadata = values.metadata;
+    }
+    return assertResult(
+      await supabase
+        .from("client_systems")
+        .update(update)
+        .eq("id", assignmentId)
+        .select()
+        .single(),
+      "The system access record could not be updated.",
+    );
+  },
+
+  async syncSystemAccessByTenant(externalTenantId, values) {
+    const userId = await currentUserId();
+    const update = {
+      status: values.status,
+      updated_by: userId,
+      updated_at: new Date().toISOString(),
+    };
+    if (Object.hasOwn(values, "activatedAt")) {
+      update.activated_at = values.activatedAt;
+    }
+    if (Object.hasOwn(values, "deactivatedAt")) {
+      update.deactivated_at = values.deactivatedAt;
+    }
+    return assertResult(
+      await supabase
+        .from("client_systems")
+        .update(update)
+        .eq("external_tenant_id", externalTenantId)
+        .select(),
+      "The system access record could not be synchronized.",
     );
   },
 };

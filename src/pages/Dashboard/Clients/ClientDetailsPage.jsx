@@ -23,6 +23,19 @@ function assignmentName(assignment) {
     : assignment.systems?.name || assignment.system_code;
 }
 
+function organizationPlanCode(organization) {
+  const plan = organization?.plan ?? organization?.subscriptionPlan;
+  return String(
+    organization?.planCode ??
+      organization?.plan_code ??
+      plan?.code ??
+      plan ??
+      "",
+  )
+    .trim()
+    .toLowerCase();
+}
+
 function SystemIcon({ code }) {
   const shared = {
     fill: "none",
@@ -60,6 +73,8 @@ export default function ClientDetailsPage() {
   const [message, setMessage] = useState(null);
   const [resendAssignment, setResendAssignment] = useState(null);
   const [resending, setResending] = useState(false);
+  const [revokeAssignment, setRevokeAssignment] = useState(null);
+  const [revoking, setRevoking] = useState(false);
 
   if (resource.loading) return <AdminLoading />;
   if (resource.error)
@@ -146,6 +161,55 @@ export default function ClientDetailsPage() {
     }
   }
 
+  async function revokePosAccess() {
+    if (!revokeAssignment?.external_tenant_id) return;
+    setRevoking(true);
+    setMessage(null);
+    try {
+      const organization = unwrapEntity(
+        await posPlatformApi.getOrganization(revokeAssignment.external_tenant_id),
+        ["organization"],
+      );
+      const planCode = organizationPlanCode(organization);
+      if (!planCode) {
+        throw new Error(
+          "The POS plan could not be determined. Open Manage access and choose a plan before removing access.",
+        );
+      }
+
+      const endedAt = new Date().toISOString();
+      await posPlatformApi.updateSubscription(
+        revokeAssignment.external_tenant_id,
+        {
+          planCode,
+          status: "cancelled",
+          currentPeriodEndsAt: endedAt,
+        },
+      );
+      await platformAdminApi.updateSystemAccess(revokeAssignment.id, {
+        status: "cancelled",
+        deactivatedAt: endedAt,
+        metadata: {
+          ...(revokeAssignment.metadata || {}),
+          accessEndedAt: endedAt,
+        },
+      });
+      setMessage({
+        type: "success",
+        text: "POS access was removed. The workspace and its data were kept, so an administrator can grant access again later.",
+      });
+      setRevokeAssignment(null);
+      await resource.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: `POS access could not be removed. ${error.message}`,
+      });
+    } finally {
+      setRevoking(false);
+    }
+  }
+
   return (
     <>
       <AdminBreadcrumbs
@@ -153,7 +217,7 @@ export default function ClientDetailsPage() {
       />
       <PageHeader
         title={name}
-        description="Registration details and connected Ximo systems."
+        description="Registration details, verification state, and Ximo system access."
         actions={
           <Link
             className="text-sm font-semibold text-primary"
@@ -265,6 +329,11 @@ export default function ClientDetailsPage() {
                       Workspace {assignment.external_tenant_id}
                     </p>
                   ) : null}
+                  <p className="mt-2 text-xs leading-5 text-[#68736A]">
+                    {assignment.status === "cancelled"
+                      ? "Access has been removed. Open Access settings to grant it again and choose a new end date."
+                      : "Use Access settings to grant, pause, or set the date when this POS access ends."}
+                  </p>
                 </div>
               </div>
               {assignment.system_code === "pos" ? (
@@ -275,6 +344,12 @@ export default function ClientDetailsPage() {
                   >
                     Manage POS
                   </Link>
+                  <Link
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#DCE8E1] bg-white px-3.5 text-sm font-semibold text-primary transition-colors hover:bg-[#F0F4F2] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    to={`/admin/systems/pos/organizations/${assignment.external_tenant_id}/subscription`}
+                  >
+                    Access settings
+                  </Link>
                   <button
                     type="button"
                     className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#DCE8E1] bg-white px-3.5 text-sm font-semibold text-primary transition-colors hover:bg-[#F0F4F2] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -283,6 +358,19 @@ export default function ClientDetailsPage() {
                   >
                     {resending ? "Preparing email…" : "Resend setup link"}
                   </button>
+                  {assignment.status !== "cancelled" ? (
+                    <button
+                      type="button"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-white px-3.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => {
+                        setMessage(null);
+                        setRevokeAssignment(assignment);
+                      }}
+                      disabled={revoking}
+                    >
+                      Remove access
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -356,6 +444,38 @@ export default function ClientDetailsPage() {
             disabled={!resendAssignment?.resolvedOwnerEmail}
           >
             Resend link
+          </Button>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={Boolean(revokeAssignment)}
+        onClose={() => !revoking && setRevokeAssignment(null)}
+        title="Remove POS access?"
+      >
+        <p className="text-sm leading-6 text-neutral-600">
+          This immediately cancels this client&apos;s POS subscription. The client
+          will no longer be able to use POS after their next refresh or sign-in,
+          but the workspace, sales data, and products remain preserved.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-neutral-600">
+          You can grant access again later from <strong>Access settings</strong>,
+          including a new access end date.
+        </p>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="ghost"
+            className="w-full sm:w-auto"
+            onClick={() => setRevokeAssignment(null)}
+            disabled={revoking}
+          >
+            Keep access
+          </Button>
+          <Button
+            className="w-full bg-red-700 hover:bg-red-800 sm:w-auto"
+            onClick={revokePosAccess}
+            loading={revoking}
+          >
+            Remove POS access
           </Button>
         </div>
       </Modal>

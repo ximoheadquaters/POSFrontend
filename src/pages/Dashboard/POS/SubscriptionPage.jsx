@@ -20,6 +20,37 @@ import {
   organizationPlan,
   organizationStatus,
 } from "./posModels";
+import { platformAdminApi } from "../../../services/platformAdminApi";
+
+function toDateTimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
+}
+
+function toIsoOrNull(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function accessEndFrom(organization) {
+  return (
+    organization?.currentPeriodEndsAt ??
+    organization?.current_period_ends_at ??
+    null
+  );
+}
+
+function clientSystemStatus(subscriptionStatus) {
+  if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
+    return "active";
+  }
+  return subscriptionStatus === "cancelled" ? "cancelled" : "suspended";
+}
 
 export default function SubscriptionPage() {
   const { organizationId } = useParams();
@@ -29,7 +60,11 @@ export default function SubscriptionPage() {
   );
   const plansResource = usePosResource(() => posPlatformApi.listPlans(), []);
   const organization = organizationFrom(resource.data);
-  const [form, setForm] = useState({ planCode: "", status: "" });
+  const [form, setForm] = useState({
+    planCode: "",
+    status: "",
+    currentPeriodEndsAt: "",
+  });
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -42,10 +77,11 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     if (!organization) return;
-    setForm((current) => ({
-      planCode: current.planCode || String(plan || "").toLowerCase(),
-      status: current.status || String(status || "").toLowerCase(),
-    }));
+    setForm({
+      planCode: String(plan || "").toLowerCase(),
+      status: String(status || "").toLowerCase(),
+      currentPeriodEndsAt: toDateTimeLocal(accessEndFrom(organization)),
+    });
   }, [organization, plan, status]);
 
   if (resource.loading || plansResource.loading) return <LoadingPanel />;
@@ -81,14 +117,47 @@ export default function SubscriptionPage() {
     : [];
 
   async function save() {
+    const currentPeriodEndsAt = toIsoOrNull(form.currentPeriodEndsAt);
+    if (form.currentPeriodEndsAt && !currentPeriodEndsAt) {
+      setMessage({
+        type: "error",
+        text: "Enter a valid access end date and time, or leave it blank for no scheduled end date.",
+      });
+      setConfirming(false);
+      return;
+    }
     setSaving(true);
     setMessage(null);
     try {
-      await posPlatformApi.updateSubscription(organizationId, form);
+      await posPlatformApi.updateSubscription(organizationId, {
+        planCode: form.planCode,
+        status: form.status,
+        currentPeriodEndsAt,
+      });
+      // The POS platform is the authority for access. The website directory
+      // mirrors its state so platform admins can see grants at a glance.
+      try {
+        await platformAdminApi.syncSystemAccessByTenant(organizationId, {
+          status: clientSystemStatus(form.status),
+          activatedAt:
+            form.status === "active" || form.status === "trialing"
+              ? new Date().toISOString()
+              : undefined,
+          deactivatedAt:
+            form.status === "active" || form.status === "trialing"
+              ? null
+              : new Date().toISOString(),
+        });
+      } catch {
+        // A standalone POS organization may not yet be linked to a website
+        // client. Its authoritative platform subscription was still updated.
+      }
       setConfirming(false);
       setMessage({
         type: "success",
-        text: "Subscription updated successfully. Ask the owner to refresh POS (or sign out/in) to reload modules.",
+        text: currentPeriodEndsAt
+          ? `Subscription updated. POS access is scheduled to end on ${new Date(currentPeriodEndsAt).toLocaleString()}. Ask the owner to refresh POS (or sign out/in) to reload access.`
+          : "Subscription updated with no scheduled access end. Ask the owner to refresh POS (or sign out/in) to reload access.",
       });
       await resource.refresh();
     } catch (error) {
@@ -184,9 +253,28 @@ export default function SubscriptionPage() {
                 <option value="active">Active</option>
                 <option value="trialing">Trialing</option>
                 <option value="past_due">Past due</option>
-                <option value="suspended">Suspended</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+            </div>
+            <div>
+              <label
+                htmlFor="currentPeriodEndsAt"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                Access ends on <span className="font-normal text-neutral-500">(optional)</span>
+              </label>
+              <input
+                id="currentPeriodEndsAt"
+                type="datetime-local"
+                value={form.currentPeriodEndsAt}
+                onChange={(event) =>
+                  setForm({ ...form, currentPeriodEndsAt: event.target.value })
+                }
+                className="w-full rounded-button border border-neutral-300 bg-white px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="mt-1.5 text-xs leading-5 text-neutral-500">
+                Set the date and time when this POS grant should end. Leave it blank only when the access should not have a scheduled end.
+              </p>
             </div>
             <Button type="submit" disabled={!form.planCode || !form.status}>
               Review change
@@ -202,10 +290,18 @@ export default function SubscriptionPage() {
             <h2 className="mt-1 text-base font-semibold text-[#252B3A]">
               {selectedPlan?.name || "Select a plan"}
             </h2>
-            <p className="mt-1 text-xs text-[#7F8793]">
-              Modules included with the selected plan.
+          <p className="mt-1 text-xs text-[#7F8793]">
+            Modules included with the selected plan.
+          </p>
+          <div className="mt-4 rounded-lg bg-[#F3F5F6] p-3 text-sm text-[#596273]">
+            <p className="font-semibold text-[#303746]">POS access period</p>
+            <p className="mt-1 text-xs leading-5">
+              {form.currentPeriodEndsAt
+                ? `Ends ${new Date(toIsoOrNull(form.currentPeriodEndsAt)).toLocaleString()}`
+                : "No end date is scheduled."}
             </p>
           </div>
+        </div>
           {selectedPlan ? (
             selectedModules.length ? (
               <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-[#303746]">
@@ -241,7 +337,9 @@ export default function SubscriptionPage() {
           <strong className="capitalize">
             {selectedPlan?.name || form.planCode} / {form.status}
           </strong>
-          ?
+          {form.currentPeriodEndsAt
+            ? `, with access ending ${new Date(toIsoOrNull(form.currentPeriodEndsAt)).toLocaleString()}?`
+            : ", with no scheduled access end?"}
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <Button

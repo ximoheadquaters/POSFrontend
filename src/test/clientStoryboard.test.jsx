@@ -92,6 +92,20 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
     expect(pageCode.includes('Email pending')).toBe(true);
   });
 
+  test('client system access can be scheduled, restored, and removed', () => {
+    const subscriptionCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/POS/SubscriptionPage.jsx'), 'utf8');
+    const detailCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Clients/ClientDetailsPage.jsx'), 'utf8');
+    const apiCode = fs.readFileSync(path.resolve(__dirname, '../services/platformAdminApi.jsx'), 'utf8');
+    expect(subscriptionCode.includes('currentPeriodEndsAt')).toBe(true);
+    expect(subscriptionCode.includes('Access ends on')).toBe(true);
+    expect(subscriptionCode.includes('<option value="suspended">')).toBe(false);
+    expect(detailCode.includes('Remove POS access')).toBe(true);
+    expect(detailCode.includes('Access settings')).toBe(true);
+    expect(detailCode.includes('status: "cancelled"')).toBe(true);
+    expect(apiCode.includes('syncSystemAccessByTenant')).toBe(true);
+    expect(apiCode.includes('Object.hasOwn(values, "deactivatedAt")')).toBe(true);
+  });
+
   test('9. Unauthenticated checkout stops at Account step', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
     expect(pageCode.includes('!isAuthenticated')).toBe(true);
