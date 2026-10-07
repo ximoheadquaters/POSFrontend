@@ -56,9 +56,17 @@ function normalizeAssignment(assignment) {
 }
 
 function normalizeClient(client) {
+  const authAccounts = Array.isArray(client.client_auth_accounts)
+    ? client.client_auth_accounts
+    : client.client_auth_accounts
+      ? [client.client_auth_accounts]
+      : [];
+  const clientAuthAccount = authAccounts[0] || null;
   return {
     ...client,
     client_systems: (client.client_systems || []).map(normalizeAssignment),
+    client_auth_accounts: authAccounts,
+    client_auth_account: clientAuthAccount,
   };
 }
 
@@ -68,16 +76,32 @@ function clientDisplayName(client) {
 
 export const platformAdminApi = {
   async listClients() {
-    const clients = assertResult(
-      await supabase
+    const clientColumns =
+      "id, kind, status, legal_name, display_name, primary_email, primary_phone, industry, created_at, client_systems(id, system_code, status)";
+    const accountColumns =
+      "client_auth_accounts(user_id, email, email_confirmed_at, source)";
+    let result = await supabase
+      .from("clients")
+      .select(`${clientColumns}, ${accountColumns}`)
+      .neq("status", "archived")
+      .order("created_at", { ascending: false });
+
+    // The website can be deployed independently from the database migration.
+    // Continue showing the existing client list until PostgREST has the new
+    // client-auth relationship, instead of failing the whole admin screen.
+    if (
+      result.error &&
+      (result.error.code === "PGRST200" || result.error.code === "PGRST205") &&
+      result.error.message?.includes("client_auth_accounts")
+    ) {
+      result = await supabase
         .from("clients")
-        .select(
-          "id, kind, status, legal_name, display_name, primary_email, primary_phone, industry, created_at, client_systems(id, system_code, status)",
-        )
+        .select(clientColumns)
         .neq("status", "archived")
-        .order("created_at", { ascending: false }),
-      "Clients could not be loaded.",
-    );
+        .order("created_at", { ascending: false });
+    }
+
+    const clients = assertResult(result, "Clients could not be loaded.");
     return (clients || []).map(normalizeClient);
   },
 
@@ -85,7 +109,7 @@ export const platformAdminApi = {
     const primaryResult = await supabase
       .from("clients")
       .select(
-        "*, client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
+        "*, client_auth_accounts(user_id, email, email_confirmed_at, source), client_contacts(*), client_addresses(*), client_systems(*, application:applications!client_systems_system_code_fkey(*))",
       )
       .eq("id", clientId)
       .single();

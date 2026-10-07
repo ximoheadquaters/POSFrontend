@@ -68,6 +68,7 @@ export default function ClientDetailsPage() {
   const client = resource.data;
   const name = client.display_name || client.legal_name;
   const assignments = client.client_systems || [];
+  const clientAccount = client.client_auth_account;
   const hasPos = assignments.some(
     (assignment) => assignment.system_code === "pos",
   );
@@ -152,7 +153,7 @@ export default function ClientDetailsPage() {
       />
       <PageHeader
         title={name}
-        description="Core client information and connected Ximo systems."
+        description="Registration details and connected Ximo systems."
         actions={
           <Link
             className="text-sm font-semibold text-primary"
@@ -174,6 +175,14 @@ export default function ClientDetailsPage() {
               { label: "Primary email", value: client.primary_email },
               { label: "Primary phone", value: client.primary_phone },
               {
+                label: "Website account",
+                value: clientAccount
+                  ? clientAccount.email_confirmed_at
+                    ? "Email verified"
+                    : "Email verification pending"
+                  : "No website account linked",
+              },
+              {
                 label: "Currency / timezone",
                 value: `${client.preferred_currency} · ${client.timezone}`,
               },
@@ -187,6 +196,22 @@ export default function ClientDetailsPage() {
           <div className="mt-3">
             <StatusBadge value={client.status} />
           </div>
+          {clientAccount ? (
+            <div className="mt-3">
+              <StatusBadge
+                value={
+                  clientAccount.email_confirmed_at
+                    ? "Email verified"
+                    : "Email pending"
+                }
+                tone={
+                  clientAccount.email_confirmed_at
+                    ? "bg-[#386F55]/10 text-[#1A593B] ring-[#386F55]/20"
+                    : "bg-amber-50 text-amber-800 ring-amber-200"
+                }
+              />
+            </div>
+          ) : null}
           <p className="mt-6 text-xs text-neutral-400">Client ID</p>
           <p className="mt-1 break-all text-xs text-neutral-600">{client.id}</p>
         </section>

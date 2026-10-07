@@ -19,6 +19,28 @@ const initialForm = {
   timezone: "Asia/Manila",
 };
 
+function AccountRegistrationBadge({ client }) {
+  const account = client.client_auth_account;
+  if (!account) {
+    return (
+      <StatusBadge
+        value="No website account"
+        tone="bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15"
+      />
+    );
+  }
+  return (
+    <StatusBadge
+      value={account.email_confirmed_at ? "Email verified" : "Email pending"}
+      tone={
+        account.email_confirmed_at
+          ? "bg-[#386F55]/10 text-[#1A593B] ring-[#386F55]/20"
+          : "bg-amber-50 text-amber-800 ring-amber-200"
+      }
+    />
+  );
+}
+
 export default function ClientsPage() {
   const navigate = useNavigate();
   const resource = usePosResource(platformAdminApi.listClients, []);
@@ -52,7 +74,7 @@ export default function ClientsPage() {
     <>
       <PageHeader
         title="Clients"
-        description="Manage client records and the Ximo services assigned to each account."
+        description="Manage every registered client account and the Ximo services assigned to each one."
         actions={<Button onClick={() => setCreating(true)}>Add client</Button>}
       />
       {resource.loading ? (
@@ -65,7 +87,7 @@ export default function ClientsPage() {
             <div>
               <h2 className="portal-section-heading">Client records</h2>
               <p className="portal-supporting-copy mt-1">
-                Profiles and Ximo access.
+                Website registrations appear here before they subscribe or activate a Ximo system.
               </p>
             </div>
             <p className="shrink-0 text-sm font-semibold text-[#1A593B]">
@@ -89,7 +111,10 @@ export default function ClientsPage() {
                     {(client.client_systems?.length || 0) === 1 ? "" : "s"}
                   </p>
                 </div>
-                <StatusBadge value={client.status} />
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <StatusBadge value={client.status} />
+                  <AccountRegistrationBadge client={client} />
+                </span>
               </Link>
             ))}
           </div>
@@ -132,7 +157,10 @@ export default function ClientsPage() {
                       {client.kind}
                     </td>
                     <td className="px-5 py-4">
-                      <StatusBadge value={client.status} />
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge value={client.status} />
+                        <AccountRegistrationBadge client={client} />
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-sm font-medium text-[#39443D]">
                       {client.client_systems?.length || 0}

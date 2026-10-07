@@ -78,6 +78,20 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
     expect(pageCode.includes('/confirm your email address/i.test(visibleError || "")')).toBe(true);
   });
 
+  test('website signup is marked for the pending-client directory', () => {
+    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Signup/SignupPage.jsx'), 'utf8');
+    expect(pageCode.includes('ximo_account_type: "website_client"')).toBe(true);
+  });
+
+  test('client directory includes website-account confirmation status when available', () => {
+    const apiCode = fs.readFileSync(path.resolve(__dirname, '../services/platformAdminApi.jsx'), 'utf8');
+    const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Clients/ClientsPage.jsx'), 'utf8');
+    expect(apiCode.includes('client_auth_accounts(user_id, email, email_confirmed_at, source)')).toBe(true);
+    expect(apiCode.includes('client_auth_account: clientAuthAccount')).toBe(true);
+    expect(pageCode.includes('Website registrations appear here before they subscribe')).toBe(true);
+    expect(pageCode.includes('Email pending')).toBe(true);
+  });
+
   test('9. Unauthenticated checkout stops at Account step', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Checkout/CheckoutPage.jsx'), 'utf8');
     expect(pageCode.includes('!isAuthenticated')).toBe(true);

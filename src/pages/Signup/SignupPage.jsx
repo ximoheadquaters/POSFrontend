@@ -332,6 +332,10 @@ export default function SignupPage({ initialMode = "signup" }) {
           emailRedirectTo: signupEmailRedirectTo(),
           data: {
             display_name: formData.ownerName.trim(),
+            // The database uses this marker to create a prospect client record
+            // for public website registrations only. POS employee invitations
+            // share the auth project, but must never appear as client prospects.
+            ximo_account_type: "website_client",
           },
         },
       });
