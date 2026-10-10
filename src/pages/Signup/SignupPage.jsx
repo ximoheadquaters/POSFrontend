@@ -5,7 +5,6 @@ import useAuth from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import XimoIconGreen from "../../assets/greenXimo.PNG";
 import { accountVerificationRedirectUrl } from "./accountVerification";
-import { accountVerificationRedirectUrl } from "./accountVerification";
 
 const ADMIN_ROLES = new Set(["super_admin", "super-admin", "superadmin"]);
 
