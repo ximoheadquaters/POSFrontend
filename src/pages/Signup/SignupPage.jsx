@@ -4,6 +4,8 @@ import { supabase } from "../../config/supabase";
 import useAuth from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import XimoIconGreen from "../../assets/greenXimo.PNG";
+import { accountVerificationRedirectUrl } from "./accountVerification";
+import { accountVerificationRedirectUrl } from "./accountVerification";
 
 const ADMIN_ROLES = new Set(["super_admin", "super-admin", "superadmin"]);
 
@@ -239,8 +241,10 @@ export default function SignupPage({ initialMode = "signup" }) {
     (planFromUrl ? "?plan=" + encodeURIComponent(planFromUrl) : "");
   const loginPath = planFromUrl ? "/login?redirect=/checkout" : "/login";
   const authenticatedSignupPath = planFromUrl ? checkoutPath : "/pricing";
+  const verificationDestination =
+    planFromUrl || shouldReturnToCheckout ? "checkout" : "sign-in";
   const signupEmailRedirectTo = () =>
-    new URL(authenticatedSignupPath, window.location.origin).toString();
+    accountVerificationRedirectUrl(window.location.origin, verificationDestination);
 
   const switchAuthMode = (nextMode) => {
     clearError();

@@ -25,6 +25,10 @@ const ServicesPage = lazyRoute(() => import("../pages/Services/ServicesPage"), "
 const ContactPage = lazyRoute(() => import("../pages/Contact/ContactPage"), "contact");
 const PricingPage = lazyRoute(() => import("../pages/Pricing/PricingPage"), "pricing");
 const SignupPage = lazyRoute(() => import("../pages/Signup/SignupPage"), "account");
+const AccountVerifiedPage = lazyRoute(
+  () => import("../pages/Signup/AccountVerifiedPage"),
+  "account-verified",
+);
 const CheckoutPage = lazyRoute(() => import("../pages/Checkout/CheckoutPage"), "checkout");
 const CheckoutProcessingPage = lazyRoute(
   () => import("../pages/Checkout/CheckoutProcessingPage"),
@@ -110,6 +114,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        <Route path="/account-verified" element={<AccountVerifiedPage />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
