@@ -98,7 +98,6 @@ export default function CheckoutPage() {
   const catalog = config?.orderConfiguration;
   const testCheckout = Boolean(config?.testMode || config?.mode === 'test');
   const paymentAvailable = Boolean(config?.enabled);
-  const includedModules = new Set(selectedPlan?.modules?.map((module) => module.code) || []);
   const isVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
 
   useEffect(() => {
@@ -119,6 +118,9 @@ export default function CheckoutPage() {
           return {
             ...previous,
             planCode,
+            addOnCodes: previous.addOnCodes.filter((code) =>
+              paymentConfig.orderConfiguration?.addOns?.some((addOn) =>
+                addOn.code === code && !addOn.quoteOnly && addOn.eligiblePlans?.includes(planCode))),
             ...(PROFILES.some(([code]) => code === profile)
               ? { intendedBusinessProfile: profile }
               : {}),
@@ -160,6 +162,8 @@ export default function CheckoutPage() {
     setError('');
     if (step === 1 && !order.organizationName.trim())
       return setError('Enter your business name to continue.');
+    if (step === 1 && order.intendedBusinessProfile !== 'retail')
+      return setError('Online package pricing currently covers retail only. Contact Ximo for food-service or hybrid pricing.');
     if (step === 4) {
       setBusy(true);
       try {
@@ -325,6 +329,11 @@ export default function CheckoutPage() {
                     </label>
                   ))}
                 </fieldset>
+                {order.intendedBusinessProfile !== 'retail' && (
+                  <p role="status" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+                    Food-service and hybrid package prices are not set yet. Please contact Ximo for a separate quote.
+                  </p>
+                )}
               </div>
             )}
             {step === 2 && (
@@ -363,7 +372,8 @@ export default function CheckoutPage() {
                   Included modules are already covered by your package.
                 </p>
                 {catalog.addOns.map((addOn) => {
-                  const included = addOn.moduleCodes.every((code) => includedModules.has(code));
+                  const included = addOn.includedInPlans.includes(order.planCode);
+                  const eligible = addOn.eligiblePlans.includes(order.planCode);
                   return (
                     <label
                       key={addOn.code}
@@ -371,7 +381,7 @@ export default function CheckoutPage() {
                     >
                       <input
                         type="checkbox"
-                        disabled={included}
+                        disabled={included || !eligible || addOn.quoteOnly}
                         checked={included || order.addOnCodes.includes(addOn.code)}
                         onChange={(e) =>
                           update({
@@ -383,7 +393,13 @@ export default function CheckoutPage() {
                       />
                       <span className="flex-1 text-sm font-semibold">{addOn.name}</span>
                       <span className="text-sm">
-                        {included ? 'Included' : `${money(addOn.monthlyPrice * 100)}/mo`}
+                        {included
+                          ? 'Included'
+                          : !eligible
+                            ? 'Requires a higher package'
+                            : addOn.quoteOnly
+                              ? `From ${money(addOn.startingMonthlyPrice * 100)}/mo · quote required`
+                              : `${money(addOn.monthlyPrice * 100)}/mo`}
                       </span>
                     </label>
                   );
@@ -415,7 +431,7 @@ export default function CheckoutPage() {
                   Number of branches
                   <input
                     type="number"
-                    min={order.addOnCodes.includes('stock_transfers') ? 2 : 1}
+                    min={1}
                     max={catalog.maxBranches}
                     step={1}
                     value={order.branchCount}
@@ -428,11 +444,6 @@ export default function CheckoutPage() {
                 <p className="text-xs text-[#5A685D]">
                   Branches are created after payment. Rename them and enter addresses in Ximo POS.
                 </p>
-                {order.addOnCodes.includes('stock_transfers') && (
-                  <p className="text-xs text-primary">
-                    Stock transfers require at least two branches.
-                  </p>
-                )}
               </div>
             )}
             {step === 5 && quote && (

@@ -8,7 +8,7 @@ test('customer configures an order and must accept terms before payment', async 
         {
           code: 'starter',
           displayName: 'Starter',
-          monthlyPrice: 499,
+          monthlyPrice: 999,
           availability: 'available',
           features: ['POS checkout'],
           modules: [{ code: 'pos', name: 'POS checkout' }],
@@ -27,13 +27,15 @@ test('customer configures an order and must accept terms before payment', async 
           termsUrl:
             'https://docs.google.com/document/d/1EUBl9DCTGvgbL8CM3AhOqS-194cjLWmxkTdMxmREg7s/edit?tab=t.0',
           includedBranches: 1,
-          extraBranchMonthlyPrice: 199,
+          extraBranchMonthlyPrice: 500,
           maxBranches: 50,
           addOns: [
             {
               code: 'promotions',
-              name: 'Promotions & combos',
-              monthlyPrice: 149,
+              name: 'Promotions & Combos',
+              monthlyPrice: 199,
+              eligiblePlans: ['starter'],
+              includedInPlans: ['business', 'professional'],
               moduleCodes: ['promotions'],
             },
           ],
@@ -48,11 +50,11 @@ test('customer configures an order and must accept terms before payment', async 
     expect(body.modificationRequest).toBe('Custom delivery workflow');
     await route.fulfill({
       json: {
-        amount: 104600,
+        amount: 219800,
         lineItems: [
-          { code: 'starter', name: 'Starter', unitAmount: 49900, quantity: 1 },
-          { code: 'promotions', name: 'Promotions & combos', unitAmount: 14900, quantity: 1 },
-          { code: 'extra_branches', name: 'Additional branches', unitAmount: 19900, quantity: 2 },
+          { code: 'starter', name: 'Starter', unitAmount: 99900, quantity: 1 },
+          { code: 'promotions', name: 'Promotions & Combos', unitAmount: 19900, quantity: 1 },
+          { code: 'extra_branches', name: 'Additional branches', unitAmount: 50000, quantity: 2 },
         ],
       },
     });
@@ -69,7 +71,7 @@ test('customer configures an order and must accept terms before payment', async 
   await page.getByLabel('Number of branches').fill('3');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Review & terms' })).toBeVisible();
-  await expect(page.getByText('₱1,046.00', { exact: true })).toBeVisible();
+  await expect(page.getByText('₱2,198.00', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Confirm order & continue' })).toBeDisabled();
   await page.getByRole('checkbox', { name: /I have reviewed/ }).check();
   await page.getByRole('button', { name: 'Confirm order & continue' }).click();

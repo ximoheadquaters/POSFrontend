@@ -47,58 +47,6 @@ const STATUS_CONFIG = {
   },
 };
 
-// Plain-language feature breakdown
-const PLAN_CAPABILITIES = [
-  {
-    name: "Point of Sale Checkout",
-    category: "POS",
-    starter: true,
-    business: true,
-  },
-  {
-    name: "Products & Inventory Management",
-    category: "Inventory",
-    starter: true,
-    business: true,
-  },
-  {
-    name: "Customer Directory",
-    category: "CRM",
-    starter: true,
-    business: true,
-  },
-  {
-    name: "Daily Sales Reports",
-    category: "Reports",
-    starter: true,
-    business: true,
-  },
-  {
-    name: "Multi-Branch Operations",
-    category: "Branches",
-    starter: false,
-    business: true,
-  },
-  {
-    name: "Food Service Ordering Tools",
-    category: "Food Service",
-    starter: false,
-    business: true,
-  },
-  {
-    name: "Supplier Purchase Orders",
-    category: "Purchasing",
-    starter: false,
-    business: true,
-  },
-  {
-    name: "Advanced Promotions & Discounts",
-    category: "Promotions",
-    starter: false,
-    business: true,
-  },
-];
-
 export default function TenantBillingPage() {
   const [subscription, setSubscription] = useState(() => {
     try {
@@ -168,7 +116,7 @@ export default function TenantBillingPage() {
         type: "success",
         text:
           res.data?.message ||
-          `Plan successfully updated to ${selectedTargetPlan === "business" ? "Business" : "Starter"} Plan!`,
+            `Plan successfully updated to ${selectedTargetPlan === "business" ? "Standard" : "Starter"} Plan!`,
       });
       try {
         sessionStorage.removeItem("ximo_billing_subscription");
@@ -529,54 +477,42 @@ export default function TenantBillingPage() {
 
                   <div className="text-left sm:text-right">
                     <span className="text-3xl font-black text-[#1F2923]">
-                      ₱
-                      {Number(subscription.plan.monthlyPrice).toLocaleString(
-                        "en-PH",
-                        { minimumFractionDigits: 2 },
-                      )}
+                      {subscription.plan.monthlyPrice == null
+                        ? "Contact support"
+                        : `₱${Number(subscription.plan.monthlyPrice).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
                     </span>
-                    <span className="text-xs text-[#5A685D] block">/month</span>
+                    <span className="text-xs text-[#5A685D] block">
+                      {subscription.plan.monthlyPrice == null ? "for renewal pricing" : "/month"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Feature Access Breakdown */}
-                <div className="space-y-4">
+                {subscription.plan.features?.length > 0 && (
+                  <div className="space-y-4">
                   <h4 className="text-sm font-semibold text-[#25352B]">
-                    Included capabilities
+                    Package highlights
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {PLAN_CAPABILITIES.map((cap, idx) => {
-                      const isIncludedInPlan =
-                        subscription.plan.code === "business"
-                          ? cap.business
-                          : cap.starter;
-                      return (
+                    {subscription.plan.features.map((feature) => (
                         <div
-                          key={idx}
+                          key={feature}
                           className="flex items-center justify-between gap-3 border-b border-[#EDF1EE] px-1 py-3 text-sm last:border-b-0"
                         >
                           <span className="font-semibold text-[#1F2923]">
-                            {cap.name}
+                            {feature}
                           </span>
-                          {isIncludedInPlan ? (
-                            <span className="shrink-0 font-semibold text-[#1A593B]">
-                              Included
-                            </span>
-                          ) : (
-                            <span className="shrink-0 text-[#748177]">
-                              Upgrade required
-                            </span>
-                          )}
+                          <span className="shrink-0 font-semibold text-[#1A593B]">Included</span>
                         </div>
-                      );
-                    })}
+                    ))}
                   </div>
-                </div>
+                  </div>
+                )}
 
                 {/* Plan Action Buttons */}
                 <div className="flex flex-wrap gap-3 pt-4 border-t border-[#F0F4F1]">
-                  <Button
+                  {subscription.providerCapabilities?.canChangePlan && (
+                    <Button
                     onClick={() => {
                       setSelectedTargetPlan(
                         subscription?.plan?.code === "business"
@@ -588,7 +524,8 @@ export default function TenantBillingPage() {
                     className="min-h-[44px]"
                   >
                     Change Plan
-                  </Button>
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
                     onClick={() => setShowCancelModal(true)}
@@ -653,11 +590,11 @@ export default function TenantBillingPage() {
             <p className="font-bold text-[#1F2923] mb-2">Select Target Plan:</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { code: "starter", name: "Starter Plan", price: "₱499.00/mo" },
+                { code: "starter", name: "Starter Plan", price: "₱999.00/mo" },
                 {
                   code: "business",
-                  name: "Business Plan",
-                  price: "₱999.00/mo",
+                  name: "Standard Plan",
+                  price: "₱1,999.00/mo",
                 },
               ].map((p) => (
                 <button
@@ -681,11 +618,12 @@ export default function TenantBillingPage() {
           (subscription?.plan?.code || "starter") === "starter" ? (
             <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 space-y-1">
               <p className="font-bold text-emerald-900">
-                Upgrade to Business Plan (₱999.00 / month)
+                Upgrade to Standard Plan (₱1,999.00 / month)
               </p>
               <p className="text-emerald-800">
-                You will be redirected to PayMongo QR Ph to pay ₱999.00. Your
-                account upgrades to Business immediately upon payment.
+                You will be redirected to PayMongo QR Ph to review the current
+                subscription amount. Your account upgrades to Standard upon
+                confirmed payment.
               </p>
             </div>
           ) : isDowngrade ? (
@@ -723,8 +661,8 @@ export default function TenantBillingPage() {
                   ? "Current Plan"
                   : selectedTargetPlan === "business" &&
                       (subscription?.plan?.code || "starter") === "starter"
-                    ? "Pay ₱999.00 with QR Ph & Upgrade"
-                    : `Confirm Switch to ${selectedTargetPlan === "business" ? "Business" : "Starter"}`}
+                    ? "Review QR Ph payment & Upgrade"
+                    : `Confirm Switch to ${selectedTargetPlan === "business" ? "Standard" : "Starter"}`}
             </Button>
           </div>
         </div>

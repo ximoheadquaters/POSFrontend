@@ -19,7 +19,7 @@ test('live checkout loads real packages, prices branches and requires agreement'
   expect(response.status()).toBe(200);
   const quote = await response.json();
   expect(quote.configuration.branchCount).toBe(2);
-  expect(quote.lineItems.find(line => line.code === 'extra_branches').unitAmount).toBe(19900);
+  expect(quote.lineItems.find(line => line.code === 'extra_branches').unitAmount).toBe(50000);
   expect(quote.amount).toBe(quote.lineItems.reduce((sum, line) => sum + line.quantity * line.unitAmount, 0));
   await expect(page.getByRole('button', { name: 'Confirm order & continue' })).toBeDisabled();
   await expect(page.getByRole('link', { name: /Read the Terms/ })).toHaveAttribute('href', /1EUBl9DCTGvgbL8CM3AhOqS/);

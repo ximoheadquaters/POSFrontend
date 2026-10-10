@@ -50,11 +50,9 @@ describe("Tenant billing workspace", () => {
     expect(billingSource.includes("Pay Again")).toBe(false);
   });
 
-  test("uses customer-facing capabilities and hides internal role codes", () => {
-    expect(billingSource.includes("Point of Sale Checkout")).toBe(true);
-    expect(billingSource.includes("Products & Inventory Management")).toBe(
-      true,
-    );
+  test("uses server-provided customer-facing capabilities and hides internal role codes", () => {
+    expect(billingSource.includes("Package highlights")).toBe(true);
+    expect(billingSource.includes("subscription.plan.features")).toBe(true);
     expect(billingSource.includes("mod_inventory_core")).toBe(false);
     expect(billingSource.includes("recipes_internal")).toBe(false);
   });

@@ -13,7 +13,6 @@ const FEATURE_CATEGORIES = [
   { id: "reports", name: "Reports", desc: "Daily sales summaries and inventory movement" },
   { id: "promotions", name: "Promotions", desc: "Discounts and special pricing rules" },
   { id: "branches", name: "Branch Management", desc: "Multi-store support and central management" },
-  { id: "foodservice", name: "Food Service Tools", desc: "Order modifiers, table management, kitchen tickets" },
 ];
 
 // Fallback plans if POS API dev instance is asleep/cold
@@ -21,43 +20,55 @@ const FALLBACK_PLANS = [
   {
     code: "starter",
     displayName: "Starter Plan",
-    shortDescription: "Essential POS tools for single-location retail stores.",
-    monthlyPrice: "499.00",
+    shortDescription: "The essentials to run a retail store.",
+    monthlyPrice: "999.00",
     currency: "PHP",
     features: [
-      "Fast Point of Sale checkout",
-      "Product & inventory management",
-      "Customer directory",
-      "Daily sales reports",
-      "Single branch support"
+      "POS & checkout",
+      "Product catalog and inventory",
+      "Purchasing & restocking",
+      "Returns & refunds",
+      "Basic reports",
+      "Unlimited users"
     ],
     recommended: false,
     availability: "available"
   },
   {
     code: "business",
-    displayName: "Business Plan",
-    shortDescription: "Complete retail and food service platform for growing businesses.",
-    monthlyPrice: "999.00",
+    displayName: "Standard",
+    shortDescription: "More control over products, promotions, inventory, and reporting.",
+    monthlyPrice: "1999.00",
     currency: "PHP",
     features: [
-      "All Starter features included",
-      "Multi-branch management",
-      "Advanced promotions & discounts",
-      "Supplier & purchase orders",
-      "Food service & kitchen ordering tools",
-      "Priority customer support"
+      "Everything in Starter",
+      "Categories, brands & variants",
+      "Promotions & combos",
+      "Stock transfers and repacking",
+      "Dashboard and detailed reports",
+      "Unlimited users"
     ],
     recommended: true,
     availability: "available"
+  },
+  {
+    code: "professional",
+    displayName: "Professional",
+    shortDescription: "Advanced analysis, register control, and business management.",
+    monthlyPrice: "3499.00",
+    currency: "PHP",
+    features: ["Everything in Standard", "Full reports and analytics", "Registers & shifts", "Cash reconciliation", "Expense management", "Unlimited users"],
+    recommended: false,
+    availability: "available"
   }
 ];
+
+const fallbackPrice = (code) => Number(FALLBACK_PLANS.find((plan) => plan.code === code)?.monthlyPrice ?? 0);
 
 export default function PricingPage() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [businessFilter, setBusinessFilter] = useState("all"); // 'all', 'retail', 'food_service', 'retail_and_food_service'
   const navigate = useNavigate();
 
   const fetchPlans = async () => {
@@ -84,7 +95,7 @@ export default function PricingPage() {
   }, []);
 
   const handleSelectPlan = (planCode) => {
-    navigate(`/checkout?plan=${planCode}${businessFilter !== "all" ? `&business=${businessFilter}` : ""}`);
+    navigate(`/checkout?plan=${planCode}&business=retail`);
   };
 
   return (
@@ -103,31 +114,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Business Type Filter (Presentation filter only) */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 bg-white p-2 rounded-2xl border border-[#E1E8E2] shadow-sm max-w-md mx-auto">
-          <span className="text-xs font-semibold text-[#5A685D] uppercase tracking-wider px-2">
-            Filter view:
-          </span>
-          <div className="flex w-full sm:w-auto gap-1">
-            {[
-              { id: "all", label: "All Stores" },
-              { id: "retail", label: "Retail" },
-              { id: "food_service", label: "Food Service" }
-            ].map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setBusinessFilter(filter.id)}
-                className={`flex-1 sm:flex-initial min-h-[44px] px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors ${
-                  businessFilter === filter.id
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-[#4B574E] hover:bg-[#F0F4F1]"
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-center text-sm text-[#5A685D]">Retail subscriptions include one store and unlimited users. Additional stores cost ₱500 each per month. Food-service pricing is quoted separately.</p>
 
         {/* Loading State */}
         {loading && (
@@ -149,7 +136,7 @@ export default function PricingPage() {
 
         {/* Plan Cards Grid */}
         {!loading && plans.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const isUnavailable = plan.availability === "hidden" || plan.availability === "disabled";
               return (
@@ -178,8 +165,8 @@ export default function PricingPage() {
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl sm:text-4xl font-black text-[#1F2923]">
                         ₱{(() => {
-                          const priceNum = Number(plan?.monthlyPrice ?? plan?.monthly_price ?? plan?.price ?? (plan?.code === 'business' ? 999 : 499));
-                          const validPrice = !isNaN(priceNum) && priceNum > 0 ? priceNum : (plan?.code === 'business' ? 999 : 499);
+                          const priceNum = Number(plan?.monthlyPrice ?? plan?.monthly_price ?? plan?.price ?? fallbackPrice(plan?.code));
+                          const validPrice = !isNaN(priceNum) && priceNum > 0 ? priceNum : fallbackPrice(plan?.code);
                           return validPrice.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         })()}
                       </span>
@@ -193,22 +180,7 @@ export default function PricingPage() {
                       </p>
                       <ul className="space-y-2.5">
                         {(() => {
-                          const defaultFeatures = plan.code === "business"
-                            ? [
-                                "All Starter features included",
-                                "Multi-branch management",
-                                "Advanced promotions & discounts",
-                                "Supplier & purchase orders",
-                                "Food service & kitchen ordering tools",
-                                "Priority customer support"
-                              ]
-                            : [
-                                "Fast Point of Sale checkout",
-                                "Product & inventory management",
-                                "Customer directory",
-                                "Daily sales reports",
-                                "Single branch support"
-                              ];
+                          const defaultFeatures = FALLBACK_PLANS.find((item) => item.code === plan.code)?.features || [];
                           const list = (Array.isArray(plan.features) && plan.features.length > 0)
                             ? plan.features
                             : defaultFeatures;
@@ -252,7 +224,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto space-y-6 pt-12">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-[#1F2923]">Compare Feature Capabilities</h2>
-            <p className="text-xs text-[#5A685D]">All features designed for Philippine retail and food businesses.</p>
+            <p className="text-xs text-[#5A685D]">Capabilities vary by retail package. Choose a plan to review exactly what is included and which add-ons are available.</p>
           </div>
 
           <div className="bg-white rounded-3xl border border-[#E1E8E2] shadow-sm overflow-hidden">
@@ -264,12 +236,7 @@ export default function PricingPage() {
                     <p className="text-xs text-[#5A685D]">{cat.desc}</p>
                   </div>
                   <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E6F2E9] text-primary text-xs font-semibold rounded-full">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Included
-                    </span>
+                    <span className="text-xs font-semibold text-primary">See package details</span>
                   </div>
                 </div>
               ))}

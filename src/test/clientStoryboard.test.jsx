@@ -46,10 +46,10 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
     expect(pageCode.includes('disabled={isUnavailable}')).toBe(true);
   });
 
-  test('6. Business-type filter is a presentation-only filter', () => {
+  test('6. Pricing routes online checkout through the published retail path', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Pricing/PricingPage.jsx'), 'utf8');
-    expect(pageCode.includes('Filter view:')).toBe(true);
-    expect(pageCode.includes('setBusinessFilter')).toBe(true);
+    expect(pageCode.includes('business=retail')).toBe(true);
+    expect(pageCode.includes('Food-service pricing is quoted separately.')).toBe(true);
   });
 
   test('7. Signup friendly error mapping converts raw errors', () => {
