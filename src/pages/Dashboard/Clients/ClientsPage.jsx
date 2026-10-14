@@ -57,26 +57,58 @@ function AccountTypeBadge({ value }) {
   );
 }
 
-function AccountRegistrationBadge({ client }) {
+function hasPosAccess(client) {
+  return (client.client_systems || []).some(
+    (assignment) =>
+      (assignment.system_code === "pos" ||
+        assignment.application_code === "ximo_pos") &&
+      assignment.status !== "cancelled",
+  );
+}
+
+function setupStatusFor(client) {
   const account = client.client_auth_account;
   if (!account) {
-    return (
-      <StatusBadge
-        value="No website account"
-        tone="bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15"
-      />
-    );
+    return {
+      label: "No website account",
+      attention: true,
+      tone: "bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15",
+    };
   }
-  return (
-    <StatusBadge
-      value={account.email_confirmed_at ? "Email verified" : "Email pending"}
-      tone={
-        account.email_confirmed_at
-          ? "bg-[#386F55]/10 text-[#1A593B] ring-[#386F55]/20"
-          : "bg-amber-50 text-amber-800 ring-amber-200"
-      }
-    />
-  );
+  if (!account.email_confirmed_at) {
+    return {
+      label: "Needs email verification",
+      attention: true,
+      tone: "bg-amber-50 text-amber-800 ring-amber-200",
+    };
+  }
+  return {
+    label: "Website ready",
+    attention: false,
+    tone: "bg-[#386F55]/10 text-[#1A593B] ring-[#386F55]/20",
+  };
+}
+
+function SetupStatusBadge({ client }) {
+  const setup = setupStatusFor(client);
+  return <StatusBadge value={setup.label} tone={setup.tone} wrap />;
+}
+
+function displayClientName(client) {
+  const source = client.display_name || client.legal_name || "Unnamed client";
+  return source
+    .trim()
+    .split(/\s+/)
+    .map((word) =>
+      word.length <= 3 && word === word.toUpperCase()
+        ? word
+        : `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`,
+    )
+    .join(" ");
+}
+
+function isClientAttention(client) {
+  return setupStatusFor(client).attention || !hasPosAccess(client);
 }
 
 export default function ClientsPage() {
@@ -87,16 +119,37 @@ export default function ClientsPage() {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [accountType, setAccountType] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [lifecycle, setLifecycle] = useState("all");
+  const [directoryView, setDirectoryView] = useState("all");
+  const [sortBy, setSortBy] = useState("attention");
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
+  const [selectedOnly, setSelectedOnly] = useState(false);
   const [createdClient, setCreatedClient] = useState(null);
   const [activatingClient, setActivatingClient] = useState(null);
 
   const clients = resource.data ?? EMPTY_CLIENTS;
+  const duplicateClientIds = useMemo(() => {
+    const names = new Map();
+    clients.forEach((client) => {
+      const key = displayClientName(client).toLowerCase();
+      names.set(key, [...(names.get(key) || []), client.id]);
+    });
+    return new Set([...names.values()].filter((ids) => ids.length > 1).flat());
+  }, [clients]);
+  const attentionCount = useMemo(
+    () => clients.filter(isClientAttention).length,
+    [clients],
+  );
   const visibleClients = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    return clients.filter((client) => {
+    const filtered = clients.filter((client) => {
       const matchesType = accountType === "all" || client.kind === accountType;
-      const matchesStatus = status === "all" || client.status === status;
+      const matchesLifecycle =
+        lifecycle === "all" || client.status === lifecycle;
+      const matchesView =
+        directoryView !== "attention" || isClientAttention(client);
+      const matchesSelection =
+        !selectedOnly || selectedClientIds.includes(client.id);
       const searchable = [
         client.display_name,
         client.legal_name,
@@ -108,14 +161,52 @@ export default function ClientsPage() {
         .toLowerCase();
       return (
         matchesType &&
-        matchesStatus &&
+        matchesLifecycle &&
+        matchesView &&
+        matchesSelection &&
         (!keyword || searchable.includes(keyword))
       );
     });
-  }, [accountType, clients, query, status]);
+    return filtered.sort((first, second) => {
+      if (sortBy === "attention") {
+        const attentionDifference =
+          Number(isClientAttention(second)) - Number(isClientAttention(first));
+        if (attentionDifference) return attentionDifference;
+      }
+      if (sortBy === "lifecycle") {
+        return String(first.status).localeCompare(String(second.status));
+      }
+      if (sortBy === "setup") {
+        return setupStatusFor(first).label.localeCompare(
+          setupStatusFor(second).label,
+        );
+      }
+      if (sortBy === "pos") {
+        return Number(hasPosAccess(first)) - Number(hasPosAccess(second));
+      }
+      return displayClientName(first).localeCompare(displayClientName(second));
+    });
+  }, [
+    accountType,
+    clients,
+    directoryView,
+    lifecycle,
+    query,
+    selectedClientIds,
+    selectedOnly,
+    sortBy,
+  ]);
   const hasFilters = Boolean(
-    query || accountType !== "all" || status !== "all",
+    query ||
+    accountType !== "all" ||
+    lifecycle !== "all" ||
+    directoryView !== "all" ||
+    selectedOnly,
   );
+  const visibleClientIds = visibleClients.map((client) => client.id);
+  const allVisibleSelected =
+    visibleClientIds.length > 0 &&
+    visibleClientIds.every((id) => selectedClientIds.includes(id));
 
   function resetCreateForm() {
     setForm(initialForm);
@@ -136,7 +227,25 @@ export default function ClientsPage() {
   function clearFilters() {
     setQuery("");
     setAccountType("all");
-    setStatus("all");
+    setLifecycle("all");
+    setDirectoryView("all");
+    setSelectedOnly(false);
+  }
+
+  function toggleClientSelection(clientId) {
+    setSelectedClientIds((current) =>
+      current.includes(clientId)
+        ? current.filter((id) => id !== clientId)
+        : [...current, clientId],
+    );
+  }
+
+  function toggleVisibleSelection() {
+    setSelectedClientIds((current) =>
+      allVisibleSelected
+        ? current.filter((id) => !visibleClientIds.includes(id))
+        : [...new Set([...current, ...visibleClientIds])],
+    );
   }
 
   async function create(event) {
@@ -193,12 +302,45 @@ export default function ClientsPage() {
                   one place.
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold tabular-nums text-[#1A593B]">
-                {visibleClients.length} of {clients.length}
-              </p>
+              <div className="flex shrink-0 items-center gap-3 text-sm">
+                <p className="font-semibold tabular-nums text-[#1A593B]">
+                  Showing {visibleClients.length} of {clients.length}
+                </p>
+                {hasFilters ? (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                ) : null}
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_auto]">
+            <div
+              className="flex flex-wrap gap-2 border-b border-[#E7ECE8] pb-4"
+              role="tablist"
+              aria-label="Client directory views"
+            >
+              <DirectoryViewButton
+                active={directoryView === "all"}
+                onClick={() => {
+                  setDirectoryView("all");
+                  setSelectedOnly(false);
+                }}
+              >
+                All clients
+              </DirectoryViewButton>
+              <DirectoryViewButton
+                active={directoryView === "attention"}
+                onClick={() => {
+                  setDirectoryView("attention");
+                  setSortBy("attention");
+                  setSelectedOnly(false);
+                }}
+              >
+                Needs attention ({attentionCount})
+              </DirectoryViewButton>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_10.5rem_10rem_10rem]">
               <label className="relative block">
                 <span className="sr-only">Search clients</span>
                 <svg
@@ -230,29 +372,43 @@ export default function ClientsPage() {
                 ]}
               />
               <SelectFilter
-                label="Status"
-                value={status}
-                onChange={setStatus}
+                label="Lifecycle"
+                value={lifecycle}
+                onChange={setLifecycle}
                 options={[
-                  ["all", "All statuses"],
+                  ["all", "All lifecycles"],
                   ["prospect", "Prospect"],
                   ["active", "Active"],
                   ["inactive", "Inactive"],
                 ]}
               />
-              {hasFilters ? (
-                <Button
-                  variant="ghost"
-                  className="md:justify-self-start xl:self-end"
-                  onClick={clearFilters}
-                >
-                  Clear filters
-                </Button>
-              ) : (
-                <span className="hidden xl:block" aria-hidden="true" />
-              )}
+              <SelectFilter
+                label="Sort clients"
+                value={sortBy}
+                onChange={setSortBy}
+                options={[
+                  ["attention", "Attention first"],
+                  ["client", "Client name"],
+                  ["lifecycle", "Lifecycle"],
+                  ["setup", "Setup status"],
+                  ["pos", "POS access"],
+                ]}
+              />
             </div>
           </div>
+
+          {selectedClientIds.length ? (
+            <BulkSelectionBar
+              count={selectedClientIds.length}
+              selectedOnly={selectedOnly}
+              onReview={() => setSelectedOnly(true)}
+              onShowAll={() => setSelectedOnly(false)}
+              onClear={() => {
+                setSelectedClientIds([]);
+                setSelectedOnly(false);
+              }}
+            />
+          ) : null}
 
           {clients.length === 0 ? (
             <ClientDirectoryEmpty onCreate={openCreate} />
@@ -262,33 +418,61 @@ export default function ClientsPage() {
             <>
               <div className="divide-y divide-[#E9EEEA] md:grid md:grid-cols-2 md:gap-px md:divide-y-0 md:bg-[#E9EEEA] xl:hidden">
                 {visibleClients.map((client) => (
-                  <ClientMobileRow key={client.id} client={client} />
+                  <ClientMobileRow
+                    key={client.id}
+                    client={client}
+                    selected={selectedClientIds.includes(client.id)}
+                    isPossibleDuplicate={duplicateClientIds.has(client.id)}
+                    onToggleSelection={() => toggleClientSelection(client.id)}
+                  />
                 ))}
               </div>
               <div className="hidden overflow-x-auto xl:block">
                 <table
-                  className="w-full min-w-[1040px] table-fixed"
+                  className="w-full min-w-[1100px] table-fixed"
                   aria-label="Client directory"
                 >
                   <thead className="bg-[#F7F9F7]">
                     <tr>
-                      <TableHeading className="w-[24%]">Client</TableHeading>
-                      <TableHeading className="w-[11%]">
+                      <TableHeading className="w-[4%]">
+                        <DirectoryCheckbox
+                          checked={allVisibleSelected}
+                          onChange={toggleVisibleSelection}
+                          label={
+                            allVisibleSelected
+                              ? "Clear visible client selection"
+                              : "Select all visible clients"
+                          }
+                        />
+                      </TableHeading>
+                      <TableHeading className="w-[20%]">Client</TableHeading>
+                      <TableHeading className="w-[10%]">
                         Account type
                       </TableHeading>
-                      <TableHeading className="w-[21%]">
-                        Account status
+                      <TableHeading className="w-[11%]">Lifecycle</TableHeading>
+                      <TableHeading className="w-[17%]">
+                        Setup status
                       </TableHeading>
-                      <TableHeading className="w-[9%]">POS access</TableHeading>
-                      <TableHeading className="w-[22%]">Contact</TableHeading>
-                      <TableHeading className="w-[13%] text-right">
+                      <TableHeading className="w-[12%]">
+                        POS access
+                      </TableHeading>
+                      <TableHeading className="w-[15%]">Contact</TableHeading>
+                      <TableHeading className="w-[11%] text-right">
                         Action
                       </TableHeading>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E9EEEA]">
                     {visibleClients.map((client) => (
-                      <ClientTableRow key={client.id} client={client} />
+                      <ClientTableRow
+                        key={client.id}
+                        client={client}
+                        selected={selectedClientIds.includes(client.id)}
+                        isPossibleDuplicate={duplicateClientIds.has(client.id)}
+                        onToggleSelection={() =>
+                          toggleClientSelection(client.id)
+                        }
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -426,38 +610,53 @@ function TableHeading({ children, className = "" }) {
   );
 }
 
-function ClientTableRow({ client }) {
-  const systems = client.client_systems?.length || 0;
+function ClientTableRow({
+  client,
+  selected,
+  isPossibleDuplicate,
+  onToggleSelection,
+}) {
+  const hasPos = hasPosAccess(client);
   return (
     <tr className="transition-colors hover:bg-[#F8FAF8]">
-      <td className="px-5 py-4 align-top">
-        <p className="truncate font-semibold text-[#17241C]">
-          {client.display_name || client.legal_name}
-        </p>
+      <td className="px-3 py-4 align-top text-center">
+        <DirectoryCheckbox
+          checked={selected}
+          onChange={onToggleSelection}
+          label={`Select ${displayClientName(client)}`}
+        />
+      </td>
+      <td className="px-4 py-4 align-top">
+        <Link
+          className="block truncate font-semibold text-[#17241C] underline-offset-4 hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          to={`/admin/clients/${client.id}`}
+        >
+          {displayClientName(client)}
+        </Link>
         {client.display_name && client.legal_name !== client.display_name ? (
           <p className="mt-1 truncate text-xs text-[#7B877F]">
             {client.legal_name}
           </p>
         ) : null}
+        {isPossibleDuplicate ? (
+          <p className="mt-1 text-xs font-medium text-[#875D17]">
+            Possible duplicate name
+          </p>
+        ) : null}
       </td>
-      <td className="px-5 py-4 align-top">
+      <td className="px-4 py-4 align-top">
         <AccountTypeBadge value={client.kind} />
       </td>
-      <td className="px-5 py-4 align-top">
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge value={client.status} />
-          <AccountRegistrationBadge client={client} />
-        </div>
+      <td className="px-4 py-4 align-top">
+        <StatusBadge value={client.status} />
       </td>
-      <td className="px-5 py-4 align-top">
-        <span className="text-sm font-semibold tabular-nums text-[#334238]">
-          {systems}
-        </span>
-        <span className="ml-1 text-xs text-[#778278]">
-          {systems === 1 ? "system" : "systems"}
-        </span>
+      <td className="px-4 py-4 align-top">
+        <SetupStatusBadge client={client} />
       </td>
-      <td className="px-5 py-4 align-top text-sm text-[#536158]">
+      <td className="px-4 py-4 align-top text-sm">
+        <PosAccessLink client={client} hasPos={hasPos} />
+      </td>
+      <td className="px-4 py-4 align-top text-sm text-[#536158]">
         <p className="truncate">{client.primary_email || "—"}</p>
         {client.primary_phone ? (
           <p className="mt-1 truncate text-xs text-[#7B877F]">
@@ -465,20 +664,40 @@ function ClientTableRow({ client }) {
           </p>
         ) : null}
       </td>
-      <td className="px-5 py-4 text-right align-top">
+      <td className="px-4 py-4 text-right align-top">
         <Link
-          className="inline-flex min-h-10 min-w-[92px] items-center justify-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0]"
+          aria-label={`Manage ${displayClientName(client)}`}
+          className="inline-flex min-h-10 items-center justify-center gap-1 whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           to={`/admin/clients/${client.id}`}
         >
           Manage
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="1.9"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m9 18 6-6-6-6"
+            />
+          </svg>
         </Link>
       </td>
     </tr>
   );
 }
 
-function ClientMobileRow({ client }) {
-  const systems = client.client_systems?.length || 0;
+function ClientMobileRow({
+  client,
+  selected,
+  isPossibleDuplicate,
+  onToggleSelection,
+}) {
+  const hasPos = hasPosAccess(client);
   return (
     <article className="bg-white px-4 py-4 sm:px-5 md:p-5">
       <div className="flex gap-3">
@@ -486,33 +705,145 @@ function ClientMobileRow({ client }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold text-[#17241C]">
-                {client.display_name || client.legal_name}
-              </h3>
+              <Link
+                className="block truncate text-sm font-semibold text-[#17241C] underline-offset-4 hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                to={`/admin/clients/${client.id}`}
+              >
+                {displayClientName(client)}
+              </Link>
               <p className="mt-1 truncate text-xs text-[#778278]">
                 {client.primary_email ||
                   client.primary_phone ||
                   "No contact details"}
               </p>
             </div>
-            <AccountTypeBadge value={client.kind} />
+            <div className="flex items-center gap-2">
+              <AccountTypeBadge value={client.kind} />
+              <DirectoryCheckbox
+                checked={selected}
+                onChange={onToggleSelection}
+                label={`Select ${displayClientName(client)}`}
+              />
+            </div>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <StatusBadge value={client.status} />
-            <AccountRegistrationBadge client={client} />
-            <span className="text-xs text-[#6B776E]">
-              {systems} {systems === 1 ? "system" : "systems"}
-            </span>
-          </div>
+          {isPossibleDuplicate ? (
+            <p className="mt-2 text-xs font-medium text-[#875D17]">
+              Possible duplicate name
+            </p>
+          ) : null}
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-[#E8EEEA] py-3 text-xs">
+            <StatusField label="Lifecycle">
+              <StatusBadge value={client.status} />
+            </StatusField>
+            <StatusField label="Setup">
+              <SetupStatusBadge client={client} />
+            </StatusField>
+            <StatusField label="POS access">
+              <PosAccessLink client={client} hasPos={hasPos} />
+            </StatusField>
+          </dl>
           <Link
-            className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#D7E1D9] px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0] md:mt-4 md:w-full"
+            className="mt-3 inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[#D7E1D9] px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0] md:mt-4 md:w-full"
             to={`/admin/clients/${client.id}`}
           >
             Manage client
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.9"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
           </Link>
         </div>
       </div>
     </article>
+  );
+}
+
+function PosAccessLink({ client, hasPos }) {
+  if (hasPos)
+    return <span className="font-semibold text-[#334238]">POS active</span>;
+  return (
+    <Link
+      className="font-semibold text-[#A23F36] underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      to={`/admin/clients/${client.id}?activate=pos`}
+    >
+      No POS access
+    </Link>
+  );
+}
+
+function StatusField({ label, children }) {
+  return (
+    <div className="min-w-0">
+      <dt className="font-semibold text-[#6A776E]">{label}</dt>
+      <dd className="mt-1">{children}</dd>
+    </div>
+  );
+}
+
+function DirectoryCheckbox({ checked, onChange, label }) {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      aria-label={label}
+      className="h-4 w-4 rounded border-[#A8B8AC] text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+    />
+  );
+}
+
+function DirectoryViewButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${active ? "bg-[#E8F1EB] text-primary" : "text-[#55635A] hover:bg-[#F2F6F3]"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BulkSelectionBar({
+  count,
+  selectedOnly,
+  onReview,
+  onShowAll,
+  onClear,
+}) {
+  return (
+    <div
+      role="status"
+      className="flex flex-col gap-3 border-b border-[#DCE8E0] bg-[#F4F8F5] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+    >
+      <p className="text-sm font-semibold text-[#315241]">
+        {count} {count === 1 ? "client" : "clients"} selected
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={selectedOnly ? onShowAll : onReview}
+        >
+          {selectedOnly ? "Show directory" : "Review selected"}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Clear selection
+        </Button>
+      </div>
+    </div>
   );
 }
 

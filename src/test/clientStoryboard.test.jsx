@@ -89,7 +89,7 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
     expect(apiCode.includes('client_auth_accounts(user_id, email, email_confirmed_at, source)')).toBe(true);
     expect(apiCode.includes('client_auth_account: clientAuthAccount')).toBe(true);
     expect(pageCode.includes('Review account type, registration status, and POS access in')).toBe(true);
-    expect(pageCode.includes('Email pending')).toBe(true);
+    expect(pageCode.includes('Needs email verification')).toBe(true);
   });
 
   test('client system access can be scheduled, restored, and removed', () => {

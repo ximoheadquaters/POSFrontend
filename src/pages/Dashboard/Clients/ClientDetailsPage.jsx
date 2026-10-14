@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
 import {
@@ -64,6 +64,7 @@ function SystemIcon({ code }) {
 
 export default function ClientDetailsPage() {
   const { clientId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const resource = usePosResource(
     () => platformAdminApi.getClient(clientId),
     [clientId],
@@ -75,6 +76,14 @@ export default function ClientDetailsPage() {
   const [resending, setResending] = useState(false);
   const [revokeAssignment, setRevokeAssignment] = useState(null);
   const [revoking, setRevoking] = useState(false);
+  const activatePosRequested = searchParams.get("activate") === "pos";
+
+  useEffect(() => {
+    if (!resource.data || !activatePosRequested) return;
+    setMessage(null);
+    setAdding(true);
+    setSearchParams({}, { replace: true });
+  }, [activatePosRequested, resource.data, setSearchParams]);
 
   if (resource.loading) return <AdminLoading />;
   if (resource.error)

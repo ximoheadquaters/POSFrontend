@@ -10,6 +10,10 @@ const wizard = fs.readFileSync(
   path.resolve(__dirname, "../pages/Dashboard/Clients/PosActivationWizard.jsx"),
   "utf8",
 );
+const clientDetail = fs.readFileSync(
+  path.resolve(__dirname, "../pages/Dashboard/Clients/ClientDetailsPage.jsx"),
+  "utf8",
+);
 
 describe("client creation and POS activation", () => {
   test("chooses QA as a client account type before activation", () => {
@@ -25,5 +29,13 @@ describe("client creation and POS activation", () => {
     expect(clientsPage).toContain("Activate POS now");
     expect(clientsPage).toContain("Not now");
     expect(wizard).toContain('title="Activation"');
+  });
+
+  test("provides an actionable triage view and direct POS setup route", () => {
+    expect(clientsPage).toContain("Needs attention");
+    expect(clientsPage).toContain("No POS access");
+    expect(clientsPage).toContain("Review selected");
+    expect(clientsPage).toContain("Setup status");
+    expect(clientDetail).toContain('searchParams.get("activate") === "pos"');
   });
 });
