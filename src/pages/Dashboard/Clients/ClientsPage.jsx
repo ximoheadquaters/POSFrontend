@@ -198,7 +198,7 @@ export default function ClientsPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_11rem_11rem_auto]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_auto]">
               <label className="relative block">
                 <span className="sr-only">Search clients</span>
                 <svg
@@ -243,13 +243,13 @@ export default function ClientsPage() {
               {hasFilters ? (
                 <Button
                   variant="ghost"
-                  className="self-end"
+                  className="md:justify-self-start xl:self-end"
                   onClick={clearFilters}
                 >
                   Clear filters
                 </Button>
               ) : (
-                <span className="hidden lg:block" aria-hidden="true" />
+                <span className="hidden xl:block" aria-hidden="true" />
               )}
             </div>
           </div>
@@ -260,30 +260,28 @@ export default function ClientsPage() {
             <ClientDirectoryEmpty filtered onClear={clearFilters} />
           ) : (
             <>
-              <div className="divide-y divide-[#E9EEEA] lg:hidden">
+              <div className="divide-y divide-[#E9EEEA] md:grid md:grid-cols-2 md:gap-px md:divide-y-0 md:bg-[#E9EEEA] xl:hidden">
                 {visibleClients.map((client) => (
                   <ClientMobileRow key={client.id} client={client} />
                 ))}
               </div>
-              <div className="hidden overflow-x-auto lg:block">
+              <div className="hidden overflow-x-auto xl:block">
                 <table
-                  className="w-full min-w-[900px] table-fixed"
+                  className="w-full min-w-[1040px] table-fixed"
                   aria-label="Client directory"
                 >
                   <thead className="bg-[#F7F9F7]">
                     <tr>
-                      <TableHeading className="w-[25%]">Client</TableHeading>
-                      <TableHeading className="w-[12%]">
+                      <TableHeading className="w-[24%]">Client</TableHeading>
+                      <TableHeading className="w-[11%]">
                         Account type
                       </TableHeading>
-                      <TableHeading className="w-[22%]">
+                      <TableHeading className="w-[21%]">
                         Account status
                       </TableHeading>
-                      <TableHeading className="w-[10%]">
-                        POS access
-                      </TableHeading>
-                      <TableHeading className="w-[21%]">Contact</TableHeading>
-                      <TableHeading className="w-[10%] text-right">
+                      <TableHeading className="w-[9%]">POS access</TableHeading>
+                      <TableHeading className="w-[22%]">Contact</TableHeading>
+                      <TableHeading className="w-[13%] text-right">
                         Action
                       </TableHeading>
                     </tr>
@@ -469,10 +467,10 @@ function ClientTableRow({ client }) {
       </td>
       <td className="px-5 py-4 text-right align-top">
         <Link
-          className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0]"
+          className="inline-flex min-h-10 min-w-[92px] items-center justify-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0]"
           to={`/admin/clients/${client.id}`}
         >
-          View client
+          Manage
         </Link>
       </td>
     </tr>
@@ -482,7 +480,7 @@ function ClientTableRow({ client }) {
 function ClientMobileRow({ client }) {
   const systems = client.client_systems?.length || 0;
   return (
-    <article className="px-4 py-4 sm:px-5">
+    <article className="bg-white px-4 py-4 sm:px-5 md:p-5">
       <div className="flex gap-3">
         <ClientAvatar name={client.display_name || client.legal_name} />
         <div className="min-w-0 flex-1">
@@ -507,10 +505,10 @@ function ClientMobileRow({ client }) {
             </span>
           </div>
           <Link
-            className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline"
+            className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#D7E1D9] px-3 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0] md:mt-4 md:w-full"
             to={`/admin/clients/${client.id}`}
           >
-            View client
+            Manage client
           </Link>
         </div>
       </div>
