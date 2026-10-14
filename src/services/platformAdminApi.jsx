@@ -74,6 +74,8 @@ function clientDisplayName(client) {
   return client?.display_name || client?.legal_name || "another client";
 }
 
+const CLIENT_ACCOUNT_TYPES = new Set(["company", "individual", "qa"]);
+
 export const platformAdminApi = {
   async listClients() {
     const clientColumns =
@@ -140,7 +142,9 @@ export const platformAdminApi = {
       ) {
         fallbackResult = await supabase
           .from("clients")
-          .select("*, client_contacts(*), client_addresses(*), client_systems(*, systems(*))")
+          .select(
+            "*, client_contacts(*), client_addresses(*), client_systems(*, systems(*))",
+          )
           .eq("id", clientId)
           .single();
       }
@@ -161,6 +165,14 @@ export const platformAdminApi = {
   async createClient(values) {
     const userId = await currentUserId();
     const primaryEmail = values.primaryEmail.trim().toLowerCase();
+    const accountType = String(values.kind || "").toLowerCase();
+
+    if (!CLIENT_ACCOUNT_TYPES.has(accountType)) {
+      throw new PlatformAdminError(
+        "Choose Company, Individual, or QA for the account type.",
+        "INVALID_CLIENT_ACCOUNT_TYPE",
+      );
+    }
 
     if (primaryEmail) {
       const { data: existingClients, error: existingClientsError } =
@@ -194,7 +206,7 @@ export const platformAdminApi = {
       await supabase
         .from("clients")
         .insert({
-          kind: values.kind,
+          kind: accountType,
           status: values.status,
           legal_name: values.legalName.trim(),
           display_name: values.displayName.trim() || null,

@@ -88,7 +88,7 @@ describe('Phase E Step 4 Client Storyboard Unit Tests', () => {
     const pageCode = fs.readFileSync(path.resolve(__dirname, '../pages/Dashboard/Clients/ClientsPage.jsx'), 'utf8');
     expect(apiCode.includes('client_auth_accounts(user_id, email, email_confirmed_at, source)')).toBe(true);
     expect(apiCode.includes('client_auth_account: clientAuthAccount')).toBe(true);
-    expect(pageCode.includes('Website registrations appear here before they subscribe')).toBe(true);
+    expect(pageCode.includes('Review account type, registration status, and POS access in')).toBe(true);
     expect(pageCode.includes('Email pending')).toBe(true);
   });
 

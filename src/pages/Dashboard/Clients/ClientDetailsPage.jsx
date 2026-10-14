@@ -167,7 +167,9 @@ export default function ClientDetailsPage() {
     setMessage(null);
     try {
       const organization = unwrapEntity(
-        await posPlatformApi.getOrganization(revokeAssignment.external_tenant_id),
+        await posPlatformApi.getOrganization(
+          revokeAssignment.external_tenant_id,
+        ),
         ["organization"],
       );
       const planCode = organizationPlanCode(organization);
@@ -234,7 +236,7 @@ export default function ClientDetailsPage() {
           <InfoGrid
             items={[
               { label: "Legal name", value: client.legal_name },
-              { label: "Client type", value: client.kind },
+              { label: "Account type", value: client.kind },
               { label: "Industry", value: client.industry },
               { label: "Primary email", value: client.primary_email },
               { label: "Primary phone", value: client.primary_phone },
@@ -297,7 +299,7 @@ export default function ClientDetailsPage() {
             }}
             disabled={hasPos || systemsResource.loading}
           >
-            Add Ximo POS
+            Activate POS
           </Button>
         </div>
         {systemsResource.error ? (
@@ -377,7 +379,7 @@ export default function ClientDetailsPage() {
           ))}
           {!assignments.length ? (
             <div className="px-5 py-8 text-sm text-neutral-500 sm:px-6">
-              No systems are assigned yet. Activate Ximo POS when this client is
+              No systems are assigned yet. Activate POS when this client is
               ready to use it.
             </div>
           ) : null}
@@ -453,13 +455,13 @@ export default function ClientDetailsPage() {
         title="Remove POS access?"
       >
         <p className="text-sm leading-6 text-neutral-600">
-          This immediately cancels this client&apos;s POS subscription. The client
-          will no longer be able to use POS after their next refresh or sign-in,
-          but the workspace, sales data, and products remain preserved.
+          This immediately cancels this client&apos;s POS subscription. The
+          client will no longer be able to use POS after their next refresh or
+          sign-in, but the workspace, sales data, and products remain preserved.
         </p>
         <p className="mt-3 text-sm leading-6 text-neutral-600">
-          You can grant access again later from <strong>Access settings</strong>,
-          including a new access end date.
+          You can grant access again later from <strong>Access settings</strong>
+          , including a new access end date.
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button

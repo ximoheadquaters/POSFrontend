@@ -262,8 +262,8 @@ export default function PosActivationWizard({
         {recoveringWorkspace
           ? "Use another owner email"
           : step === 1 || isDone(outcome) || isBlocked(outcome)
-          ? "Cancel"
-          : "Back"}
+            ? "Cancel"
+            : "Back"}
       </Button>
       {step === 1 ? (
         <Button
@@ -286,9 +286,7 @@ export default function PosActivationWizard({
           loading={saving}
           onClick={activate}
         >
-          {recoveringWorkspace
-            ? "Link existing workspace"
-            : "Create and assign POS"}
+          {recoveringWorkspace ? "Link existing workspace" : "Activate POS"}
         </Button>
       ) : null}
     </div>
@@ -298,7 +296,7 @@ export default function PosActivationWizard({
     <Modal
       isOpen={isOpen}
       onClose={close}
-      title="Activate Ximo POS"
+      title="Activation"
       footer={footer}
       className="max-w-xl"
     >
@@ -327,40 +325,13 @@ function Access({ values, update }) {
     <div className="space-y-5">
       <div>
         <h4 className="text-base font-semibold text-[#17241C]">
-          Confirm the POS owner
+          Confirm the owner
         </h4>
         <p className="mt-1 text-sm leading-5 text-neutral-500">
-          We use this email to find an existing POS workspace before creating a
-          new one.
+          We check this email for an existing Ximo POS workspace before we
+          create a new one.
         </p>
       </div>
-      <fieldset>
-        <legend className="text-sm font-medium text-[#26342A]">
-          Account use
-        </legend>
-        <p className="mt-1 text-xs leading-5 text-[#637168]">
-          Both options follow the same secure setup flow. This label keeps the
-          client assignment clear for your team.
-        </p>
-        <div
-          className="mt-3 grid gap-3 sm:grid-cols-2"
-          role="radiogroup"
-          aria-label="Account use"
-        >
-          <Choice
-            selected={values.purpose === "client_access"}
-            title="Client account"
-            description="Provide POS access to a customer manually."
-            onClick={() => update("purpose", "client_access")}
-          />
-          <Choice
-            selected={values.purpose === "qa_workspace"}
-            title="QA test account"
-            description="Issue a controlled workspace for your team to test."
-            onClick={() => update("purpose", "qa_workspace")}
-          />
-        </div>
-      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           id="pos-owner-name"
@@ -379,9 +350,9 @@ function Access({ values, update }) {
         />
       </div>
       <div className="rounded-xl border border-[#DDE8E0] bg-[#F4F8F5] p-3 text-sm leading-5 text-[#486052]">
-        A landing-page account alone does not create a POS workspace. If a POS
-        workspace already uses this email, it is safely connected to this
-        client. Otherwise, Ximo sends a secure setup link after activation.
+        Activation connects Ximo POS to this client. If this owner already has a
+        workspace, it is safely connected instead of duplicated. Otherwise, Ximo
+        sends a secure setup link after activation.
       </div>
     </div>
   );
@@ -635,7 +606,6 @@ function initialValues(client) {
     planCode: "",
     subscriptionStatus: "",
     businessProfile: "",
-    purpose: "client_access",
     ownerEmail: client?.primary_email || "",
     ownerName: client?.display_name || client?.legal_name || "",
   };
