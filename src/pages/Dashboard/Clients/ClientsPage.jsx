@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import Modal from "../../../components/common/Modal";
 import { AdminError } from "../../../components/admin/AdminUi";
-import { PageHeader, StatusBadge } from "../../../components/pos/PosUi";
 import usePosResource from "../../../hooks/usePosResource";
 import { platformAdminApi } from "../../../services/platformAdminApi";
 import PosActivationWizard from "./PosActivationWizard";
@@ -39,24 +38,6 @@ function accountTypeLabel(value) {
   return ACCOUNT_TYPES.find((type) => type.value === value)?.label || "Other";
 }
 
-function AccountTypeBadge({ value }) {
-  const tone =
-    {
-      company: "bg-[#EAF2EE] text-[#1A593B] ring-[#C9DDCE]",
-      individual: "bg-[#EEF1F5] text-[#435466] ring-[#D8E0E8]",
-      qa: "bg-[#FFF5E6] text-[#875D17] ring-[#F1D3A0]",
-    }[value] || "bg-[#F2F4F2] text-[#536158] ring-[#DDE4DE]";
-
-  return (
-    <span
-      aria-label={`Account type: ${accountTypeLabel(value)}`}
-      className={`inline-flex min-h-7 items-center rounded-lg px-2.5 text-[11px] font-semibold ring-1 ring-inset ${tone}`}
-    >
-      {accountTypeLabel(value)}
-    </span>
-  );
-}
-
 function hasPosAccess(client) {
   return (client.client_systems || []).some(
     (assignment) =>
@@ -72,26 +53,31 @@ function setupStatusFor(client) {
     return {
       label: "No website account",
       attention: true,
-      tone: "bg-[#4C4239]/10 text-[#4C4239] ring-[#4C4239]/15",
     };
   }
   if (!account.email_confirmed_at) {
     return {
-      label: "Needs email verification",
+      label: "Email verification needed",
       attention: true,
-      tone: "bg-amber-50 text-amber-800 ring-amber-200",
     };
   }
   return {
     label: "Website ready",
     attention: false,
-    tone: "bg-[#386F55]/10 text-[#1A593B] ring-[#386F55]/20",
   };
 }
 
-function SetupStatusBadge({ client }) {
+function lifecycleLabel(value) {
+  const label = String(value || "Unknown").replaceAll("_", " ");
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+}
+
+function clientStatusFor(client) {
   const setup = setupStatusFor(client);
-  return <StatusBadge value={setup.label} tone={setup.tone} wrap />;
+  return {
+    ...setup,
+    label: `${lifecycleLabel(client.status)} · ${setup.label}`,
+  };
 }
 
 function displayClientName(client) {
@@ -112,12 +98,14 @@ function isClientAttention(client) {
 }
 
 export default function ClientsPage() {
+  const navigate = useNavigate();
   const resource = usePosResource(platformAdminApi.listClients, []);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [accountType, setAccountType] = useState("all");
   const [lifecycle, setLifecycle] = useState("all");
   const [directoryView, setDirectoryView] = useState("all");
@@ -273,11 +261,17 @@ export default function ClientsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Clients"
-        description="Create, review, and activate the client accounts managed by your team."
-        actions={<Button onClick={openCreate}>Add client</Button>}
-      />
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[#17241C] sm:text-3xl">
+          Clients
+        </h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium tabular-nums text-[#5C685F]">
+            {clients.length} clients
+          </span>
+          <Button onClick={openCreate}>Add client</Button>
+        </div>
+      </div>
 
       {resource.loading ? (
         <ClientDirectoryLoading />
@@ -285,63 +279,12 @@ export default function ClientsPage() {
         <AdminError error={resource.error} retry={resource.refresh} />
       ) : (
         <section
-          className="portal-surface"
-          aria-labelledby="client-directory-heading"
+          className="border-t border-[#DDE4DE]"
+          aria-label="Client directory"
         >
-          <div className="flex flex-col gap-4 border-b border-[#1A593B]/10 px-4 py-5 sm:px-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2
-                  id="client-directory-heading"
-                  className="portal-section-heading"
-                >
-                  Client directory
-                </h2>
-                <p className="portal-supporting-copy mt-1 max-w-2xl">
-                  Review account type, registration status, and POS access in
-                  one place.
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3 text-sm">
-                <p className="font-semibold tabular-nums text-[#1A593B]">
-                  Showing {visibleClients.length} of {clients.length}
-                </p>
-                {hasFilters ? (
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    Clear filters
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-
-            <div
-              className="flex flex-wrap gap-2 border-b border-[#E7ECE8] pb-4"
-              role="tablist"
-              aria-label="Client directory views"
-            >
-              <DirectoryViewButton
-                active={directoryView === "all"}
-                onClick={() => {
-                  setDirectoryView("all");
-                  setSelectedOnly(false);
-                }}
-              >
-                All clients
-              </DirectoryViewButton>
-              <DirectoryViewButton
-                active={directoryView === "attention"}
-                onClick={() => {
-                  setDirectoryView("attention");
-                  setSortBy("attention");
-                  setSelectedOnly(false);
-                }}
-              >
-                Needs attention ({attentionCount})
-              </DirectoryViewButton>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_10.5rem_10rem_10rem]">
-              <label className="relative block">
+          <div className="py-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <label className="relative block sm:min-w-0 sm:flex-1">
                 <span className="sr-only">Search clients</span>
                 <svg
                   aria-hidden="true"
@@ -359,42 +302,75 @@ export default function ClientsPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search name, email, or phone"
-                  className="w-full rounded-xl border border-[#D7E1D9] bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-xl border border-[#D7E1D9] bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 sm:min-w-0 sm:flex-1"
                 />
               </label>
-              <SelectFilter
-                label="Account type"
-                value={accountType}
-                onChange={setAccountType}
-                options={[
-                  ["all", "All account types"],
-                  ...ACCOUNT_TYPES.map((type) => [type.value, type.label]),
-                ]}
-              />
-              <SelectFilter
-                label="Lifecycle"
-                value={lifecycle}
-                onChange={setLifecycle}
-                options={[
-                  ["all", "All lifecycles"],
-                  ["prospect", "Prospect"],
-                  ["active", "Active"],
-                  ["inactive", "Inactive"],
-                ]}
-              />
-              <SelectFilter
-                label="Sort clients"
-                value={sortBy}
-                onChange={setSortBy}
-                options={[
-                  ["attention", "Attention first"],
-                  ["client", "Client name"],
-                  ["lifecycle", "Lifecycle"],
-                  ["setup", "Setup status"],
-                  ["pos", "POS access"],
-                ]}
-              />
+              <Button
+                variant="secondary"
+                className="shrink-0"
+                onClick={() => setFiltersOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+              >
+                Filters{hasFilters ? " · active" : ""}
+              </Button>
             </div>
+            {hasFilters ? (
+              <AppliedFilters
+                accountType={accountType}
+                lifecycle={lifecycle}
+                directoryView={directoryView}
+                selectedOnly={selectedOnly}
+                onClear={clearFilters}
+              />
+            ) : null}
+            {filtersOpen ? (
+              <div className="mt-3 grid gap-3 border-t border-[#E7ECE8] pt-3 sm:grid-cols-2 xl:grid-cols-4">
+                <SelectFilter
+                  label="Account type"
+                  value={accountType}
+                  onChange={setAccountType}
+                  options={[
+                    ["all", "All account types"],
+                    ...ACCOUNT_TYPES.map((type) => [type.value, type.label]),
+                  ]}
+                />
+                <SelectFilter
+                  label="Lifecycle"
+                  value={lifecycle}
+                  onChange={setLifecycle}
+                  options={[
+                    ["all", "All lifecycles"],
+                    ["prospect", "Prospect"],
+                    ["active", "Active"],
+                    ["inactive", "Inactive"],
+                  ]}
+                />
+                <SelectFilter
+                  label="View"
+                  value={directoryView}
+                  onChange={(value) => {
+                    setDirectoryView(value);
+                    if (value === "attention") setSortBy("attention");
+                  }}
+                  options={[
+                    ["all", "All clients"],
+                    ["attention", `Needs attention (${attentionCount})`],
+                  ]}
+                />
+                <SelectFilter
+                  label="Sort clients"
+                  value={sortBy}
+                  onChange={setSortBy}
+                  options={[
+                    ["attention", "Attention first"],
+                    ["client", "Client name"],
+                    ["lifecycle", "Lifecycle"],
+                    ["setup", "Setup status"],
+                    ["pos", "POS access"],
+                  ]}
+                />
+              </div>
+            ) : null}
           </div>
 
           {selectedClientIds.length ? (
@@ -424,6 +400,7 @@ export default function ClientsPage() {
                     selected={selectedClientIds.includes(client.id)}
                     isPossibleDuplicate={duplicateClientIds.has(client.id)}
                     onToggleSelection={() => toggleClientSelection(client.id)}
+                    onOpen={() => navigate(`/admin/clients/${client.id}`)}
                   />
                 ))}
               </div>
@@ -445,20 +422,12 @@ export default function ClientsPage() {
                           }
                         />
                       </TableHeading>
-                      <TableHeading className="w-[20%]">Client</TableHeading>
-                      <TableHeading className="w-[10%]">
-                        Account type
-                      </TableHeading>
-                      <TableHeading className="w-[11%]">Lifecycle</TableHeading>
-                      <TableHeading className="w-[17%]">
-                        Setup status
-                      </TableHeading>
-                      <TableHeading className="w-[12%]">
-                        POS access
-                      </TableHeading>
-                      <TableHeading className="w-[15%]">Contact</TableHeading>
-                      <TableHeading className="w-[11%] text-right">
-                        Action
+                      <TableHeading className="w-[29%]">Client</TableHeading>
+                      <TableHeading className="w-[24%]">Status</TableHeading>
+                      <TableHeading className="w-[15%]">POS</TableHeading>
+                      <TableHeading className="w-[22%]">Contact</TableHeading>
+                      <TableHeading className="w-[6%] text-right">
+                        <span className="sr-only">Open</span>
                       </TableHeading>
                     </tr>
                   </thead>
@@ -472,6 +441,7 @@ export default function ClientsPage() {
                         onToggleSelection={() =>
                           toggleClientSelection(client.id)
                         }
+                        onOpen={() => navigate(`/admin/clients/${client.id}`)}
                       />
                     ))}
                   </tbody>
@@ -603,7 +573,7 @@ export default function ClientsPage() {
 function TableHeading({ children, className = "" }) {
   return (
     <th
-      className={`px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-[#758176] ${className}`}
+      className={`px-4 py-3 text-left text-[11px] font-semibold tracking-[0.035em] text-[#5D685F] ${className}`}
     >
       {children}
     </th>
@@ -615,48 +585,60 @@ function ClientTableRow({
   selected,
   isPossibleDuplicate,
   onToggleSelection,
+  onOpen,
 }) {
   const hasPos = hasPosAccess(client);
   return (
-    <tr className="transition-colors hover:bg-[#F8FAF8]">
-      <td className="px-3 py-4 align-top text-center">
+    <tr
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="group cursor-pointer transition-colors hover:bg-[#FAFCFA] focus:bg-[#F4F8F5] focus:outline-none"
+    >
+      <td className="px-3 py-5 align-top text-center">
         <DirectoryCheckbox
           checked={selected}
           onChange={onToggleSelection}
           label={`Select ${displayClientName(client)}`}
         />
       </td>
-      <td className="px-4 py-4 align-top">
+      <td className="px-4 py-5 align-top">
         <Link
-          className="block truncate font-semibold text-[#17241C] underline-offset-4 hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="block truncate text-[15px] font-semibold text-[#17241C] underline-offset-4 hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           to={`/admin/clients/${client.id}`}
         >
           {displayClientName(client)}
         </Link>
-        {client.display_name && client.legal_name !== client.display_name ? (
-          <p className="mt-1 truncate text-xs text-[#7B877F]">
-            {client.legal_name}
-          </p>
-        ) : null}
+        <p className="mt-1 truncate text-xs text-[#778278]">
+          {client.display_name && client.legal_name !== client.display_name
+            ? client.legal_name
+            : accountTypeLabel(client.kind)}
+          {client.primary_phone ? ` · ${client.primary_phone}` : ""}
+        </p>
         {isPossibleDuplicate ? (
-          <p className="mt-1 text-xs font-medium text-[#875D17]">
-            Possible duplicate name
-          </p>
+          <p className="mt-1 text-xs text-[#875D17]">Possible duplicate</p>
         ) : null}
       </td>
-      <td className="px-4 py-4 align-top">
-        <AccountTypeBadge value={client.kind} />
+      <td className="px-4 py-5 align-top text-sm">
+        <p
+          className={
+            clientStatusFor(client).attention
+              ? "text-[#9A5A12]"
+              : "text-[#556158]"
+          }
+        >
+          {clientStatusFor(client).label}
+        </p>
       </td>
-      <td className="px-4 py-4 align-top">
-        <StatusBadge value={client.status} />
-      </td>
-      <td className="px-4 py-4 align-top">
-        <SetupStatusBadge client={client} />
-      </td>
-      <td className="px-4 py-4 align-top text-sm">
+      <td className="px-4 py-5 align-top text-sm">
         <PosAccessLink client={client} hasPos={hasPos} />
       </td>
-      <td className="px-4 py-4 align-top text-sm text-[#536158]">
+      <td className="px-4 py-5 align-top text-sm text-[#536158]">
         <p className="truncate">{client.primary_email || "—"}</p>
         {client.primary_phone ? (
           <p className="mt-1 truncate text-xs text-[#7B877F]">
@@ -664,13 +646,12 @@ function ClientTableRow({
           </p>
         ) : null}
       </td>
-      <td className="px-4 py-4 text-right align-top">
+      <td className="px-3 py-5 text-right align-top">
         <Link
-          aria-label={`Manage ${displayClientName(client)}`}
-          className="inline-flex min-h-10 items-center justify-center gap-1 whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-primary transition hover:bg-[#EEF5F0] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-label={`Open ${displayClientName(client)}`}
+          className="inline-flex min-h-10 w-10 items-center justify-center rounded-xl text-[#637168] transition hover:bg-[#EEF5F0] hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           to={`/admin/clients/${client.id}`}
         >
-          Manage
           <svg
             aria-hidden="true"
             className="h-4 w-4"
@@ -696,10 +677,21 @@ function ClientMobileRow({
   selected,
   isPossibleDuplicate,
   onToggleSelection,
+  onOpen,
 }) {
   const hasPos = hasPosAccess(client);
   return (
-    <article className="bg-white px-4 py-4 sm:px-5 md:p-5">
+    <article
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="cursor-pointer bg-white px-4 py-4 outline-none transition hover:bg-[#FAFCFA] focus:bg-[#F4F8F5] sm:px-5 md:p-5"
+    >
       <div className="flex gap-3">
         <ClientAvatar name={client.display_name || client.legal_name} />
         <div className="min-w-0 flex-1">
@@ -718,7 +710,6 @@ function ClientMobileRow({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <AccountTypeBadge value={client.kind} />
               <DirectoryCheckbox
                 checked={selected}
                 onChange={onToggleSelection}
@@ -732,11 +723,21 @@ function ClientMobileRow({
             </p>
           ) : null}
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-[#E8EEEA] py-3 text-xs">
-            <StatusField label="Lifecycle">
-              <StatusBadge value={client.status} />
+            <StatusField label="Account type">
+              <span className="text-sm text-[#556158]">
+                {accountTypeLabel(client.kind)}
+              </span>
             </StatusField>
-            <StatusField label="Setup">
-              <SetupStatusBadge client={client} />
+            <StatusField label="Status">
+              <span
+                className={
+                  clientStatusFor(client).attention
+                    ? "text-[#9A5A12]"
+                    : "text-[#556158]"
+                }
+              >
+                {clientStatusFor(client).label}
+              </span>
             </StatusField>
             <StatusField label="POS access">
               <PosAccessLink client={client} hasPos={hasPos} />
@@ -769,14 +770,18 @@ function ClientMobileRow({
 }
 
 function PosAccessLink({ client, hasPos }) {
-  if (hasPos)
-    return <span className="font-semibold text-[#334238]">POS active</span>;
+  if (hasPos) return <span className="text-[#556158]">Active</span>;
   return (
     <Link
-      className="font-semibold text-[#A23F36] underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      className="inline-flex items-center gap-1.5 font-medium text-[#B42318] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
       to={`/admin/clients/${client.id}?activate=pos`}
+      onClick={(event) => event.stopPropagation()}
     >
-      No POS access
+      <span
+        className="h-1.5 w-1.5 rounded-full bg-current"
+        aria-hidden="true"
+      />
+      No access
     </Link>
   );
 }
@@ -796,23 +801,10 @@ function DirectoryCheckbox({ checked, onChange, label }) {
       type="checkbox"
       checked={checked}
       onChange={onChange}
+      onClick={(event) => event.stopPropagation()}
       aria-label={label}
       className="h-4 w-4 rounded border-[#A8B8AC] text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
     />
-  );
-}
-
-function DirectoryViewButton({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${active ? "bg-[#E8F1EB] text-primary" : "text-[#55635A] hover:bg-[#F2F6F3]"}`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -826,7 +818,7 @@ function BulkSelectionBar({
   return (
     <div
       role="status"
-      className="flex flex-col gap-3 border-b border-[#DCE8E0] bg-[#F4F8F5] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+      className="flex flex-col gap-3 border-y border-[#DCE8E0] bg-[#F7FAF8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
     >
       <p className="text-sm font-semibold text-[#315241]">
         {count} {count === 1 ? "client" : "clients"} selected
@@ -847,6 +839,36 @@ function BulkSelectionBar({
   );
 }
 
+function AppliedFilters({
+  accountType,
+  lifecycle,
+  directoryView,
+  selectedOnly,
+  onClear,
+}) {
+  const labels = [
+    accountType !== "all" && accountTypeLabel(accountType),
+    lifecycle !== "all" && lifecycleLabel(lifecycle),
+    directoryView === "attention" && "Needs attention",
+    selectedOnly && "Selected clients",
+  ].filter(Boolean);
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5D685F]">
+      <span>Filters:</span>
+      {labels.map((label) => (
+        <span key={label}>{label}</span>
+      ))}
+      <button
+        type="button"
+        onClick={onClear}
+        className="font-medium text-primary underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Clear
+      </button>
+    </div>
+  );
+}
+
 function ClientAvatar({ name }) {
   return (
     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#EAF2EE] text-sm font-semibold text-[#1A593B]">
@@ -860,7 +882,7 @@ function ClientAvatar({ name }) {
 function ClientDirectoryLoading() {
   return (
     <section
-      className="portal-surface"
+      className="border-t border-[#DDE4DE]"
       aria-label="Loading client directory"
       aria-busy="true"
     >
