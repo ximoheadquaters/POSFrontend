@@ -105,7 +105,6 @@ export default function ClientsPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [accountType, setAccountType] = useState("all");
   const [lifecycle, setLifecycle] = useState("all");
   const [directoryView, setDirectoryView] = useState("all");
@@ -170,12 +169,6 @@ export default function ClientsPage() {
       return displayClientName(first).localeCompare(displayClientName(second));
     });
   }, [accountType, clients, directoryView, lifecycle, query, sortBy]);
-  const hasFilters = Boolean(
-    query ||
-    accountType !== "all" ||
-    lifecycle !== "all" ||
-    directoryView !== "all",
-  );
 
   function resetCreateForm() {
     setForm(initialForm);
@@ -247,7 +240,7 @@ export default function ClientsPage() {
           aria-label="Client directory"
         >
           <div className="py-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(18rem,1.6fr)_minmax(9rem,0.7fr)_minmax(9rem,0.7fr)_minmax(10rem,0.8fr)_minmax(9rem,0.7fr)]">
               <label className="relative block sm:min-w-0 sm:flex-1">
                 <span className="sr-only">Search clients</span>
                 <svg
@@ -269,71 +262,51 @@ export default function ClientsPage() {
                   className="w-full rounded-xl border border-[#D7E1D9] bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 sm:min-w-0 sm:flex-1"
                 />
               </label>
-              <Button
-                variant="secondary"
-                className="shrink-0"
-                onClick={() => setFiltersOpen((open) => !open)}
-                aria-expanded={filtersOpen}
-              >
-                Filters{hasFilters ? " · active" : ""}
-              </Button>
-            </div>
-            {hasFilters ? (
-              <AppliedFilters
-                accountType={accountType}
-                lifecycle={lifecycle}
-                directoryView={directoryView}
-                onClear={clearFilters}
+              <SelectFilter
+                label="Account type"
+                value={accountType}
+                onChange={setAccountType}
+                options={[
+                  ["all", "All account types"],
+                  ...ACCOUNT_TYPES.map((type) => [type.value, type.label]),
+                ]}
               />
-            ) : null}
-            {filtersOpen ? (
-              <div className="mt-3 grid gap-3 border-t border-[#E7ECE8] pt-3 sm:grid-cols-2 xl:grid-cols-4">
-                <SelectFilter
-                  label="Account type"
-                  value={accountType}
-                  onChange={setAccountType}
-                  options={[
-                    ["all", "All account types"],
-                    ...ACCOUNT_TYPES.map((type) => [type.value, type.label]),
-                  ]}
-                />
-                <SelectFilter
-                  label="Lifecycle"
-                  value={lifecycle}
-                  onChange={setLifecycle}
-                  options={[
-                    ["all", "All lifecycles"],
-                    ["prospect", "Prospect"],
-                    ["active", "Active"],
-                    ["inactive", "Inactive"],
-                  ]}
-                />
-                <SelectFilter
-                  label="View"
-                  value={directoryView}
-                  onChange={(value) => {
-                    setDirectoryView(value);
-                    if (value === "attention") setSortBy("attention");
-                  }}
-                  options={[
-                    ["all", "All clients"],
-                    ["attention", `Needs attention (${attentionCount})`],
-                  ]}
-                />
-                <SelectFilter
-                  label="Sort clients"
-                  value={sortBy}
-                  onChange={setSortBy}
-                  options={[
-                    ["attention", "Attention first"],
-                    ["client", "Client name"],
-                    ["lifecycle", "Lifecycle"],
-                    ["setup", "Setup status"],
-                    ["pos", "POS access"],
-                  ]}
-                />
-              </div>
-            ) : null}
+              <SelectFilter
+                label="Lifecycle"
+                value={lifecycle}
+                onChange={setLifecycle}
+                options={[
+                  ["all", "All lifecycles"],
+                  ["prospect", "Prospect"],
+                  ["active", "Active"],
+                  ["inactive", "Inactive"],
+                ]}
+              />
+              <SelectFilter
+                label="View"
+                value={directoryView}
+                onChange={(value) => {
+                  setDirectoryView(value);
+                  if (value === "attention") setSortBy("attention");
+                }}
+                options={[
+                  ["all", "All clients"],
+                  ["attention", `Needs attention (${attentionCount})`],
+                ]}
+              />
+              <SelectFilter
+                label="Sort clients"
+                value={sortBy}
+                onChange={setSortBy}
+                options={[
+                  ["attention", "Attention first"],
+                  ["client", "Client name"],
+                  ["lifecycle", "Lifecycle"],
+                  ["setup", "Setup status"],
+                  ["pos", "POS access"],
+                ]}
+              />
+            </div>
           </div>
 
           {clients.length === 0 ? (
@@ -538,7 +511,6 @@ function ClientTableRow({ client, isPossibleDuplicate, onOpen }) {
           {client.display_name && client.legal_name !== client.display_name
             ? client.legal_name
             : accountTypeLabel(client.kind)}
-          {client.primary_phone ? ` · ${client.primary_phone}` : ""}
         </p>
         {isPossibleDuplicate ? (
           <p className="mt-1 text-xs text-[#875D17]">Possible duplicate</p>
@@ -698,29 +670,6 @@ function StatusField({ label, children }) {
     <div className="min-w-0">
       <dt className="font-semibold text-[#6A776E]">{label}</dt>
       <dd className="mt-1">{children}</dd>
-    </div>
-  );
-}
-
-function AppliedFilters({ accountType, lifecycle, directoryView, onClear }) {
-  const labels = [
-    accountType !== "all" && accountTypeLabel(accountType),
-    lifecycle !== "all" && lifecycleLabel(lifecycle),
-    directoryView === "attention" && "Needs attention",
-  ].filter(Boolean);
-  return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5D685F]">
-      <span>Filters:</span>
-      {labels.map((label) => (
-        <span key={label}>{label}</span>
-      ))}
-      <button
-        type="button"
-        onClick={onClear}
-        className="font-medium text-primary underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-      >
-        Clear
-      </button>
     </div>
   );
 }
