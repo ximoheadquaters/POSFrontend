@@ -34,7 +34,6 @@ describe("client creation and POS activation", () => {
   test("provides an actionable triage view and direct POS setup route", () => {
     expect(clientsPage).toContain("Needs attention");
     expect(clientsPage).toContain("No access");
-    expect(clientsPage).toContain("Review selected");
     expect(clientsPage).toContain("Setup status");
     expect(clientDetail).toContain('searchParams.get("activate") === "pos"');
   });

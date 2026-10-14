@@ -110,8 +110,6 @@ export default function ClientsPage() {
   const [lifecycle, setLifecycle] = useState("all");
   const [directoryView, setDirectoryView] = useState("all");
   const [sortBy, setSortBy] = useState("attention");
-  const [selectedClientIds, setSelectedClientIds] = useState([]);
-  const [selectedOnly, setSelectedOnly] = useState(false);
   const [createdClient, setCreatedClient] = useState(null);
   const [activatingClient, setActivatingClient] = useState(null);
 
@@ -136,8 +134,6 @@ export default function ClientsPage() {
         lifecycle === "all" || client.status === lifecycle;
       const matchesView =
         directoryView !== "attention" || isClientAttention(client);
-      const matchesSelection =
-        !selectedOnly || selectedClientIds.includes(client.id);
       const searchable = [
         client.display_name,
         client.legal_name,
@@ -151,7 +147,6 @@ export default function ClientsPage() {
         matchesType &&
         matchesLifecycle &&
         matchesView &&
-        matchesSelection &&
         (!keyword || searchable.includes(keyword))
       );
     });
@@ -174,27 +169,13 @@ export default function ClientsPage() {
       }
       return displayClientName(first).localeCompare(displayClientName(second));
     });
-  }, [
-    accountType,
-    clients,
-    directoryView,
-    lifecycle,
-    query,
-    selectedClientIds,
-    selectedOnly,
-    sortBy,
-  ]);
+  }, [accountType, clients, directoryView, lifecycle, query, sortBy]);
   const hasFilters = Boolean(
     query ||
     accountType !== "all" ||
     lifecycle !== "all" ||
-    directoryView !== "all" ||
-    selectedOnly,
+    directoryView !== "all",
   );
-  const visibleClientIds = visibleClients.map((client) => client.id);
-  const allVisibleSelected =
-    visibleClientIds.length > 0 &&
-    visibleClientIds.every((id) => selectedClientIds.includes(id));
 
   function resetCreateForm() {
     setForm(initialForm);
@@ -217,23 +198,6 @@ export default function ClientsPage() {
     setAccountType("all");
     setLifecycle("all");
     setDirectoryView("all");
-    setSelectedOnly(false);
-  }
-
-  function toggleClientSelection(clientId) {
-    setSelectedClientIds((current) =>
-      current.includes(clientId)
-        ? current.filter((id) => id !== clientId)
-        : [...current, clientId],
-    );
-  }
-
-  function toggleVisibleSelection() {
-    setSelectedClientIds((current) =>
-      allVisibleSelected
-        ? current.filter((id) => !visibleClientIds.includes(id))
-        : [...new Set([...current, ...visibleClientIds])],
-    );
   }
 
   async function create(event) {
@@ -319,7 +283,6 @@ export default function ClientsPage() {
                 accountType={accountType}
                 lifecycle={lifecycle}
                 directoryView={directoryView}
-                selectedOnly={selectedOnly}
                 onClear={clearFilters}
               />
             ) : null}
@@ -373,19 +336,6 @@ export default function ClientsPage() {
             ) : null}
           </div>
 
-          {selectedClientIds.length ? (
-            <BulkSelectionBar
-              count={selectedClientIds.length}
-              selectedOnly={selectedOnly}
-              onReview={() => setSelectedOnly(true)}
-              onShowAll={() => setSelectedOnly(false)}
-              onClear={() => {
-                setSelectedClientIds([]);
-                setSelectedOnly(false);
-              }}
-            />
-          ) : null}
-
           {clients.length === 0 ? (
             <ClientDirectoryEmpty onCreate={openCreate} />
           ) : visibleClients.length === 0 ? (
@@ -397,9 +347,7 @@ export default function ClientsPage() {
                   <ClientMobileRow
                     key={client.id}
                     client={client}
-                    selected={selectedClientIds.includes(client.id)}
                     isPossibleDuplicate={duplicateClientIds.has(client.id)}
-                    onToggleSelection={() => toggleClientSelection(client.id)}
                     onOpen={() => navigate(`/admin/clients/${client.id}`)}
                   />
                 ))}
@@ -411,18 +359,7 @@ export default function ClientsPage() {
                 >
                   <thead className="bg-[#F7F9F7]">
                     <tr>
-                      <TableHeading className="w-[4%]">
-                        <DirectoryCheckbox
-                          checked={allVisibleSelected}
-                          onChange={toggleVisibleSelection}
-                          label={
-                            allVisibleSelected
-                              ? "Clear visible client selection"
-                              : "Select all visible clients"
-                          }
-                        />
-                      </TableHeading>
-                      <TableHeading className="w-[29%]">Client</TableHeading>
+                      <TableHeading className="w-[33%]">Client</TableHeading>
                       <TableHeading className="w-[24%]">Status</TableHeading>
                       <TableHeading className="w-[15%]">POS</TableHeading>
                       <TableHeading className="w-[22%]">Contact</TableHeading>
@@ -436,11 +373,7 @@ export default function ClientsPage() {
                       <ClientTableRow
                         key={client.id}
                         client={client}
-                        selected={selectedClientIds.includes(client.id)}
                         isPossibleDuplicate={duplicateClientIds.has(client.id)}
-                        onToggleSelection={() =>
-                          toggleClientSelection(client.id)
-                        }
                         onOpen={() => navigate(`/admin/clients/${client.id}`)}
                       />
                     ))}
@@ -580,13 +513,7 @@ function TableHeading({ children, className = "" }) {
   );
 }
 
-function ClientTableRow({
-  client,
-  selected,
-  isPossibleDuplicate,
-  onToggleSelection,
-  onOpen,
-}) {
+function ClientTableRow({ client, isPossibleDuplicate, onOpen }) {
   const hasPos = hasPosAccess(client);
   return (
     <tr
@@ -600,13 +527,6 @@ function ClientTableRow({
       }}
       className="group cursor-pointer transition-colors hover:bg-[#FAFCFA] focus:bg-[#F4F8F5] focus:outline-none"
     >
-      <td className="px-3 py-5 align-top text-center">
-        <DirectoryCheckbox
-          checked={selected}
-          onChange={onToggleSelection}
-          label={`Select ${displayClientName(client)}`}
-        />
-      </td>
       <td className="px-4 py-5 align-top">
         <Link
           className="block truncate text-[15px] font-semibold text-[#17241C] underline-offset-4 hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -672,13 +592,7 @@ function ClientTableRow({
   );
 }
 
-function ClientMobileRow({
-  client,
-  selected,
-  isPossibleDuplicate,
-  onToggleSelection,
-  onOpen,
-}) {
+function ClientMobileRow({ client, isPossibleDuplicate, onOpen }) {
   const hasPos = hasPosAccess(client);
   return (
     <article
@@ -708,13 +622,6 @@ function ClientMobileRow({
                   client.primary_phone ||
                   "No contact details"}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <DirectoryCheckbox
-                checked={selected}
-                onChange={onToggleSelection}
-                label={`Select ${displayClientName(client)}`}
-              />
             </div>
           </div>
           {isPossibleDuplicate ? (
@@ -795,62 +702,11 @@ function StatusField({ label, children }) {
   );
 }
 
-function DirectoryCheckbox({ checked, onChange, label }) {
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      onClick={(event) => event.stopPropagation()}
-      aria-label={label}
-      className="h-4 w-4 rounded border-[#A8B8AC] text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-    />
-  );
-}
-
-function BulkSelectionBar({
-  count,
-  selectedOnly,
-  onReview,
-  onShowAll,
-  onClear,
-}) {
-  return (
-    <div
-      role="status"
-      className="flex flex-col gap-3 border-y border-[#DCE8E0] bg-[#F7FAF8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-    >
-      <p className="text-sm font-semibold text-[#315241]">
-        {count} {count === 1 ? "client" : "clients"} selected
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={selectedOnly ? onShowAll : onReview}
-        >
-          {selectedOnly ? "Show directory" : "Review selected"}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onClear}>
-          Clear selection
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function AppliedFilters({
-  accountType,
-  lifecycle,
-  directoryView,
-  selectedOnly,
-  onClear,
-}) {
+function AppliedFilters({ accountType, lifecycle, directoryView, onClear }) {
   const labels = [
     accountType !== "all" && accountTypeLabel(accountType),
     lifecycle !== "all" && lifecycleLabel(lifecycle),
     directoryView === "attention" && "Needs attention",
-    selectedOnly && "Selected clients",
   ].filter(Boolean);
   return (
     <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5D685F]">
